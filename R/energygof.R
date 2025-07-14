@@ -328,10 +328,10 @@ PoissonGOF <- R6::R6Class(
 BernoulliGOF <- R6::R6Class(
   "BernoulliGOF", inherit = DistributionGOF,
   public = list(
-    initialize = function(prob = NULL) {
-      super$initialize("bernoulli", composite_allowed = FALSE)
-      # Set parameter values
-      self$parameter$prob <- prob
+        initialize = function(prob = NULL) {
+          super$initialize("bernoulli", composite_allowed = FALSE)
+          # Set parameter values
+          self$parameter$prob <- prob
     },
     support = function(x) all(x %in% c(0L, 1L)),
     sampler = function(n) rbinom(n, size = 1, prob = self$parameter$prob)
@@ -369,7 +369,7 @@ BetaGOF <- R6::R6Class(
       self$parameter$shape1 <- shape1
       self$parameter$shape2 <- shape2
     },
-    sampler = function(n) rbeta(n, shape1 = self$parametershape1,
+    sampler = function(n) rbeta(n, shape1 = self$parameter$shape1,
                                 shape2 = self$parameter$shape2)
     support = function(x) all(x < 1) && all(x > 0),
     ExY = function(x, shape1 = self$parameter$shape1,
@@ -439,9 +439,9 @@ StandardHalfNormalGOF <- R6::R6Class(
 HalfNormalGOF <- R6::R6Class(
   "HalfNormalGOF", inherit = DistributionGOF,
   public = list(
-    initialize = function() {
+    initialize = function(theta = NULL) {
       super$initialize("halfnormal", composite_allowed = FALSE)
-      self$parameters$theta <- theta
+      self$parameter$theta <- theta
     },
     support = function(x) all(x > 0),
     sampler = function(n) abs(rnorm(n, 0 sd = self$parameter$theta))
@@ -455,43 +455,182 @@ HalfNormalGOF <- R6::R6Class(
 )
 
 ##### Laplace
-EXYhat.laplace <- function(x, mu, sigma, ...) {
-  mean(sigma * exp(-abs(x - mu) / sigma) + abs(x - mu))
-}
+LaplaceGOF <- R6::R6Class(
+  "LaplaceGOF", inherit = DistributionGOF,
+  public = list(
+    initialize = function(mu = NULL, sigma = NULL) {
+      super$initialize("laplace", composite_allowed = TRUE)
+      self$parameter$theta <- theta
+      self$parameter$sigma <- sigma
+    },
+    support = function(x) is.numeric(x)
+    sampler =  function(n, mu = self$parameter$mu, sigma = self$parameter$sigma) {
+      u <- runif(n, -0.5, 0.5)
+      mu - sigma * sign(u) * log(1 - 2 * abs(u))
+    },
+    EXYhat = function(x, mu, sigma) {
+      mean(sigma * exp(-abs(x - mu) / sigma) + abs(x - mu))
+    },
+    EYY = function(sigma) {
+      2 * sigma
+    }
+  )
+)
 
-EYY.laplace <- function(sigma, ...) {
-  2 * sigma
-}
+##### Log-Normal
+LogNormalGOF <- R6::R6Class(
+  "LogNormalGOF", inherit = DistributionGOF,
+  public = list(
+    initialize = function(meanlog = NULL, sdlog = NULL) {
+      super$initialize("lognormal", composite_allowed = TRUE)
+      self$parameter$meanlog <- meanlog
+      self$parameter$sdlog <- sdlog
+    },
+    support = function(x) {
+      all(x > 0)
+    },
+    sampler = function(n, meanlog = self$parameter$meanlog,
+                       sdlog = self$parameter$sdlog) {
+      rlnorm(n, mean, sd)
+    },
+    EXYhat = function(x, meanlog = self$parameter$meanlog,
+                      sdlog = self$parameter$sdlog) {
+      A <- exp(meanlog + sdlog^2 / 2)
+      z <- (log(x) - meanlog) / sdlog
+      z_prime <- (log(x) - meanlog - sdlog^2) / sdlog
+      mean(x * (2 * pnorm(z) - 1) + A * (2 * pnorm(z_prime) - 1))
+    },
+    EYY = function(meanlog = self$parameter$meanlog,
+                   sdlog = self$parameter$sdlog) {
+      integrand <- function(w) {
+        abs(exp(w) - 1) * dnorm(w, mean = 0, sd = sqrt(2) * sigma)
+      }
+      scaling <- exp(meanlog + sdlog^2 / 2)
+      scaling * integrate(integrand, lower = -Inf, upper = Inf)$value
+    }
+  )
+)
 
-rlaplace <- function(n, mu = 0, sigma = 1) {
-  u <- runif(n, -0.5, 0.5)
-  mu - sigma * sign(u) * log(1 - 2 * abs(u))
-}
 
 ##### Asymmetric Laplace
-EXYhat.asymmetriclaplace <- function(x, theta, sigma, kappa, ...) {
-  mu <- (1 / kappa - kappa) / sqrt(2)
-  lambda <- sqrt(2) * kappa / sigma
-  beta <- sqrt(2) / (kappa * sigma)
-  pk <- 1 / ( 1 + kappa^2)
-  qk <- 1 - pk
-  mean(ifelse(x >= theta,
-              x - theta - mu + (2 * pk / lambda) * exp(-lambda * abs(x - theta)),
-              -x + theta + mu + (2 * qk / beta) * exp(-beta * abs(x - theta))))
-}
+AsymmetricLaplaceGOF <- R6::R6Class(
+  "AsymmetricLaplaceGOF", inherit = DistributionGOF,
+  public = list(
+    initialize = function(mu = NULL, sigma = NULL) {
+      super$initialize("asymmetric laplace", composite_allowed = TRUE)
+      self$parameter$theta <- theta
+      self$parameter$sigma <- sigma
+      self$parameter$kappa <- kappa
+    },
+    support = function(x) is.numeric(x)
+    sampler =  function(n, mu = self$parameter$mu, sigma = self$parameter$sigma) {
+      u <- runif(n, -0.5, 0.5)
+      mu - sigma * sign(u) * log(1 - 2 * abs(u))
+    },
+    sampler = function(n, theta, sigma, kappa) {
+      #stuff
+      #TODO
+    },
+    EXYhat = function(x, theta, sigma, kappa) {
+      mu <- (1 / kappa - kappa) / sqrt(2)
+      lambda <- sqrt(2) * kappa / sigma
+      beta <- sqrt(2) / (kappa * sigma)
+      pk <- 1 / ( 1 + kappa^2)
+      qk <- 1 - pk
+      mean(ifelse(x >= theta,
+                  x - theta - mu + (2 * pk / lambda) * exp(-lambda * abs(x - theta)),
+                  -x + theta + mu + (2 * qk / beta) * exp(-beta * abs(x - theta))))
+    },
+    EYY = function (theta, sigma, kappa){
+      mu <- (1 / kappa - kappa) / sqrt(2)
+      lambda <- sqrt(2) * kappa / sigma
+      beta <- sqrt(2) / (kappa * sigma)
+      pk <- 1 / (1 + kappa^2)
+      qk <- 1 - pk
+      pk / beta + qk / lambda + pk^2 / lambda + qk^2 / beta
+    }
+  )
+)
 
-EYY.asymmetriclaplace <- function (theta, sigma, kappa, ...){
-  mu <- (1 / kappa - kappa) / sqrt(2)
-  lambda <- sqrt(2) * kappa / sigma
-  beta <- sqrt(2) / (kappa * sigma)
-  pk <- 1 / (1 + kappa^2)
-  qk <- 1 - pk
-  pk / beta + qk / lambda + pk^2 / lambda + qk^2 / beta
-}
 
-rasymmetriclaplace <- function(n, theta, sigma, kappa, ...) {
-  #stuff
-}
+##### Weibull
+WeibullGOF <- R6::R6Class(
+  "WeibullGOF", inherit = DistributionGOF,
+  public = list(
+    initialize = function(shape = NULL, scale = NULL) {
+      super$initialize("weibull", composite_allowed = TRUE)
+      self$parameter$shape <- shape
+      self$parameter$scale <- scale
+    },
+    support = function(x) {
+      all(x > 0)
+    },
+    sampler = function(n) rweibull(n, shape = self$parameter$shape,
+                                   scale = self$parameter$scale),
+    EXYhat = function(x, shape = self$parameter$shape,
+                      scale = self$parameter$scale) {
+      z = (x / scale)^shape
+      mean(2 * x * pweibull(x, shape, scale) - x +
+             scale * gamma(1 + 1 / shape) * (1 - 2 * pgamma(z, 1 + 1 / shape, 1)))
+    },
+    EYY = function(shape, scale) {
+      # shape = k
+      # scale = lambda
+      (2 * scale / shape) * gamma(1 / shape) * (1 - 2^(-1 / shape))
+    }
+  )
+)
+
+
+
+##### Gamma
+GammaGOF <- R6::R6Class(
+  "GammaGOF", inherit = DistributionGOF,
+  public = list(
+    initialize = function(shape = NULL, rate = NULL) {
+      super$initialize("gamma", composite_allowed = TRUE)
+      self$parameter$shape <- shape
+      self$parameter$rate <- rate
+    },
+    support = function(x) {
+      all(x > 0)
+    },
+    sampler = function(n) rgamma(n, shape = self$parameter$shape,
+                                 rate = self$parameter$rate),
+    EXYhat = function(x, shape = self$parameter$shape,
+                      rate = self$parameter$rate) {
+      mean(x * (2 * pgamma(x, shape, rate) - 1) +
+             gamma(shape + 1) / (b * gamma(shape)))
+    },
+    EYY = function(shape = self$parameter$shape,
+                   rate = self$parameter$rate) {
+      2 * gamma(shape + 1 / 2) / (b * gamma(shape) * sqrt(pi))
+    }
+  )
+)
+
+##### Chi-Square
+ChiSquaredGOF <- R6::R6Class(
+  "ChiSquaredGOF", inherit = DistributionGOF,
+  public = list(
+    initialize = function(df = NULL) {
+      super$initialize("chi-squared", composite_allowed = FALSE)
+      self$parameter$df <- df
+    },
+    support = function(x) {
+      all(x > 0)
+    },
+    sampler = function(n) rchisq(n, df = self$parameter$df,
+                                 ncp = 0),
+    EXYhat = function(x, df = self$parameter$df) {
+      mean((df - x) + 2 * x * pchisq(x, df, 0) - 2 * df * pchisq(x, df + 2, 0))
+    },
+    EYY.chisq = function(df = self$parameter$df) {
+      4 * gamma((df + 1) / 2) / (sqrt(pi) * gamma(df / 2))
+    }
+  )
+)
+
 
 ##### Inverse Gaussian
 EXYhat.inversegaussian <- function(x, ...) {
@@ -501,58 +640,9 @@ EXYhat.inversegaussian <- function(x, ...) {
 
 EYY.inversegaussian <- EYY.standardhalfnormal
 
-##### Weibull
-EXYhat.weibull <- function(x, shape, scale, ...) {
-  stopifnot(all(x > 0))
-  z = (x / scale)^shape
-  mean(2 * x * pweibull(x, shape, scale) - x +
-         scale * gamma(1 + 1 / shape) * (1 - 2 * pgamma(z, 1 + 1 / shape, 1)))
-}
-
-EYY.weibull <- function(shape, scale, ...) {
-  # shape = k
-  # scale = lambda
-  (2 * scale / shape) * gamma(1 / shape) * (1 - 2^(-1 / shape))
-}
-
-##### Gamma
-EXYhat.gamma <- function(x, shape, rate, ...) {
-  mean(x * (2 * pgamma(x, shape, rate) - 1) +
-         gamma(shape + 1) / (b * gamma(shape)))
-}
-
-EYY.gamma <- function(shape, rate, ...) {
-  (2 * gamma(shape + 1 / 2) / (b * gamma(shape) * sqrt(pi)))
-}
-
-##### Chi-Square
-EXYhat.chisq <- function(x, df, ...) {
-  stopifnot(all(x > 0))
-  mean((df - x) + 2 * x * pchisq(x, df, 0) - 2 * df * pchisq(x, df + 2, 0))
-}
-
-EYY.chisq <- function(df, ...) {
-  4 * gamma((df + 1) / 2) / (sqrt(pi) * gamma(df / 2))
-}
-
 ##### Inverse Gamma?
 
-##### Log-Normal
-EXYhat.lognormal <- function(x, meanlog, sdlog, ...) {
-  stopifnot(all(x > 0))
-  A <- exp(meanlog + sdlog^2 / 2)
-  z <- (log(x) - meanlog) / sdlog
-  z_prime <- (log(x) - meanlog - sdlog^2) / sdlog
-  mean(x * (2 * pnorm(z) - 1) + A * (2 * pnorm(z_prime) - 1))
-}
 
-EYY.lognormal <- function(meanlog, sdlog, ...) {
-  integrand <- function(w) {
-    abs(exp(w) - 1) * dnorm(w, mean = 0, sd = sqrt(2) * sigma)
-  }
-  scaling <- exp(meanlog + sdlog^2 / 2)
-  scaling * integrate(integrand, lower = -Inf, upper = Inf)$value
-}
 
 #### Generalized Goodness-of-fit Tests
 
