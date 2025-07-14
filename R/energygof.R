@@ -642,19 +642,31 @@ EYY.inversegaussian <- EYY.standardhalfnormal
 
 ##### Inverse Gamma?
 
-
-
 #### Generalized Goodness-of-fit Tests
 
 ##### Standard Cauchy
-EXYhat.cauchy <- function(x, ...) {
-  stopifnot(!missing(s), s < 1)
-  mean((1 + x^2)^(s / 2) * (cos(s * arctan(x)) / cos(pi * s / 2)))
-}
-
-EYY.cauchy <- function(s, ...) {
-  2^s / cos(pi * s / 2)
-}
+StandardCauchyGOF <- R6::R6Class(
+  "StandardCauchyGOF",
+  inherit = DistributionGOF,
+  public = list(
+    initialize = function(exponent = 0.5) {
+      super$initialize("Standard Cauchy", composite_allowed = TRUE)
+      self$expontent <- exponent
+    },
+    support = function(x) {
+      is.numeric(x)
+    },
+    sampler = function(n) {
+      rcauchy(n, 0, 1)
+    },
+    EXYhat = function(x, s = self$exponent) {
+      mean((1 + x^2)^(s / 2) * (cos(s * arctan(x)) / cos(pi * s / 2)))
+    },
+    EYY = function(s = self$exponent) {
+      2^s / cos(pi * s / 2)
+    }
+  )
+)
 
 ##### Cauchy
 
