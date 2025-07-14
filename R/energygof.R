@@ -66,6 +66,7 @@ energygof <- function(x, dist =  c("uniform",
                                    "cauchy",
                                    "pareto"),
                       R = 100, ...) {
+  dist <- match.arg(dist)
   dist_obj <- distribution_factory(dist, ...)
   test <- EGOFTest$new(x, dist = dist_obj, R = R, ...)
   test$as_htest()
@@ -100,6 +101,15 @@ check_known_parameters <- function(dist, dots) {
   return(no_nulls)
 }
 
+validate_x <- function(x, dist) {
+  if (!dist$support(x)) {
+    stop(sprintf("Not all elements of x lie in the support of distribution: %s
+Support test:  %s",
+dist$distribution_name, paste0(deparse(body(dist$support)),
+                               collapse = "")))
+  }
+}
+
 EGOFTest <- R6::R6Class(
   "EGOFTest",
   public = list(
@@ -112,15 +122,12 @@ EGOFTest <- R6::R6Class(
     p_value = NULL,
 
     initialize = function(x, dist, R = 0, ...) {
+      validate_x(x, dist)
       dots <- list(...)
       self$x <- x
       self$R <- R
       self$dist <- dist
       self$known_param <- check_known_parameters(dist, dots)
-      self$run(x)
-    },
-
-    run = function(x) {
       self$E_stat <- self$compute_E_stat(x)
       self$p_value <- self$simulate_pval(x)
     },
@@ -149,8 +156,11 @@ EGOFTest <- R6::R6Class(
     as_htest = function() {
       structure(list(
         method = paste("Energy goodness-of-fit test for",
-                       self$dist$distribution_name),
+                       self$dist$distribution_name, " distribution"),
         data.name = deparse(substitute(self$x)),
+        parameters = self$parameters,
+        null.value = paste0(self$dist$distribution_name, "Distribution with Parameters: ", self$dist$parameter),
+        R = self$R,
         statistic = self$E_stat,
         p.value = self$p_value,
         estimate = if (!self$known_param) self$estimates else NULL
@@ -233,19 +243,15 @@ NormalGOF <- R6::R6Class(
       self$estimator$mean <- function(x) mean(x)
       self$estimator$sd <- function(x) sd(x)
     },
-
     support = function(x) {
       is.numeric(x)
     },
-
     sampler = function(n) {
       rnorm(n, self$parameter$mean, self$parameter$sd)
     },
-
     EYY = function() {
       2 * self$parameter$sd / sqrt(pi)
     },
-
     EXYhat = function(x) {
       mu <- self$parameter$mean
       s <- self$parameter$sd
@@ -262,18 +268,18 @@ UniformGOF <- R6::R6Class(
   "UniformGOF", inherit = DistributionGOF,
   public = list(
     initialize = function() {
-      super$initialize("uniform", c("min", "max"), composite_allowed = FALSE)
+      super$initialize("uniform", composite_allowed = FALSE)
+      # Set parameter values
+      self$parameter$min <- min
+      self$parameter$max <- max
+
     },
     support = function (x) x > self$min && x < self$max,
-    estimator = function(x) list(min = min(x), max = max(x)),
     sampler = function(n, min, max) runif(n, self$min, self$max),
     EYY =  function(min, max, ...) (self$max - self$min) / 3,
     EXYhat = function(x, min, max, ...) {
       mean((x - self$min)^2 / (self$max - self$min) - x + (self$max - self$min) / 2)
-    },
-    parameterless_transform = NA,
-    parameterless_sampler = NA,
-    parameterless_test = NA
+    }
   )
 )
 
