@@ -116,7 +116,7 @@ EGOFTest <- R6::R6Class(
       self$x <- x
       self$R <- R
       self$dist <- dist
-      self$known_param <- self$check_known_parameters(dist, dots)
+      self$known_param <- check_known_parameters(dist, dots)
       self$run(x)
     },
 
@@ -125,7 +125,7 @@ EGOFTest <- R6::R6Class(
       self$p_value <- self$simulate_pval(x)
     },
 
-    compute_E_stat = function() {
+    compute_E_stat = function(x = self$x) {
       n <- length(self$x)
       EYY <- self$dist$EYY()
       EXY <- self$dist$EXYhat(x)
