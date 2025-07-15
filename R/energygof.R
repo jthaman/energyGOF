@@ -132,22 +132,23 @@ EGOFTest <- R6::R6Class(
       self$p_value <- self$simulate_pval(x)
     },
 
-    compute_E_stat = function(x = self$x) {
-      n <- length(self$x)
-      EYY <- self$dist$EYY()
-      EXY <- self$dist$EXYhat(x)
-      EXX <- EXXhat(self$x)
+    compute_E_stat = function(x = self$x, d = self$dist) {
+      n <- length(x)
+      EYY <- d$EYY()
+      EXY <- d$EXYhat(x)
+      EXX <- EXXhat(x)
       out <- n * (2 * EXY - EYY - EXX)
       names(out) <- "E-statistic"
       out
     },
 
-    simulate_pval = function(x = self$x) {
-      if (self$R == 0) return (NA)
+    simulate_pval = function(x = self$x, R = self$R) {
+      if (self$R == 0) return(NA)
       bootobj <- boot::boot(x, statistic = self$compute_E_stat,
                             R = R, sim = "parametric",
-                            ran.gen = self$dist$sampler)
-      1 - mean(bootobj$t < bootobj$t0)
+                            ran.gen = self$dist$sampler,
+                            mle = self$dist$parameter)
+      mean(bootobj$t > bootobj$t0)
     },
 
     as_htest = function() {
@@ -156,7 +157,9 @@ EGOFTest <- R6::R6Class(
                        self$dist$distribution_name, " distribution"),
         data.name = deparse(substitute(self$x)),
         parameters = self$parameters,
-        null.value = paste0(self$dist$distribution_name, "Distribution with Parameters: ", self$dist$parameter),
+        null.value = paste0(self$dist$distribution_name,
+                            "Distribution with Parameters: ",
+                            self$dist$parameter),
         R = self$R,
         statistic = self$E_stat,
         p.value = self$p_value,
@@ -233,18 +236,18 @@ NormalGOF <- R6::R6Class(
       self$parameter$sd <- sd
     },
     # Statistic estimator
-    statistic = function(x) {
+    estimator = function(x) {
       self$statistic$mean <- mean(x)
       self$statistic$sd <- sd(x)
     },
     support = function(x) {
       is.numeric(x)
     },
-    sampler = function(n) {
-      rnorm(n, self$parameter$mean, self$parameter$sd)
+    sampler = function(n, par = self$parameter) {
+      rnorm(n, par$mean, par$sd)
     },
-    EYY = function() {
-      2 * self$parameter$sd / sqrt(pi)
+    EYY = function(sd = self$parameter$sd) {
+      2 * sd / sqrt(pi)
     },
     EXYhat = function(x) {
       mu <- self$parameter$mean
@@ -252,9 +255,6 @@ NormalGOF <- R6::R6Class(
       mean(2 * (x - mu) * pnorm(x, mu, s) +
              2 * s^2 * dnorm(x, mu, s) -
                (x - mu))
-    },
-    x_std = function(x) {
-      (x - self$statistic$mean) / self$statistic$sd
     }
   )
 )
@@ -271,8 +271,8 @@ UniformGOF <- R6::R6Class(
       self$parameter$max <- max
     },
     support = function (x) all(x > self$parameter$min) && all(x < self$parameter$max),
-    sampler = function(n) runif(n, self$parameter$min, self$parameter$max),
-    EYY =  function() (self$parameter$max - self$parameter$min) / 3,
+    sampler = function(n, par) runif(n, par$min, par$max),
+    EYY =  function(min = self$parameter$min, max = self$parameter$max) (max - min) / 3,
     EXYhat = function(x) {
       mean((x - self$parameter$min)^2 / (self$parameter$max - self$parameter$min) - x +
              (self$parameter$max - self$parameter$min) / 2)
@@ -290,8 +290,8 @@ ExponentialGOF <- R6::R6Class(
       self$parameter$rate <- rate
     },
     support = function (x) all(x > 0),
-    sampler = function(n) rexp(n, self$parameter$rate),
-    EYY = function() 1 / self$parameter$rate,
+    sampler = function(n, par) rexp(n, par$rate),
+    EYY = function(rate = self$parameter$rate) 1 / rate,
     EXYhat = function(x) {
       mean(x + self$parameter$rate * (1 - 2 * pexp(x, self$parameter$rate)))
     }
@@ -311,7 +311,7 @@ PoissonGOF <- R6::R6Class(
       self$statistic$lambda <- mean(x)
     },
     support = function (x) all(x >= 0) && all(x == floor(x)),
-    sampler = function(n) rpois(n, self$lambda),
+    sampler = function(n, par) rpois(n, par$lambda),
     EYY = function(lambda = self$lambda) {
       2 * lambda * exp(-2 * lambda) * (besselI(2 * lambda, 0) - besselI(2 * lambda, 1))
     },
@@ -334,7 +334,7 @@ BernoulliGOF <- R6::R6Class(
           self$parameter$prob <- prob
     },
     support = function(x) all(x %in% c(0L, 1L)),
-    sampler = function(n) rbinom(n, size = 1, prob = self$parameter$prob)
+    sampler = function(n) rbinom(n, size = 1, prob = self$parameter$prob),
     EYY = function(prob = self$prob) 2 * prob * (1 - prob),
     EXYhat = function(x, prob = self$prob) {
       h <- sum(x)
@@ -370,7 +370,7 @@ BetaGOF <- R6::R6Class(
       self$parameter$shape2 <- shape2
     },
     sampler = function(n) rbeta(n, shape1 = self$parameter$shape1,
-                                shape2 = self$parameter$shape2)
+                                shape2 = self$parameter$shape2),
     support = function(x) all(x < 1) && all(x > 0),
     ExY = function(x, shape1 = self$parameter$shape1,
                    shape2 = self$parameter$shape2) {
@@ -444,7 +444,7 @@ HalfNormalGOF <- R6::R6Class(
       self$parameter$theta <- theta
     },
     support = function(x) all(x > 0),
-    sampler = function(n) abs(rnorm(n, 0 sd = self$parameter$theta))
+    sampler = function(n) abs(rnorm(n, 0, sd = self$parameter$theta)),
     EXYhat = function(x, theta) {
       mean(2 * theta * (dnorm(x / theta) + (x / theta) * (pnorm(x / theta) - 1)))
     },
@@ -463,7 +463,7 @@ LaplaceGOF <- R6::R6Class(
       self$parameter$theta <- theta
       self$parameter$sigma <- sigma
     },
-    support = function(x) is.numeric(x)
+    support = function(x) is.numeric(x),
     sampler =  function(n, mu = self$parameter$mu, sigma = self$parameter$sigma) {
       u <- runif(n, -0.5, 0.5)
       mu - sigma * sign(u) * log(1 - 2 * abs(u))
@@ -522,11 +522,7 @@ AsymmetricLaplaceGOF <- R6::R6Class(
       self$parameter$sigma <- sigma
       self$parameter$kappa <- kappa
     },
-    support = function(x) is.numeric(x)
-    sampler =  function(n, mu = self$parameter$mu, sigma = self$parameter$sigma) {
-      u <- runif(n, -0.5, 0.5)
-      mu - sigma * sign(u) * log(1 - 2 * abs(u))
-    },
+    support = function(x) is.numeric(x),
     sampler = function(n, theta, sigma, kappa) {
       #stuff
       #TODO
@@ -638,7 +634,6 @@ EXYhat.inversegaussian <- function(x, ...) {
   EXYhat.standardhalfnormal(r)
 }
 
-EYY.inversegaussian <- EYY.standardhalfnormal
 
 ##### Inverse Gamma?
 
