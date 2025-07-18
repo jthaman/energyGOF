@@ -17,7 +17,7 @@
 #'
 #' @details
 #'
-#'
+#' You should set R to be a very large number in practice. I recommend at least 10,000. The default value is not a robust choice.
 #'
 #' @examples
 #' x <- rnorm(10)
@@ -46,10 +46,10 @@
 #'
 #'
 #'
+#' @export
 
-# User-facing wrapper
-energygof <- function(x, dist =  c("uniform",
-                                   "exponential",
+egof <- function(x, dist =  c("uniform",
+                              "exponential",
                                    "bernoulli", "binomial",
                                    "geometric",
                                    "normal", "gaussian",
@@ -65,17 +65,22 @@ energygof <- function(x, dist =  c("uniform",
                                    "weibull",
                                    "cauchy",
                                    "pareto"),
-                      R = 100, ...) {
-  dist <- match.arg(dist)
-  dist_obj <- distribution_factory(dist, ...)
-  test <- EGOFTest$new(x, dist = dist_obj, R = R, ...)
+                      R = 100,
+                      ...) {
+  valid_dists <- eval(formals(egof)$dist)
+  distname <- match.arg(tolower(dist), choices = valid_dists)
+  validate_R(R)
+  dist_obj <- distribution_factory(distname, ...)
+  validate_x(x, dist_obj)
+  dots <- list(...)
+  validate_dots(dist_obj, dots)
+  test <- EGOFTest$new(x, dist = dist_obj, R = R)
   test$as_htest()
 }
 
-check_known_parameters <- function(dist, dots) {
+validate_dots <- function(dist, dots) {
   required_params <- names(dist$parameter)
   supplied_params <- names(dots)
-
   # 1. Check for missing required parameters
   missing_params <- setdiff(required_params, supplied_params)
   if (length(missing_params) > 0) {
@@ -84,7 +89,6 @@ check_known_parameters <- function(dist, dots) {
                     paste(missing_params, collapse = ", ")))
     return(FALSE)
   }
-
   # 2. Check for unexpected extra parameters
   extra_params <- setdiff(supplied_params, required_params)
   if (length(extra_params) > 0) {
@@ -94,10 +98,8 @@ check_known_parameters <- function(dist, dots) {
     # Optional: decide if you want to allow extra parameters or not.
     # If not, return FALSE here.
   }
-
   # 3. Check that all required parameters are not NULL
-  no_nulls <- all(!vapply(dots[required_params], is.null, logical(1)))
-
+  no_nulls <- all(!vapply(dots[required_params], is.null, FALSE))
   return(no_nulls)
 }
 
@@ -110,73 +112,13 @@ dist$distribution_name, paste0(deparse(body(dist$support)),
   }
 }
 
-EGOFTest <- R6::R6Class(
-  "EGOFTest",
-  public = list(
-    dist = NULL,
-    R = 0,
-    known_param = FALSE,
-    x = NULL,
-    estimates = NULL,
-    E_stat = NULL,
-    p_value = NULL,
-
-    initialize = function(x, dist, R = 0, ...) {
-      validate_x(x, dist)
-      dots <- list(...)
-      self$x <- x
-      self$R <- R
-      self$dist <- dist
-      self$known_param <- check_known_parameters(dist, dots)
-      self$E_stat <- self$compute_E_stat(x)
-      self$p_value <- self$simulate_pval(x)
-    },
-
-    compute_E_stat = function(x = self$x, d = self$dist) {
-      n <- length(x)
-      EYY <- d$EYY()
-      EXY <- d$EXYhat(x)
-      EXX <- EXXhat(x)
-      out <- n * (2 * EXY - EYY - EXX)
-      names(out) <- "E-statistic"
-      out
-    },
-
-    simulate_pval = function(x = self$x, R = self$R) {
-      if (self$R == 0) return(NA)
-      bootobj <- boot::boot(x, statistic = self$compute_E_stat,
-                            R = R, sim = "parametric",
-                            ran.gen = self$dist$sampler,
-                            mle = self$dist$parameter)
-      mean(bootobj$t > bootobj$t0)
-    },
-
-    as_htest = function() {
-      structure(list(
-        method = paste("Energy goodness-of-fit test for",
-                       self$dist$distribution_name, " distribution"),
-        data.name = deparse(substitute(self$x)),
-        parameters = self$parameters,
-        null.value = paste0(self$dist$distribution_name,
-                            "Distribution with Parameters: ",
-                            self$dist$parameter),
-        R = self$R,
-        statistic = self$E_stat,
-        p.value = self$p_value,
-        estimate = if (!self$known_param) self$estimates else NULL
-      ), class = "htest")
-    }
-  )
-)
-
-EXXhat <- function(x) {
-  n <- length(x)
-  xs <- sort(x)
-  prefix <- 2 * seq_len(n) - 1 - n
-  2 * mean(prefix * xs) / n
+validate_R <- function(R) {
+  if (!is.numeric(R))
+    stop("R must be numeric.")
+  if (!(R >= 0))
+    stop("R must be non-negative.")
 }
 
-# Factory function
 distribution_factory <- function(name, ...) {
   switch(name,
          "normal" = NormalGOF$new(...),
@@ -204,18 +146,103 @@ distribution_factory <- function(name, ...) {
          stop("Unsupported distribution"))
 }
 
+
+EGOFTest <- R6::R6Class(
+  "EGOFTest",
+  public = list(
+    dist = NULL,
+    R = 0,
+    x = NULL,
+    composite = FALSE,
+    E_stat = NULL,
+    p_value = NULL,
+    EYY = 0,
+
+    initialize = function(x, dist, R) {
+      self$x <- x
+      self$R <- R
+      self$composite <- length(dist$parameter) == 0
+      self$dist <- dist
+      self$EYY <- self$dist$EYY(
+      (if (self$composite)
+        self$dist$ref_parameter
+        else
+          self$dist$parameter))
+      self$E_stat <-self$compute_E_stat(x)
+      self$p_value <- self$simulate_pval(x)
+    },
+
+    compute_E_stat = function(x = self$x,
+                              d = self$dist,
+                              EYY = self$EYY) {
+      if (self$composite) x <- self$dist$xform(x)
+      n <- length(x)
+      EXY <- d$EXYhat(x)
+      EXX <- self$EXXhat(x)
+      out <- n * (2 * EXY - EYY - EXX)
+      names(out) <- paste0("E-statistic",
+      (if (self$composite) " (standardized data)" else ""))
+      out
+    },
+
+    simulate_pval = function(x = self$x, R = self$R) {
+      if (self$R == 0) return(NA)
+      bootobj <- boot::boot(x, statistic = self$compute_E_stat,
+                            R = R, sim = "parametric",
+                            ran.gen = self$dist$sampler,
+                            mle =
+                              (if (self$composite)
+                                self$dist$ref_parameter
+                                else
+                                self$dist$parameter),
+                            EYY = self$EYY)
+      mean(bootobj$t > bootobj$t0)
+    },
+
+    EXXhat = function(x = self$x) {
+      n <- length(x)
+      xs <- sort(x)
+      prefix <- 2 * seq_len(n) - 1 - n
+      2 * mean(prefix * xs) / n
+    },
+
+    as_htest = function() {
+      structure(list(
+        method = paste((if (self$composite) "Composite" else "Simple"),
+                       " Energy goodness-of-fit test for",
+                       self$dist$distribution_name, " distribution"),
+        data.name = deparse(substitute(self$x)),
+        parameters = self$parameters,
+        null.value = paste0(self$dist$distribution_name,
+                            "Distribution with Parameters: ",
+                            self$dist$parameter),
+        R = self$R,
+        composite = self$composite,
+        statistic = self$E_stat,
+        p.value = self$p_value,
+        estimate = if (self$composite) self$dist$statistics else NULL
+      ), class = "htest")
+    }
+  )
+)
+
+
+
+
 DistributionGOF <- R6::R6Class(
   "DistributionGOF",
   public = list(
     distribution_name = NULL,
     composite_allowed = FALSE,
     parameter = NULL,
+    ref_parameter = NULL,
     statistic = NULL,
     initialize = function(distribution_name = NULL,
                           composite_allowed = FALSE) {
       self$distribution_name <- distribution_name
       self$composite_allowed <- composite_allowed
       self$parameter <- list()
+      self$ref_parameter <- list()
       self$statistic <- list()
     },
     support = function(x) stop("Not implemented."),
@@ -232,13 +259,13 @@ NormalGOF <- R6::R6Class(
   public = list(
     initialize = function(mean = NULL, sd = NULL) {
       super$initialize("normal", composite_allowed = TRUE)
-      self$parameter$mean <- mean
-      self$parameter$sd <- sd
+      self$parameter <- list(mean = mean, sd = sd)
+      self$ref_parameter <- list(mean = 0, sd = 1)
+      if (is.null(mean) || is.null(sd)) estimator(x)
     },
     # Statistic estimator
     estimator = function(x) {
-      self$statistic$mean <- mean(x)
-      self$statistic$sd <- sd(x)
+      self$statistic <- list(mean = mean(), sd = sd(x))
     },
     support = function(x) {
       is.numeric(x)
@@ -246,15 +273,17 @@ NormalGOF <- R6::R6Class(
     sampler = function(n, par = self$parameter) {
       rnorm(n, par$mean, par$sd)
     },
-    EYY = function(sd = self$parameter$sd) {
-      2 * sd / sqrt(pi)
+    EYY = function(par = self$parameter) {
+      2 * par$sd / sqrt(pi)
     },
-    EXYhat = function(x) {
-      mu <- self$parameter$mean
-      s <- self$parameter$sd
-      mean(2 * (x - mu) * pnorm(x, mu, s) +
-             2 * s^2 * dnorm(x, mu, s) -
-               (x - mu))
+    EXYhat = function(x,
+                      mean = self$parameter$mean,
+                      sd = self$parameter$sd) {
+      mean(2 * (x - mean) * pnorm(x, mean, sd) +
+             2 * sd^2 * dnorm(x, mean, sd) - (x - mean))
+    },
+    xform = function(x, stat = self$statistic) {
+      (x - stat$mean) / stat$sd
     }
   )
 )
@@ -290,7 +319,7 @@ ExponentialGOF <- R6::R6Class(
       self$parameter$rate <- rate
     },
     support = function (x) all(x > 0),
-    sampler = function(n, par) rexp(n, par$rate),
+    sampler = function(n, par = self$parameter) rexp(n, par$rate),
     EYY = function(rate = self$parameter$rate) 1 / rate,
     EXYhat = function(x) {
       mean(x + self$parameter$rate * (1 - 2 * pexp(x, self$parameter$rate)))
@@ -311,7 +340,7 @@ PoissonGOF <- R6::R6Class(
       self$statistic$lambda <- mean(x)
     },
     support = function (x) all(x >= 0) && all(x == floor(x)),
-    sampler = function(n, par) rpois(n, par$lambda),
+    sampler = function(n, par = self$parameter) rpois(n, par$lambda),
     EYY = function(lambda = self$lambda) {
       2 * lambda * exp(-2 * lambda) * (besselI(2 * lambda, 0) - besselI(2 * lambda, 1))
     },
@@ -328,13 +357,13 @@ PoissonGOF <- R6::R6Class(
 BernoulliGOF <- R6::R6Class(
   "BernoulliGOF", inherit = DistributionGOF,
   public = list(
-        initialize = function(prob = NULL) {
-          super$initialize("bernoulli", composite_allowed = FALSE)
-          # Set parameter values
-          self$parameter$prob <- prob
+    initialize = function(prob = NULL) {
+      super$initialize("bernoulli", composite_allowed = FALSE)
+      # Set parameter values
+      self$parameter$prob <- prob
     },
     support = function(x) all(x %in% c(0L, 1L)),
-    sampler = function(n) rbinom(n, size = 1, prob = self$parameter$prob),
+    sampler = function(n, par = self$parameter) rbinom(n, size = 1, prob = par$prob),
     EYY = function(prob = self$prob) 2 * prob * (1 - prob),
     EXYhat = function(x, prob = self$prob) {
       h <- sum(x)
@@ -369,8 +398,8 @@ BetaGOF <- R6::R6Class(
       self$parameter$shape1 <- shape1
       self$parameter$shape2 <- shape2
     },
-    sampler = function(n) rbeta(n, shape1 = self$parameter$shape1,
-                                shape2 = self$parameter$shape2),
+    sampler = function(n, par = self$parameter) rbeta(n, shape1 = par$shape1,
+                                                      shape2 = par$shape2),
     support = function(x) all(x < 1) && all(x > 0),
     ExY = function(x, shape1 = self$parameter$shape1,
                    shape2 = self$parameter$shape2) {
@@ -397,17 +426,18 @@ BetaGOF <- R6::R6Class(
 GeometricGOF <- R6::R6Class(
   "GeometricGOF", inherit = DistributionGOF,
   public = list(
-    initialize = function(p = NULL) {
-      super$initialize("beta", composite_allowed = FALSE)
+    initialize = function(prob = NULL) {
+      super$initialize("geometric", composite_allowed = FALSE)
       # Set parameter values
-      self$parameter$p
+      self$parameter$prob <- prob
     },
     support = function(x) all(x == floor(x)) && all(x > 0),
-    EYY = function(p = self$parameter$p) {
+    sampler = function(n, par) rgeom(n, par$prob),
+    EYY = function(p = self$parameter$prob) {
       q <- 1 - p
       (2 * q) / (1 - q^2)
     },
-    EXYhat = function(x, p = self$parameter$p) {
+    EXYhat = function(x, p = self$parameter$prob) {
       mean(x + 1 + (1 - 2 * pgeom(x)) / p)
     }
   )
@@ -425,7 +455,7 @@ StandardHalfNormalGOF <- R6::R6Class(
       ## No Parameters
     },
     support = function(x) all(x > 0),
-    sampler = function(n) abs(rnorm(n)),
+    sampler = function(n, par) abs(rnorm(n)),
     EXYhat = function(x) {
       mean(4 * x * pnorm(x) + 4 * dnorm(x) - 3 * x + sqrt(2 / pi))
     },
@@ -444,7 +474,7 @@ HalfNormalGOF <- R6::R6Class(
       self$parameter$theta <- theta
     },
     support = function(x) all(x > 0),
-    sampler = function(n) abs(rnorm(n, 0, sd = self$parameter$theta)),
+    sampler = function(n, par = self$parameter) abs(rnorm(n, 0, sd = par$theta)),
     EXYhat = function(x, theta) {
       mean(2 * theta * (dnorm(x / theta) + (x / theta) * (pnorm(x / theta) - 1)))
     },
@@ -464,7 +494,8 @@ LaplaceGOF <- R6::R6Class(
       self$parameter$sigma <- sigma
     },
     support = function(x) is.numeric(x),
-    sampler =  function(n, mu = self$parameter$mu, sigma = self$parameter$sigma) {
+    sampler =  function(n, par = self$parameter) {
+      mu <- par$mu; sigma <- par$sigma
       u <- runif(n, -0.5, 0.5)
       mu - sigma * sign(u) * log(1 - 2 * abs(u))
     },
@@ -489,9 +520,8 @@ LogNormalGOF <- R6::R6Class(
     support = function(x) {
       all(x > 0)
     },
-    sampler = function(n, meanlog = self$parameter$meanlog,
-                       sdlog = self$parameter$sdlog) {
-      rlnorm(n, mean, sd)
+    sampler = function(n, par = self$parameter) {
+      rlnorm(n, par$meanlog, par$sdlog)
     },
     EXYhat = function(x, meanlog = self$parameter$meanlog,
                       sdlog = self$parameter$sdlog) {
@@ -523,7 +553,7 @@ AsymmetricLaplaceGOF <- R6::R6Class(
       self$parameter$kappa <- kappa
     },
     support = function(x) is.numeric(x),
-    sampler = function(n, theta, sigma, kappa) {
+    sampler = function(n, par) {
       #stuff
       #TODO
     },
@@ -561,8 +591,8 @@ WeibullGOF <- R6::R6Class(
     support = function(x) {
       all(x > 0)
     },
-    sampler = function(n) rweibull(n, shape = self$parameter$shape,
-                                   scale = self$parameter$scale),
+    sampler = function(n, par = self$parameter) rweibull(n, shape = par$shape,
+                                                         scale = par$scale),
     EXYhat = function(x, shape = self$parameter$shape,
                       scale = self$parameter$scale) {
       z = (x / scale)^shape
@@ -591,8 +621,8 @@ GammaGOF <- R6::R6Class(
     support = function(x) {
       all(x > 0)
     },
-    sampler = function(n) rgamma(n, shape = self$parameter$shape,
-                                 rate = self$parameter$rate),
+    sampler = function(n, par = self$parameter)
+      rgamma(n, shape = par$shape, rate = par$rate),
     EXYhat = function(x, shape = self$parameter$shape,
                       rate = self$parameter$rate) {
       mean(x * (2 * pgamma(x, shape, rate) - 1) +
@@ -616,8 +646,8 @@ ChiSquaredGOF <- R6::R6Class(
     support = function(x) {
       all(x > 0)
     },
-    sampler = function(n) rchisq(n, df = self$parameter$df,
-                                 ncp = 0),
+    sampler = function(n, par = self$parameter) rchisq(n, df = par$df,
+                                                       ncp = 0),
     EXYhat = function(x, df = self$parameter$df) {
       mean((df - x) + 2 * x * pchisq(x, df, 0) - 2 * df * pchisq(x, df + 2, 0))
     },
