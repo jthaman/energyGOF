@@ -156,14 +156,12 @@ egof <- function(x, dist =  c("uniform",
   distname <- match.arg(tolower(dist), choices = valid_dists)
   validate_R(R)
   dots <- list(...)
-  dots <- validate_dots(dots, distname)
+  validate_dots(dots, distname)
   dist_obj <- distribution_factory(distname, ...)
   validate_x(x, dist_obj)
   test <- EGOFTest$new(x, dist = dist_obj, R = R)
   test$as_htest()
 }
-
-energygof <- egof
 
 validate_dots <- function(dots, distname) {
   dist <- distribution_factory(distname)
@@ -171,22 +169,27 @@ validate_dots <- function(dots, distname) {
   supplied_params <- names(dots)
   missing_params <- setdiff(required_params, supplied_params)
   extra_params <- setdiff(supplied_params, required_params)
-  no_required_params_p <- length(setdiff(required_params, missing_params)) == 0
+  no_required_params_in_dots_p <- setequal(missing_params, required_params)
 
   ## composite case
-  if (no_required_params_p) {
-    # do nothing if it seems to be the composite case.
+  if (no_required_params_in_dots_p) {
+    if (dist$composite_allowed) {
+      # OK
+    } else {
+      ## Stop if the distribution does not permit composite test.
+      stop(sprintf("Cannot conduct a composite test of distribution %s.",
+                   dist$name))
+    }
   } else if (length(missing_params) > 0){
     ## Error if partially composite test
-    stop(sprintf("Missing required parameters needed for *simple* test of '%s' distribution: %s", dist$name, paste(missing_params, collapse = ", ")))
+    stop(sprintf("Missing required parameter(s) needed for *simple* test of '%s' distribution: %s", dist$name, paste(missing_params, collapse = ", ")))
   }
   ## Warning if extra stuff in ...
   if (length(extra_params) > 0) {
-    warning(sprintf("Unexpected parameters passed to '%s': %s.",
+    warning(sprintf("Ignoring unexpected parameter(s) passed to %s distribution: %s.",
                     dist$name,
                     paste(extra_params, collapse = ", ")))
   }
-  dots[names(dots) %in% required_params]
 }
 
 validate_x <- function(x, dist) {
@@ -298,14 +301,16 @@ EGOFTest <- R6::R6Class(
 
     as_htest = function() {
       structure(list(
-        method = paste((if (self$composite_p) "Composite" else "Simple"),
-                       " Energy goodness-of-fit test for",
-                       self$dist$name, " distribution"),
+        method = paste0((if (self$composite_p) "Composite" else "Simple"),
+                        " Energy goodness-of-fit test for ",
+                        self$dist$name, " distribution"),
         data.name = deparse(substitute(self$x)),
         parameters = self$dist$parameters,
         null.value = paste0(self$dist$name,
-                            "Distribution with Parameters: ",
-                            self$dist$parameter),
+                            " distribution",
+                            (if (!self$composite_p)
+                              paste0(" with parameters ",
+                                     deparse(self$dist$parameter)))),
         R = self$R,
         composite_p = self$composite_p,
         statistic = self$E_stat,
@@ -348,7 +353,7 @@ NormalGOF <- R6::R6Class(
   inherit = DistributionGOF,
   public = list(
     initialize = function(mean = NULL, sd = NULL) {
-      super$initialize("normal", composite_allowed = TRUE)
+      super$initialize("Normal", composite_allowed = TRUE)
       self$parameter <- list(mean = mean, sd = sd)
       self$ref_parameter <- list(mean = 0, sd = 1)
       if (is.null(mean) || is.null(sd)) self$estimator(x)
@@ -382,7 +387,7 @@ UniformGOF <- R6::R6Class(
   "UniformGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(min = NULL, max = NULL) {
-      super$initialize("uniform",
+      super$initialize("Uniform",
                        composite_allowed = FALSE)
       self$parameter <- list(min = min, max = max)
       self$ref_parameter <- list(min = 0, max = 1)
@@ -405,7 +410,7 @@ ExponentialGOF <- R6::R6Class(
   "ExponentialGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(rate = NULL) {
-      super$initialize("exponential",
+      super$initialize("Exponential",
                        composite_allowed = TRUE)
       self$parameter <- list(rate = rate)
       self$ref_parameter <- list(rate = 1)
@@ -430,12 +435,13 @@ PoissonGOF <- R6::R6Class(
   "PoissonGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(lambda = NULL) {
-      super$initialize("poisson",
+      super$initialize("Poisson",
                        composite_allowed = FALSE)
       self$parameter <- list(lambda = lambda)
       self$ref_parameter <- list(lambda = 1)
+      if (is.null(lambda)) self$estimator(x)
     },
-    statistic = function(x) {
+    estimator = function(x) {
       self$statistic <- list(lambda = mean(x))
     },
     support = function (x) {
@@ -449,7 +455,7 @@ PoissonGOF <- R6::R6Class(
     EXYhat = function(x, par = self$parameter) {
       n <- length(x)
       mean(2 * n * ppois(x, par$lambda) -
-             2 * lambda * ppois(x - 1, par$lambda) + par$lambda - x)
+             2 * par$lambda * ppois(x - 1, par$lambda) + par$lambda - x)
     }
   )
 )
@@ -461,7 +467,7 @@ BernoulliGOF <- R6::R6Class(
   "BernoulliGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(prob = NULL) {
-      super$initialize("bernoulli", composite_allowed = FALSE)
+      super$initialize("Bernoulli", composite_allowed = FALSE)
       # Set parameter values
       self$parameter$prob <- prob
     },
@@ -496,7 +502,7 @@ BetaGOF <- R6::R6Class(
   "BetaGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(shape1 = NULL, shape2 = NULL) {
-      super$initialize("beta", composite_allowed = FALSE)
+      super$initialize("Beta", composite_allowed = FALSE)
       # Set parameter values
       self$parameter$shape1 <- shape1
       self$parameter$shape2 <- shape2
@@ -530,7 +536,7 @@ GeometricGOF <- R6::R6Class(
   "GeometricGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(prob = NULL) {
-      super$initialize("geometric", composite_allowed = FALSE)
+      super$initialize("Geometric", composite_allowed = FALSE)
       # Set parameter values
       self$parameter$prob <- prob
     },
@@ -554,7 +560,7 @@ StandardHalfNormalGOF <- R6::R6Class(
   "StandardHalfNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function() {
-      super$initialize("standardhalfnormal", composite_allowed = FALSE)
+      super$initialize("StandardHalfNormal", composite_allowed = FALSE)
       ## No Parameters
     },
     support = function(x) all(x > 0),
@@ -573,7 +579,7 @@ HalfNormalGOF <- R6::R6Class(
   "HalfNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(theta = NULL) {
-      super$initialize("halfnormal", composite_allowed = FALSE)
+      super$initialize("HalfNormal", composite_allowed = FALSE)
       self$parameter$theta <- theta
     },
     support = function(x) all(x > 0),
@@ -592,7 +598,7 @@ LaplaceGOF <- R6::R6Class(
   "LaplaceGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(mu = NULL, sigma = NULL) {
-      super$initialize("laplace", composite_allowed = TRUE)
+      super$initialize("Laplace", composite_allowed = TRUE)
       self$parameter$theta <- theta
       self$parameter$sigma <- sigma
     },
@@ -616,7 +622,7 @@ LogNormalGOF <- R6::R6Class(
   "LogNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(meanlog = NULL, sdlog = NULL) {
-      super$initialize("lognormal", composite_allowed = TRUE)
+      super$initialize("Log-normal", composite_allowed = TRUE)
       self$parameter$meanlog <- meanlog
       self$parameter$sdlog <- sdlog
     },
@@ -650,7 +656,7 @@ AsymmetricLaplaceGOF <- R6::R6Class(
   "AsymmetricLaplaceGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(mu = NULL, sigma = NULL) {
-      super$initialize("asymmetric laplace", composite_allowed = TRUE)
+      super$initialize("Asymmetric Laplace", composite_allowed = TRUE)
       self$parameter$theta <- theta
       self$parameter$sigma <- sigma
       self$parameter$kappa <- kappa
@@ -687,7 +693,7 @@ WeibullGOF <- R6::R6Class(
   "WeibullGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(shape = NULL, scale = NULL) {
-      super$initialize("weibull", composite_allowed = TRUE)
+      super$initialize("Weibull", composite_allowed = TRUE)
       self$parameter$shape <- shape
       self$parameter$scale <- scale
     },
@@ -717,7 +723,7 @@ GammaGOF <- R6::R6Class(
   "GammaGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(shape = NULL, rate = NULL) {
-      super$initialize("gamma", composite_allowed = TRUE)
+      super$initialize("Gamma", composite_allowed = TRUE)
       self$parameter$shape <- shape
       self$parameter$rate <- rate
     },
@@ -743,7 +749,7 @@ ChiSquaredGOF <- R6::R6Class(
   "ChiSquaredGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(df = NULL) {
-      super$initialize("chi-squared", composite_allowed = FALSE)
+      super$initialize("Chi-Squared", composite_allowed = FALSE)
       self$parameter$df <- df
     },
     support = function(x) {
