@@ -20,6 +20,9 @@
 #' @param dist A string. The distribution to test.
 #' @param R A positive integer. The number of parametric bootstrap replicates
 #'   taken to calculate the p-value.
+#' @param htest A logical. If TRUE, return an htest object, otherwise return R6
+#'   EGOFTest object. The EGOFTest object has some more information about the
+#'   test and a different print method.
 #' @param ... Parameters of the distribution \code{dist}. For distributions in
 #'   the R `stats' library, parameter argument names are identical. To test the
 #'   _composite_ goodness-of-fit hypothesis that \code{x} is distributed
@@ -185,7 +188,8 @@ validate_dots <- function(dots, distname) {
     }
   } else if (length(missing_params) > 0){
     ## Error if partially composite test
-    stop(sprintf("Missing required parameter(s) needed for *simple* test of '%s' distribution: %s", dist$name, paste(missing_params, collapse = ", ")))
+    stop(sprintf("Missing required parameter(s) needed for *simple* test of '%s' distribution: %s",
+                 dist$name, paste(missing_params, collapse = ", ")))
   }
   ## Warning if extra stuff in ...
   if (length(extra_params) > 0) {
@@ -265,7 +269,6 @@ EGOFTest <- R6::R6Class(
       self$p_value <- self$simulate_pval(x)
     },
 
-
     #### Compute Energy Statistic
     compute_E_stat = function(x = self$x,
                               d = self$dist,
@@ -282,51 +285,51 @@ EGOFTest <- R6::R6Class(
       names(out) <- paste0("E-statistic",
       (if (self$composite_p) " (standardized data)" else ""))
       out
-},
+    },
 
-#### Simulate Pvalue
-simulate_pval = function(x = self$x, R = self$R) {
-  if (self$R == 0) return(NA)
-  bootobj <- boot::boot(x, statistic = self$compute_E_stat,
-                        R = R, sim = "parametric",
-                        ran.gen = self$dist$sampler,
-                        mle =
-                          (if (self$composite_p)
-                            self$dist$ref_parameter
-                            else
-                              self$dist$parameter),
-                        EYY = self$EYY)
-  mean(bootobj$t > bootobj$t0)
-},
+    #### Simulate Pvalue
+    simulate_pval = function(x = self$x, R = self$R) {
+      if (self$R == 0) return(NA)
+      bootobj <- boot::boot(x, statistic = self$compute_E_stat,
+                            R = R, sim = "parametric",
+                            ran.gen = self$dist$sampler,
+                            mle =
+                              (if (self$composite_p)
+                                self$dist$ref_parameter
+                                else
+                                  self$dist$parameter),
+                            EYY = self$EYY)
+      mean(bootobj$t > bootobj$t0)
+    },
 
-#### EXXhat
-EXXhat = function(x = self$x) {
-  n <- length(x)
-  xs <- sort(x)
-  prefix <- 2 * seq_len(n) - 1 - n
-  2 * mean(prefix * xs) / n
-},
+    #### EXXhat
+    EXXhat = function(x = self$x) {
+      n <- length(x)
+      xs <- sort(x)
+      prefix <- 2 * seq_len(n) - 1 - n
+      2 * mean(prefix * xs) / n
+    },
 
-#### As Htest
-as_htest = function() {
-  structure(list(
-    method = paste0((if (self$composite_p) "Composite" else "Simple"),
-                    " Energy goodness-of-fit test for ",
-                    self$dist$name, " distribution"),
-    data.name = deparse(substitute(self$x)),
-    parameters = self$dist$parameters,
-    null.value = paste0(self$dist$name,
-                        " distribution",
-                        (if (!self$composite_p)
-                          paste0(" with parameters ",
-                                 deparse(self$dist$parameter)))),
-    R = self$R,
-    composite_p = self$composite_p,
-    statistic = self$E_stat,
-    p.value = self$p_value,
-    estimate = if (self$composite_p) self$dist$statistic else NULL
-  ), class = "htest")
-}
+    #### As htest objecti
+    as_htest = function() {
+      structure(list(
+        method = paste0((if (self$composite_p) "Composite" else "Simple"),
+                        " Energy goodness-of-fit test for ",
+                        self$dist$name, " distribution"),
+        data.name = deparse(substitute(self$x)),
+        parameters = self$dist$parameters,
+        null.value = paste0(self$dist$name,
+                            " distribution",
+                            (if (!self$composite_p)
+                              paste0(" with parameters ",
+                                     deparse(self$dist$parameter)))),
+        R = self$R,
+        composite_p = self$composite_p,
+        statistic = self$E_stat,
+        p.value = self$p_value,
+        estimate = if (self$composite_p) self$dist$statistic else NULL
+      ), class = "htest")
+    }
   )
 )
 
