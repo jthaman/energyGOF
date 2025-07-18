@@ -266,15 +266,16 @@ EGOFTestGen <- R6::R6Class(
         self$dist$ref_parameter
         else
           self$dist$parameter))
-      self$E_stat <-self$compute_E_stat(x)
-      self$p_value <- self$simulate_pval(x)
+      self$E_stat <-self$compute_E_stat(self$x, self$dist, self$EYY)
+      self$p_value <- self$simulate_pval(self$x, self$R)
     },
 
     #### Compute Energy Statistic
     compute_E_stat = function(x = self$x,
                               d = self$dist,
                               EYY = self$EYY) {
-      if (self$composite_p) x <- self$dist$xform(x)
+      if (self$composite_p)
+        x <- self$dist$xform(x)
       EXYpar <- (if (self$composite_p)
         self$dist$ref_parameter
         else
@@ -290,18 +291,17 @@ EGOFTestGen <- R6::R6Class(
 
     #### Simulate Pvalue
     simulate_pval = function(x = self$x, R = self$R) {
-      if (self$R == 0)
+      if (R == 0)
         return(NA)
-      n <- length(x) # for ran.gen
+      ran.gen.args <-
+        (if (self$composite_p)
+          self$dist$ref_parameter
+          else
+            self$dist$parameter)
       bootobj <- boot::boot(x, statistic = self$compute_E_stat,
                             R = R, sim = "parametric",
                             ran.gen = self$dist$sampler,
-                            mle =
-                              (if (self$composite_p)
-                                self$dist$ref_parameter
-                                else
-                                  self$dist$parameter),
-                            EYY = self$EYY)
+                            mle = ran.gen.args)
       self$sim_reps <- bootobj$t
       mean(bootobj$t > bootobj$t0)
     },
@@ -320,7 +320,7 @@ EGOFTestGen <- R6::R6Class(
         method = paste0((if (self$composite_p) "Composite" else "Simple"),
                         " Energy goodness-of-fit test for ",
                         self$dist$name, " distribution"),
-        data.name = deparse(substitute(self$x)),
+        data.name = deparse(substitute(x)),
         parameters = self$dist$parameters,
         null.value = paste0(self$dist$name,
                             " distribution",
@@ -373,7 +373,7 @@ NormalGOFGen <- R6::R6Class(
   inherit = DistributionGOFGen,
   public = list(
     initialize = function(mean = NULL, sd = NULL) {
-      super$initialize("Normal", composite_allowed = TRUE)
+      super$initialize("normal", composite_allowed = TRUE)
       self$parameter <- list(mean = mean, sd = sd)
       self$ref_parameter <- list(mean = 0, sd = 1)
       if (is.null(mean) || is.null(sd)) self$estimator(x)
@@ -395,8 +395,8 @@ NormalGOFGen <- R6::R6Class(
       mean(2 * (x - par$mean) * pnorm(x, par$mean, par$sd) +
              2 * par$sd^2 * dnorm(x, par$mean, par$sd) - (x - par$mean))
     },
-    xform = function(x, stat = self$statistic) {
-      (x - stat$mean) / stat$sd
+    xform = function(x) {
+      (x - mean(x)) / sd(x)
     }
   )
 )
@@ -407,7 +407,7 @@ UniformGOFGen <- R6::R6Class(
   "UniformGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(min = NULL, max = NULL) {
-      super$initialize("Uniform",
+      super$initialize("uniform",
                        composite_allowed = FALSE)
       self$parameter <- list(min = min, max = max)
       self$ref_parameter <- list(min = 0, max = 1)
@@ -430,7 +430,7 @@ ExponentialGOFGen <- R6::R6Class(
   "ExponentialGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(rate = NULL) {
-      super$initialize("Exponential",
+      super$initialize("exponential",
                        composite_allowed = TRUE)
       self$parameter <- list(rate = rate)
       self$ref_parameter <- list(rate = 1)
@@ -455,7 +455,7 @@ PoissonGOFGen <- R6::R6Class(
   "PoissonGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(lambda = NULL) {
-      super$initialize("Poisson",
+      super$initialize("poisson",
                        composite_allowed = FALSE)
       self$parameter <- list(lambda = lambda)
       self$ref_parameter <- list(lambda = 1)
@@ -488,7 +488,7 @@ BernoulliGOFGen <- R6::R6Class(
   "BernoulliGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(prob = NULL) {
-      super$initialize("Bernoulli",
+      super$initialize("bernoulli",
                        composite_allowed = FALSE)
       self$parameter$prob <- prob
     },
@@ -526,7 +526,7 @@ BetaGOFGen <- R6::R6Class(
   public = list(
     initialize = function(shape1 = NULL,
                           shape2 = NULL) {
-      super$initialize("Beta",
+      super$initialize("beta",
                        composite_allowed = FALSE)
       self$parameter <- list(shape1 = shape1, shape2 = shape2)
     },
@@ -556,7 +556,7 @@ GeometricGOFGen <- R6::R6Class(
   "GeometricGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(prob = NULL) {
-      super$initialize("Geometric",
+      super$initialize("geometric",
                        composite_allowed = FALSE)
       # Set parameter values
       self$parameter$prob <- prob
@@ -581,7 +581,7 @@ StandardHalfNormalGOFGen <- R6::R6Class(
   "StandardHalfNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function() {
-      super$initialize("StandardHalfNormal",
+      super$initialize("standardhalfnormal",
                        composite_allowed = FALSE)
       ## No Parameters
     },
@@ -601,7 +601,7 @@ HalfNormalGOFGen <- R6::R6Class(
   "HalfNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(theta = NULL) {
-      super$initialize("HalfNormal", composite_allowed = FALSE)
+      super$initialize("halfnormal", composite_allowed = FALSE)
       self$parameter$theta <- theta
     },
     support = function(x) all(x > 0),
@@ -621,7 +621,7 @@ LaplaceGOFGen <- R6::R6Class(
   "LaplaceGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(mu = NULL, sigma = NULL) {
-      super$initialize("Laplace", composite_allowed = TRUE)
+      super$initialize("laplace", composite_allowed = TRUE)
       self$parameter$theta <- theta
       self$parameter$sigma <- sigma
     },
@@ -644,7 +644,7 @@ LogNormalGOFGen <- R6::R6Class(
   "LogNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(meanlog = NULL, sdlog = NULL) {
-      super$initialize("Log-normal",
+      super$initialize("lognormal",
                        composite_allowed = TRUE) # TODO
       self$parameter$meanlog <- meanlog
       self$parameter$sdlog <- sdlog
@@ -679,7 +679,7 @@ AsymmetricLaplaceGOFGen <- R6::R6Class(
   "AsymmetricLaplaceGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(mu = NULL, sigma = NULL) {
-      super$initialize("Asymmetric Laplace",
+      super$initialize("asymmetriclaplace",
                        composite_allowed = TRUE)
       self$parameter <- list(theta = theta, sigma = sigma, kappa = kappa)
     },
@@ -715,7 +715,7 @@ WeibullGOFGen <- R6::R6Class(
   "WeibullGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(shape = NULL, scale = NULL) {
-      super$initialize("Weibull",
+      super$initialize("weibull",
                        composite_allowed = TRUE)
       self$parameter <- list(shape = shape, scale = scale)
     },
@@ -744,7 +744,7 @@ GammaGOFGen <- R6::R6Class(
   "GammaGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(shape = NULL, rate = NULL) {
-      super$initialize("Gamma",
+      super$initialize("gamma",
                        composite_allowed = TRUE)
       self$parameter <- list(shape = shape, rate = rate)
     },
@@ -768,7 +768,7 @@ ChiSquaredGOFGen <- R6::R6Class(
   "ChiSquaredGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(df = NULL) {
-      super$initialize("Chi-Squared",
+      super$initialize("chisquared",
                        composite_allowed = FALSE)
       self$parameter$df <- df
     },
@@ -800,7 +800,7 @@ StandardCauchyGOFGen <- R6::R6Class(
   inherit = DistributionGOF,
   public = list(
     initialize = function(exponent = 0.5) {
-      super$initialize("Standard Cauchy", composite_allowed = TRUE)
+      super$initialize("standardcauchy", composite_allowed = TRUE)
       self$expontent <- exponent
     },
     support = function(x) {
