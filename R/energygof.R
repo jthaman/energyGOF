@@ -133,6 +133,7 @@
 
 ### Code
 
+#### EGOF
 egof <- function(x, dist =  c("uniform",
                               "exponential",
                               "bernoulli", "binomial",
@@ -151,6 +152,7 @@ egof <- function(x, dist =  c("uniform",
                               "cauchy",
                               "pareto"),
                  R = 100,
+                 htest = TRUE,
                  ...) {
   valid_dists <- eval(formals(egof)$dist)
   distname <- match.arg(tolower(dist), choices = valid_dists)
@@ -160,9 +162,10 @@ egof <- function(x, dist =  c("uniform",
   dist_obj <- distribution_factory(distname, ...)
   validate_x(x, dist_obj)
   test <- EGOFTest$new(x, dist = dist_obj, R = R)
-  test$as_htest()
+  if (htest) test$as_htest() else test
 }
 
+#### Validation
 validate_dots <- function(dots, distname) {
   dist <- distribution_factory(distname)
   required_params <- names(dist$parameter)
@@ -208,6 +211,7 @@ validate_R <- function(R) {
     stop("R must be non-negative.")
 }
 
+### Distribution Factory
 distribution_factory <- function(name, ...) {
   switch(name,
          "normal" = NormalGOF$new(...),
@@ -235,7 +239,7 @@ distribution_factory <- function(name, ...) {
          stop("Unsupported distribution"))
 }
 
-
+#### EGOFTest Class
 EGOFTest <- R6::R6Class(
   "EGOFTest",
   public = list(
@@ -261,6 +265,8 @@ EGOFTest <- R6::R6Class(
       self$p_value <- self$simulate_pval(x)
     },
 
+
+    #### Compute Energy Statistic
     compute_E_stat = function(x = self$x,
                               d = self$dist,
                               EYY = self$EYY) {
@@ -278,53 +284,58 @@ EGOFTest <- R6::R6Class(
       out
 },
 
-    simulate_pval = function(x = self$x, R = self$R) {
-      if (self$R == 0) return(NA)
-      bootobj <- boot::boot(x, statistic = self$compute_E_stat,
-                            R = R, sim = "parametric",
-                            ran.gen = self$dist$sampler,
-                            mle =
-                              (if (self$composite_p)
-                                self$dist$ref_parameter
-                                else
-                                  self$dist$parameter),
-                            EYY = self$EYY)
-      mean(bootobj$t > bootobj$t0)
-    },
+#### Simulate Pvalue
+simulate_pval = function(x = self$x, R = self$R) {
+  if (self$R == 0) return(NA)
+  bootobj <- boot::boot(x, statistic = self$compute_E_stat,
+                        R = R, sim = "parametric",
+                        ran.gen = self$dist$sampler,
+                        mle =
+                          (if (self$composite_p)
+                            self$dist$ref_parameter
+                            else
+                              self$dist$parameter),
+                        EYY = self$EYY)
+  mean(bootobj$t > bootobj$t0)
+},
 
-    EXXhat = function(x = self$x) {
-      n <- length(x)
-      xs <- sort(x)
-      prefix <- 2 * seq_len(n) - 1 - n
-      2 * mean(prefix * xs) / n
-    },
+#### EXXhat
+EXXhat = function(x = self$x) {
+  n <- length(x)
+  xs <- sort(x)
+  prefix <- 2 * seq_len(n) - 1 - n
+  2 * mean(prefix * xs) / n
+},
 
-    as_htest = function() {
-      structure(list(
-        method = paste0((if (self$composite_p) "Composite" else "Simple"),
-                        " Energy goodness-of-fit test for ",
-                        self$dist$name, " distribution"),
-        data.name = deparse(substitute(self$x)),
-        parameters = self$dist$parameters,
-        null.value = paste0(self$dist$name,
-                            " distribution",
-                            (if (!self$composite_p)
-                              paste0(" with parameters ",
-                                     deparse(self$dist$parameter)))),
-        R = self$R,
-        composite_p = self$composite_p,
-        statistic = self$E_stat,
-        p.value = self$p_value,
-        estimate = if (self$composite_p) self$dist$statistics else NULL
-      ), class = "htest")
-    }
+#### As Htest
+as_htest = function() {
+  structure(list(
+    method = paste0((if (self$composite_p) "Composite" else "Simple"),
+                    " Energy goodness-of-fit test for ",
+                    self$dist$name, " distribution"),
+    data.name = deparse(substitute(self$x)),
+    parameters = self$dist$parameters,
+    null.value = paste0(self$dist$name,
+                        " distribution",
+                        (if (!self$composite_p)
+                          paste0(" with parameters ",
+                                 deparse(self$dist$parameter)))),
+    R = self$R,
+    composite_p = self$composite_p,
+    statistic = self$E_stat,
+    p.value = self$p_value,
+    estimate = if (self$composite_p) self$dist$statistic else NULL
+  ), class = "htest")
+}
   )
 )
 
+#### DistributionGOF Class
 DistributionGOF <- R6::R6Class(
   "DistributionGOF",
   public = list(
     name = NULL,
+    exponent = NULL,
     composite_allowed = FALSE,
     parameter = NULL,
     ref_parameter = NULL,
@@ -345,8 +356,10 @@ DistributionGOF <- R6::R6Class(
 )
 
 
+
 #### Distributions
 
+#### TODO: the logic for composite testing Seems to be broken.
 ##### Normal
 NormalGOF <- R6::R6Class(
   "NormalGOF",
@@ -456,7 +469,8 @@ PoissonGOF <- R6::R6Class(
       n <- length(x)
       mean(2 * n * ppois(x, par$lambda) -
              2 * par$lambda * ppois(x - 1, par$lambda) + par$lambda - x)
-    }
+    },
+    xform = function(x) x
   )
 )
 
@@ -467,16 +481,18 @@ BernoulliGOF <- R6::R6Class(
   "BernoulliGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(prob = NULL) {
-      super$initialize("Bernoulli", composite_allowed = FALSE)
-      # Set parameter values
+      super$initialize("Bernoulli",
+                       composite_allowed = FALSE)
       self$parameter$prob <- prob
     },
     support = function(x) all(x %in% c(0L, 1L)),
-    sampler = function(n, par = self$parameter) rbinom(n, size = 1, prob = par$prob),
-    EYY = function(prob = self$prob) 2 * prob * (1 - prob),
-    EXYhat = function(x, prob = self$prob) {
+    sampler = function(n, par = self$parameter) {
+      rbinom(n, size = 1, prob = par$prob)},
+    EYY = function(prob = self$prob) {
+      2 * par$prob * (1 - par$prob)},
+    EXYhat = function(x, par = self$parameter) {
       h <- sum(x)
-      (h * (1 - prob) + (n - h) * prob) / n
+      (h * (1 - par$prob) + (n - h) * par$prob) / n
     }
   )
 )
@@ -501,30 +517,27 @@ BernoulliGOF <- R6::R6Class(
 BetaGOF <- R6::R6Class(
   "BetaGOF", inherit = DistributionGOF,
   public = list(
-    initialize = function(shape1 = NULL, shape2 = NULL) {
-      super$initialize("Beta", composite_allowed = FALSE)
-      # Set parameter values
-      self$parameter$shape1 <- shape1
-      self$parameter$shape2 <- shape2
+    initialize = function(shape1 = NULL,
+                          shape2 = NULL) {
+      super$initialize("Beta",
+                       composite_allowed = FALSE)
+      self$parameter <- list(shape1 = shape1, shape2 = shape2)
     },
-    sampler = function(n, par = self$parameter) rbeta(n, shape1 = par$shape1,
-                                                      shape2 = par$shape2),
+    sampler = function(n, par = self$parameter) {
+      rbeta(n, shape1 = par$shape1, shape2 = par$shape2)},
     support = function(x) all(x < 1) && all(x > 0),
-    ExY = function(x, shape1 = self$parameter$shape1,
-                   shape2 = self$parameter$shape2) {
-      2 * x * pbeta(x, shape1, shape2) - x + (shape1 / (shape1 + shape2)) -
-        2 * (beta(shape1 + 1, shape2) / beta(shape1, shape2)) *
-          pbeta(x, shape1 + 1, shape2)
+    EYY = function(par = self$parameter)  {
+      integrand <- function(x, shape1, shape2) {
+        2 * x * pbeta(x, shape1, shape2) - x + (shape1 / (shape1 + shape2)) -
+          2 * (beta(shape1 + 1, shape2) / beta(shape1, shape2)) *
+            pbeta(x, shape1 + 1, shape2)
+      }
+      integrate(ExY.beta, 0, 1, shape1 = par$shape1, shape2 = par$shape2)$value
     },
-    EYY = function(shape1 = self$parameter$shape1,
-                   shape2 = self$parameter$shape2)  {
-      integrate(ExY.beta, 0, 1, shape1 = shape1, shape2 = shape2)$value
-    },
-    EXYhat = function(x, shape1 = self$parameter$shape1,
-                      shape2 = self$parameter$shape2) {
-      mean(2 * x * pbeta(x, shape1, shape2) - x + (shape1 / (shape1 + shape2)) -
-             2 * (beta(shape1 + 1, shape2) / beta(shape1, shape2)) *
-               pbeta(x, shape1 + 1, shape2))
+    EXYhat = function(x, par = self$parameter) {
+      mean(2 * x * pbeta(x, par$shape1, par$shape2) - x + (par$shape1 / (par$shape1 + par$shape2)) -
+             2 * (beta(par$shape1 + 1, par$shape2) / beta(par$shape1, par$shape2)) *
+               pbeta(x, par$shape1 + 1, par$shape2))
     }
   )
 )
@@ -536,18 +549,19 @@ GeometricGOF <- R6::R6Class(
   "GeometricGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(prob = NULL) {
-      super$initialize("Geometric", composite_allowed = FALSE)
+      super$initialize("Geometric",
+                       composite_allowed = FALSE)
       # Set parameter values
       self$parameter$prob <- prob
     },
     support = function(x) all(x == floor(x)) && all(x > 0),
-    sampler = function(n, par) rgeom(n, par$prob),
+    sampler = function(n, par = self$parameter) rgeom(n, par$prob),
     EYY = function(p = self$parameter$prob) {
       q <- 1 - p
       (2 * q) / (1 - q^2)
     },
-    EXYhat = function(x, p = self$parameter$prob) {
-      mean(x + 1 + (1 - 2 * pgeom(x)) / p)
+    EXYhat = function(x, par = self$parameter) {
+      mean(x + 1 + (1 - 2 * pgeom(x)) / par$prob)
     }
   )
 )
@@ -560,15 +574,16 @@ StandardHalfNormalGOF <- R6::R6Class(
   "StandardHalfNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function() {
-      super$initialize("StandardHalfNormal", composite_allowed = FALSE)
+      super$initialize("StandardHalfNormal",
+                       composite_allowed = FALSE)
       ## No Parameters
     },
     support = function(x) all(x > 0),
     sampler = function(n, par) abs(rnorm(n)),
-    EXYhat = function(x) {
+    EXYhat = function(x, par) {
       mean(4 * x * pnorm(x) + 4 * dnorm(x) - 3 * x + sqrt(2 / pi))
     },
-    EYY = function(x) {
+    EYY = function(par) {
       2 * (2 - sqrt(2)) / sqrt(pi)
     }
   )
@@ -583,12 +598,13 @@ HalfNormalGOF <- R6::R6Class(
       self$parameter$theta <- theta
     },
     support = function(x) all(x > 0),
-    sampler = function(n, par = self$parameter) abs(rnorm(n, 0, sd = par$theta)),
-    EXYhat = function(x, theta) {
-      mean(2 * theta * (dnorm(x / theta) + (x / theta) * (pnorm(x / theta) - 1)))
+    sampler = function(n, par = self$parameter) {
+      abs(rnorm(n, 0, sd = par$theta))},
+    EXYhat = function(x, par = self$parameter) {
+      mean(2 * par$theta * (dnorm(x / par$theta) + (x / par$theta) * (pnorm(x / par$theta) - 1)))
     },
-    EYY = function(theta) {
-      theta * sqrt(2) * (1 - 2 / pi)
+    EYY = function(par = self$parameter) {
+      par$theta * sqrt(2) * (1 - 2 / pi)
     }
   )
 )
@@ -604,15 +620,14 @@ LaplaceGOF <- R6::R6Class(
     },
     support = function(x) is.numeric(x),
     sampler =  function(n, par = self$parameter) {
-      mu <- par$mu; sigma <- par$sigma
       u <- runif(n, -0.5, 0.5)
-      mu - sigma * sign(u) * log(1 - 2 * abs(u))
+      par$mu - par$sigma * sign(u) * log(1 - 2 * abs(u))
     },
-    EXYhat = function(x, mu, sigma) {
-      mean(sigma * exp(-abs(x - mu) / sigma) + abs(x - mu))
+    EXYhat = function(x, par = self$parameter) {
+      mean(par$sigma * exp(-abs(x - par$mu) / par$sigma) + abs(x - par$mu))
     },
-    EYY = function(sigma) {
-      2 * sigma
+    EYY = function(par = self$parameter) {
+      2 * par$sigma
     }
   )
 )
@@ -622,7 +637,8 @@ LogNormalGOF <- R6::R6Class(
   "LogNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(meanlog = NULL, sdlog = NULL) {
-      super$initialize("Log-normal", composite_allowed = TRUE)
+      super$initialize("Log-normal",
+                       composite_allowed = TRUE) # TODO
       self$parameter$meanlog <- meanlog
       self$parameter$sdlog <- sdlog
     },
@@ -632,19 +648,19 @@ LogNormalGOF <- R6::R6Class(
     sampler = function(n, par = self$parameter) {
       rlnorm(n, par$meanlog, par$sdlog)
     },
-    EXYhat = function(x, meanlog = self$parameter$meanlog,
-                      sdlog = self$parameter$sdlog) {
-      A <- exp(meanlog + sdlog^2 / 2)
-      z <- (log(x) - meanlog) / sdlog
-      z_prime <- (log(x) - meanlog - sdlog^2) / sdlog
+    EXYhat = function(x, par = self$parameter) {
+      m <- par$meanlog
+      s <- par$sdlog
+      A <- exp(m + s^2 / 2)
+      z <- (log(x) - m) / s
+      z_prime <- (log(x) - m - s^2) / s
       mean(x * (2 * pnorm(z) - 1) + A * (2 * pnorm(z_prime) - 1))
     },
-    EYY = function(meanlog = self$parameter$meanlog,
-                   sdlog = self$parameter$sdlog) {
+    EYY = function(par = self$parameter) {
       integrand <- function(w) {
-        abs(exp(w) - 1) * dnorm(w, mean = 0, sd = sqrt(2) * sigma)
+        abs(exp(w) - 1) * dnorm(w, mean = 0, sd = sqrt(2) * par$sdlog)
       }
-      scaling <- exp(meanlog + sdlog^2 / 2)
+      scaling <- exp(par$meanlog + par$sdlog^2 / 2)
       scaling * integrate(integrand, lower = -Inf, upper = Inf)$value
     }
   )
@@ -656,31 +672,30 @@ AsymmetricLaplaceGOF <- R6::R6Class(
   "AsymmetricLaplaceGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(mu = NULL, sigma = NULL) {
-      super$initialize("Asymmetric Laplace", composite_allowed = TRUE)
-      self$parameter$theta <- theta
-      self$parameter$sigma <- sigma
-      self$parameter$kappa <- kappa
+      super$initialize("Asymmetric Laplace",
+                       composite_allowed = TRUE)
+      self$parameter <- list(theta = theta, sigma = sigma, kappa = kappa)
     },
     support = function(x) is.numeric(x),
-    sampler = function(n, par) {
+    sampler = function(n, par = self$parameter) {
       #stuff
       #TODO
     },
-    EXYhat = function(x, theta, sigma, kappa) {
-      mu <- (1 / kappa - kappa) / sqrt(2)
-      lambda <- sqrt(2) * kappa / sigma
-      beta <- sqrt(2) / (kappa * sigma)
-      pk <- 1 / ( 1 + kappa^2)
+    EXYhat = function(x, par = self$parameter) {
+      mu <- (1 / par$kappa - par$kappa) / sqrt(2)
+      lambda <- sqrt(2) * par$kappa / par$sigma
+      beta <- sqrt(2) / (par$kappa * par$sigma)
+      pk <- 1 / ( 1 + par$kappa^2)
       qk <- 1 - pk
-      mean(ifelse(x >= theta,
-                  x - theta - mu + (2 * pk / lambda) * exp(-lambda * abs(x - theta)),
-                  -x + theta + mu + (2 * qk / beta) * exp(-beta * abs(x - theta))))
+      mean(ifelse(x >= par$theta,
+                  x - par$theta - mu + (2 * pk / lambda) * exp(-lambda * abs(x - par$theta)),
+                  -x + par$theta + mu + (2 * qk / beta) * exp(-beta * abs(x - par$theta))))
     },
-    EYY = function (theta, sigma, kappa){
-      mu <- (1 / kappa - kappa) / sqrt(2)
-      lambda <- sqrt(2) * kappa / sigma
-      beta <- sqrt(2) / (kappa * sigma)
-      pk <- 1 / (1 + kappa^2)
+    EYY = function(par = self$parameter){
+      mu <- (1 / par$kappa - par$kappa) / sqrt(2)
+      lambda <- sqrt(2) * par$kappa / par$sigma
+      beta <- sqrt(2) / (par$kappa * par$sigma)
+      pk <- 1 / (1 + par$kappa^2)
       qk <- 1 - pk
       pk / beta + qk / lambda + pk^2 / lambda + qk^2 / beta
     }
@@ -693,25 +708,24 @@ WeibullGOF <- R6::R6Class(
   "WeibullGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(shape = NULL, scale = NULL) {
-      super$initialize("Weibull", composite_allowed = TRUE)
-      self$parameter$shape <- shape
-      self$parameter$scale <- scale
+      super$initialize("Weibull",
+                       composite_allowed = TRUE)
+      self$parameter <- list(shape = shape, scale = scale)
     },
     support = function(x) {
       all(x > 0)
     },
-    sampler = function(n, par = self$parameter) rweibull(n, shape = par$shape,
-                                                         scale = par$scale),
-    EXYhat = function(x, shape = self$parameter$shape,
-                      scale = self$parameter$scale) {
-      z = (x / scale)^shape
-      mean(2 * x * pweibull(x, shape, scale) - x +
-             scale * gamma(1 + 1 / shape) * (1 - 2 * pgamma(z, 1 + 1 / shape, 1)))
+    sampler = function(n, par = self$parameter) {
+      rweibull(n, shape = par$shape, scale = par$scale)},
+    EXYhat = function(x, par = parameter$scale) {
+      z = (x / par$scale)^par$shape
+      mean(2 * x * pweibull(x, par$shape, par$scale) - x +
+             par$scale * gamma(1 + 1 / par$shape) * (1 - 2 * pgamma(z, 1 + 1 / par$shape, 1)))
     },
-    EYY = function(shape, scale) {
-      # shape = k
+    EYY = function(par = self$parameter) {
+      # par$shape = k
       # scale = lambda
-      (2 * scale / shape) * gamma(1 / shape) * (1 - 2^(-1 / shape))
+      (2 * par$scale / par$shape) * gamma(1 / par$shape) * (1 - 2^(-1 / par$shape))
     }
   )
 )
@@ -723,23 +737,21 @@ GammaGOF <- R6::R6Class(
   "GammaGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(shape = NULL, rate = NULL) {
-      super$initialize("Gamma", composite_allowed = TRUE)
-      self$parameter$shape <- shape
-      self$parameter$rate <- rate
+      super$initialize("Gamma",
+                       composite_allowed = TRUE)
+      self$parameter <- list(shape = shape, rate = rate)
     },
     support = function(x) {
       all(x > 0)
     },
-    sampler = function(n, par = self$parameter)
-      rgamma(n, shape = par$shape, rate = par$rate),
-    EXYhat = function(x, shape = self$parameter$shape,
-                      rate = self$parameter$rate) {
-      mean(x * (2 * pgamma(x, shape, rate) - 1) +
-             gamma(shape + 1) / (b * gamma(shape)))
+    sampler = function(n, par = self$parameter) {
+      rgamma(n, shape = par$shape, rate = par$rate)},
+    EXYhat = function(x, par = self$parameter) {
+      mean(x * (2 * pgamma(x, par$shape, par$rate) - 1) +
+             gamma(par$shape + 1) / (par$rate * gamma(par$shape)))
     },
-    EYY = function(shape = self$parameter$shape,
-                   rate = self$parameter$rate) {
-      2 * gamma(shape + 1 / 2) / (b * gamma(shape) * sqrt(pi))
+    EYY = function(par = self$parameter) {
+      2 * gamma(par$shape + 1 / 2) / (par$rate * gamma(par$shape) * sqrt(pi))
     }
   )
 )
@@ -749,29 +761,26 @@ ChiSquaredGOF <- R6::R6Class(
   "ChiSquaredGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(df = NULL) {
-      super$initialize("Chi-Squared", composite_allowed = FALSE)
+      super$initialize("Chi-Squared",
+                       composite_allowed = FALSE)
       self$parameter$df <- df
     },
     support = function(x) {
       all(x > 0)
     },
-    sampler = function(n, par = self$parameter) rchisq(n, df = par$df,
-                                                       ncp = 0),
-    EXYhat = function(x, df = self$parameter$df) {
-      mean((df - x) + 2 * x * pchisq(x, df, 0) - 2 * df * pchisq(x, df + 2, 0))
+    sampler = function(n, par = self$parameter) {
+      rchisq(n, df = par$df, ncp = 0)},
+    EXYhat = function(x, par = self$parameter) {
+      mean((par$df - x) + 2 * x * pchisq(x, par$df, 0) - 2 * par$df * pchisq(x, par$df + 2, 0))
     },
-    EYY.chisq = function(df = self$parameter$df) {
-      4 * gamma((df + 1) / 2) / (sqrt(pi) * gamma(df / 2))
+    EYY.chisq = function(par = self$parameter) {
+      4 * gamma((par$df + 1) / 2) / (sqrt(pi) * gamma(par$df / 2))
     }
   )
 )
 
 
 ##### Inverse Gaussian
-EXYhat.inversegaussian <- function(x, ...) {
-  r <- abs(sqrt(lambda / x) * (x - mu) / mu)
-  EXYhat.standardhalfnormal(r)
-}
 
 
 ##### Inverse Gamma?
@@ -802,215 +811,30 @@ StandardCauchyGOF <- R6::R6Class(
   )
 )
 
-##### Cauchy
-
-##### Pareto
-###### Case 1: alpha > 1, s = 1
-EXYhat.pareto.alpha.greaterthan1 <- function(x, alpha, sigma, ...) {
-  mean(y + (2 * sigma^alpha * x^(1 - alpha) - alpha * sigma) / (alpha - 1))
-}
-
-EYY.pareto.alphage.greaterthan1 <- function(alpha, sigma, ...) {
-  stopifnot(alpha > 1)
-  EY <- alpha * sigma / (alpha - 1)
-  EY / (alpha - 0.5)
-}
-
-###### Case 2: alpha > 1, s = alpha - 1
-
-###### Case 3: 0 < s < alpha < 1
-EXYhat.pareto.alphalessthan1<- function(x, alpha, sigma, ...) {
-
-}
-
-
-EYY.pareto.alphalessthan1 <- function(alpha, sigma, ...) {
-
-}
-
-###### Case 4: alpha = 1 and 0 < s < 1
-
-
-## egof <- function(x,
-##                  dist =  c("uniform",
-##                            "exponential",
-##                            "bernoulli", "binomial",
-##                            "geometric",
-##                            "normal", "gaussian",
-##                            "beta",
-##                            "poisson",
-##                            "lognormal", "lnorm",
-##                            "laplace", "doubleexponential",
-##                            "asymmetriclaplace",
-##                            "inversegaussian",
-##                            "standardhalfnormal", "halfnormal",
-##                            "chisq",
-##                            "gamma",
-##                            "weibull",
-##                            "cauchy",
-##                            "pareto"),
-##                  ...,
-##                  R = 0,
-##                  s = NULL) {
-##   stopifnot(is.numeric(x))
-##   stopifnot(is.character(dist), length(dist) == 1)
-##   stopifnot(R >= 0, length(R) == 1)
-##   distname <- match.arg(dist)
-##   distname <- switch(distname,
-##                      "doubleexponential" = "laplace",
-##                      "gaussian" = "normal",
-##                      "lnorm" = "lognormal",
-##                      distname)
-##   n <- length(x)
-##   dots <- list(...)
-##   known.param <- length(dots) != 0
-##   if (known.param) {
-##     stopifnot(dist.data[[distname]]$param %in% names(dots))
-##     EYY <- do.call(paste0("EYY.", distname), dots)
-##     E.stat <- E.stat(x, distname, n, EYY, ...)
-##     p.value <- simulation.pval(x, distname, n, EYY, E.stat, R, known.param, ...)
-##   } else if (!known.param){
-##     stopifnot(dist.data[[distname]]$composite)
-##     estimates <- lapply(dist.data[[distname]]$estimator,
-##                         function(estimator) estimator(x))
-##     x <- dist.data[[distname]]$parameterless.dist(x)
-##     x.est <- lapply(dist.data[[distname]]$estimator,
-##                     function(estimator) estimator(x))
-##     EYY <- do.call(paste0("EYY.", distname), x.est)
-##     E.stat <- E.stat(x, distname, n, EYY, unlist(x.est))
-##     p.value <- simulation.pval(x, distname, n, EYY, E.stat, R, known.param, ...)
-##   }
-##   out <- list(
-##     method = paste0("Energy goodness-of-fit test for ",
-##                     distname, " distribution",
-##                     ifelse(known.param, " (Simple hypothesis test)",
-##                            " (Composite hypothesis test)")),
-##     data.name = paste0(deparse(substitute(x)),
-##                        ", sample size ", n,
-##                        ", replicates ", R),
-##     statistic = E.stat,
-##     #    estimate = if (!known.param) estimates else "Simple test: No parameter estimate",
-##     if (!known.param) statistic = estimates,
-##     parameter = dots[dist.data[[distname]]$param],
-##     p.value = if (R == 0) NA else p.value
-##   )
-##   class(out) <- "htest"
-##   out
-## }
-
-
-## dist.data <- list(
-##   "uniform" = list(
-##     composite = FALSE,
-##     sampler = "runif",
-##     param = c("min", "max")),
-##   "exponential" = list(
-##     composite = TRUE,
-##     sampler = "rexp",
-##     param = "rate",
-##     estimator = c(rate = function(x) 1 / mean(x)),
-##     parameterless.dist= function (x) x / mean(x)),
-##   "bernoulli" = list(
-##     composite = FALSE,
-##     sampler = "rbinom",
-##     sampler.arg = c(size = 1),
-##     param = "prob"),
-##   "binomial" = list(
-##     composite = FALSE,
-##     sampler = "rbinom",
-##     param = c("size", "prob")),
-##   "beta" = list(
-##     composite = FALSE,
-##     sampler = "rbeta",
-##     param = c("shape1", "shape2")),
-##   "chisq" = list(
-##     composite = TRUE,
-##     sampler = "rchisq",
-##     param = c("df"),
-##     sampler.arg = c(ncp = 0)),
-##   "normal" = list(
-##     composite = TRUE,
-##     sampler = "rnorm",
-##     param = c("mean", "sd"),
-##     estimator = c(mean = function(x) mean(x),
-##                   sd = function(x) sd(x)),
-##     parameterless.dist = function (x) (x - mean(x)) / sd(x)),
-##   "lognormal" = list(
-##     composite = TRUE,
-##     sampler = "rlnorm",
-##     param = c("meanlog", "sdlog")),
-##   "gamma" = list(
-##     composite = FALSE,
-##     sampler = "rgamma",
-##     param = c("shape", "rate")),
-##   "poisson" = list(
-##     composite = TRUE,
-##     sampler = "rpois",
-##     param = "lambda"),
-##   "asymmetriclaplace" = list(
-##     composite = TRUE,
-##     sampler = "rasymmetriclaplace",
-##     param = c("theta", "sigma", "kappa")),
-##   "laplace" = list(
-##     composite = TRUE,
-##     sampler = "rlaplace",
-##     param = c("theta", "sigma")),
-##   "geometric" = list(
-##     composite = FALSE,
-##     sampler = "rgeom",
-##     param = "prob"),
-##   "standardhalfnormal" = list(
-##     composite = FALSE,
-##     sampler = "rhnorm",
-##     sampler.arg = c(theta = 1)),
-##   "inversegaussian" = list(
-##     composite = FALSE,
-##     sampler = "rshnorm",
-##     param = "theta"),
-##   "weibull" = list(
-##     composite = TRUE,
-##     sampler = "rweibull",
-##     param = c("shape", "scale"),
-##     parameterless.dist = function(x) (x / scale)^shape),
-##   "cauchy" = list(
-##     composite = TRUE,
-##     sampler = "rcauchy",
-##     param = c("location", "scale")
-##   )
-## ) # add pareto
-
-
-## E.stat <- function(x, distname, n, EYY, ...) {
-##   dots <- list(...)
-##   all.args <- c(as.list(environment()), dots)
-##   EXYhat <-  do.call(paste0("EXYhat.", distname), all.args)
-##   EXXhat <- EXXhat(x, n)
-##   out <- n * (2 * EXYhat - EYY - EXXhat)
-##   names(out) <- "E-statistic"
-##   out
+## ##### Cauchy
+##
+## ##### Pareto
+## ###### Case 1: alpha > 1, s = 1
+## EXYhat.pareto.alpha.greaterthan1 <- function(x, alpha, sigma, ...) {
+##   mean(y + (2 * sigma^alpha * x^(1 - alpha) - alpha * sigma) / (alpha - 1))
 ## }
 ##
-## simulation.pval <- function(x, distname, n, EYY, E.stat, R, known.param, ...) {
-##   dots <- list(...)
-##   all.args <- c(as.list(environment()), dots,
-##                 dist.data[[distname]]$sampler.arg)
-##   sampler.name <- dist.data[[distname]]$sampler
-##   Estat.nulldist <- rep(NA, R)
-##   for (i in 1:R) {
-##     if (known.param) {
-##       samp <- do.call(sampler.name, all.args[names(formals(sampler.name))])
-##       Estat.nulldist[i] <- E.stat(samp, distname, n, EYY, ...)
-##     } else {
-##       samp <- do.call(sampler.name, all.args[names(formals(sampler.name))])
-##       samp.free <- dist.data[[distname]]$distribution.free(samp)
-##       samp.free.param <- lapply(dist.data[[distname]]$estimator,
-##                                 function(estimator) estimator(samp.free))
-##       EYY.samp <- do.call(paste0("EYY.", distname), samp.free.param)
-##       Estat.nulldist[i] <- E.stat(samp.free, distname, n,
-##                                   EYY.samp, samp.free.param)
-##     }
-##   }
-##   mean(Estat.nulldist > E.stat)
+## EYY.pareto.alphage.greaterthan1 <- function(alpha, sigma, ...) {
+##   stopifnot(alpha > 1)
+##   EY <- alpha * sigma / (alpha - 1)
+##   EY / (alpha - 0.5)
 ## }
 ##
-## simulation.pval <- memoise::memoise(simulation.pval)
+## ###### Case 2: alpha > 1, s = alpha - 1
+##
+## ###### Case 3: 0 < s < alpha < 1
+## EXYhat.pareto.alphalessthan1<- function(x, alpha, sigma, ...) {
+##
+## }
+##
+##
+## EYY.pareto.alphalessthan1 <- function(alpha, sigma, ...) {
+##
+## }
+##
+## ###### Case 4: alpha = 1 and 0 < s < 1
