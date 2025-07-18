@@ -164,7 +164,7 @@ egof <- function(x, dist =  c("uniform",
   validate_dots(dots, distname)
   dist_obj <- distribution_factory(distname, ...)
   validate_x(x, dist_obj)
-  test <- EGOFTest$new(x, dist = dist_obj, R = R)
+  test <- EGOFTestGen$new(x, dist = dist_obj, R = R)
   if (htest) test$as_htest() else test
 }
 
@@ -218,38 +218,39 @@ validate_R <- function(R) {
 ### Distribution Factory
 distribution_factory <- function(name, ...) {
   switch(name,
-         "normal" = NormalGOF$new(...),
-         "gaussian" = NormalGOF$new(...),
-         "uniform" = UniformGOF$new(...),
-         "exponential" = ExponentialGOF$new(...),
-         "bernoulli" = BinomialGOF$new(...),
-         "binomial" = BinomialGOF$new(...),
-         "geometric" = GeometricGOF$new(...),
-         "beta" = BetaGOF$new(...),
-         "poisson" = PoissonGOF$new(...),
-         "lognormal" = LognormalGOF$new(...),
-         "lnorm" = LognormalGOF$new(...),
-         "laplace" = LaplaceGOF$new(...),
-         "doubleexponential" = LaplaceGOF$new(...),
-         "asymmetriclaplace" = LaplaceGOF$new(...),
-         "inversegaussian" = InverseGaussianGOF$new(...),
-         "halfnormal" = HalfNormalGOF$new(...),
-         "chisq" = ChiSquaredGOF$new(...),
-         "chisquared" = ChiSquaredGOF$new(...),
-         "gamma" = GammaGOF$new(...),
-         "weibull" = WeibullGOF$new(...),
-         "cauchy" = CauchyGOF$new(...),
-         "pareto" = ParetoGOF$new(...),
+         "normal" = NormalGOFGen$new(...),
+         "gaussian" = NormalGOFGen$new(...),
+         "uniform" = UniformGOFGen$new(...),
+         "exponential" = ExponentialGOFGen$new(...),
+         "bernoulli" = BinomialGOFGen$new(...),
+         "binomial" = BinomialGOFGen$new(...),
+         "geometric" = GeometricGOFGen$new(...),
+         "beta" = BetaGOFGen$new(...),
+         "poisson" = PoissonGOFGen$new(...),
+         "lognormal" = LognormalGOFGen$new(...),
+         "lnorm" = LognormalGOFGen$new(...),
+         "laplace" = LaplaceGOFGen$new(...),
+         "doubleexponential" = LaplaceGOFGen$new(...),
+         "asymmetriclaplace" = LaplaceGOFGen$new(...),
+         "inversegaussian" = InverseGaussianGOFGen$new(...),
+         "halfnormal" = HalfNormalGOFGen$new(...),
+         "chisq" = ChiSquaredGOFGen$new(...),
+         "chisquared" = ChiSquaredGOFGen$new(...),
+         "gamma" = GammaGOFGen$new(...),
+         "weibull" = WeibullGOFGen$new(...),
+         "cauchy" = CauchyGOFGen$new(...),
+         "pareto" = ParetoGOFGen$new(...),
          stop("Unsupported distribution"))
 }
 
-#### EGOFTest Class
-EGOFTest <- R6::R6Class(
+#### EGOFTestGen Class
+EGOFTestGen <- R6::R6Class(
   "EGOFTest",
   public = list(
     dist = NULL,
     R = 0,
     x = NULL,
+    sim_reps = NULL,
     composite_p = FALSE,
     E_stat = NULL,
     p_value = NULL,
@@ -289,7 +290,9 @@ EGOFTest <- R6::R6Class(
 
     #### Simulate Pvalue
     simulate_pval = function(x = self$x, R = self$R) {
-      if (self$R == 0) return(NA)
+      if (self$R == 0)
+        return(NA)
+      n <- length(x) # for ran.gen
       bootobj <- boot::boot(x, statistic = self$compute_E_stat,
                             R = R, sim = "parametric",
                             ran.gen = self$dist$sampler,
@@ -299,6 +302,7 @@ EGOFTest <- R6::R6Class(
                                 else
                                   self$dist$parameter),
                             EYY = self$EYY)
+      self$sim_reps <- bootobj$t
       mean(bootobj$t > bootobj$t0)
     },
 
@@ -334,7 +338,7 @@ EGOFTest <- R6::R6Class(
 )
 
 #### DistributionGOF Class
-DistributionGOF <- R6::R6Class(
+DistributionGOFGen <- R6::R6Class(
   "DistributionGOF",
   public = list(
     name = NULL,
@@ -364,9 +368,9 @@ DistributionGOF <- R6::R6Class(
 
 #### TODO: the logic for composite testing Seems to be broken.
 ##### Normal
-NormalGOF <- R6::R6Class(
+NormalGOFGen <- R6::R6Class(
   "NormalGOF",
-  inherit = DistributionGOF,
+  inherit = DistributionGOFGen,
   public = list(
     initialize = function(mean = NULL, sd = NULL) {
       super$initialize("Normal", composite_allowed = TRUE)
@@ -399,7 +403,7 @@ NormalGOF <- R6::R6Class(
 
 
 ##### Uniform
-UniformGOF <- R6::R6Class(
+UniformGOFGen <- R6::R6Class(
   "UniformGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(min = NULL, max = NULL) {
@@ -422,7 +426,7 @@ UniformGOF <- R6::R6Class(
 )
 
 ##### Exponential
-ExponentialGOF <- R6::R6Class(
+ExponentialGOFGen <- R6::R6Class(
   "ExponentialGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(rate = NULL) {
@@ -447,7 +451,7 @@ ExponentialGOF <- R6::R6Class(
 )
 
 ##### Poisson
-PoissonGOF <- R6::R6Class(
+PoissonGOFGen <- R6::R6Class(
   "PoissonGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(lambda = NULL) {
@@ -480,7 +484,7 @@ PoissonGOF <- R6::R6Class(
 ##### Skew-Normal?
 
 ##### Bernoulli
-BernoulliGOF <- R6::R6Class(
+BernoulliGOFGen <- R6::R6Class(
   "BernoulliGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(prob = NULL) {
@@ -517,7 +521,7 @@ BernoulliGOF <- R6::R6Class(
 ## }
 
 ##### Beta
-BetaGOF <- R6::R6Class(
+BetaGOFGen <- R6::R6Class(
   "BetaGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(shape1 = NULL,
@@ -548,7 +552,7 @@ BetaGOF <- R6::R6Class(
 ##### Dirchlet?
 
 ##### Geometric
-GeometricGOF <- R6::R6Class(
+GeometricGOFGen <- R6::R6Class(
   "GeometricGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(prob = NULL) {
@@ -573,7 +577,7 @@ GeometricGOF <- R6::R6Class(
 ##### Negative Binomial?
 
 ##### Standard Half-Normal
-StandardHalfNormalGOF <- R6::R6Class(
+StandardHalfNormalGOFGen <- R6::R6Class(
   "StandardHalfNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function() {
@@ -593,7 +597,7 @@ StandardHalfNormalGOF <- R6::R6Class(
 )
 
 ##### Half-Normal
-HalfNormalGOF <- R6::R6Class(
+HalfNormalGOFGen <- R6::R6Class(
   "HalfNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(theta = NULL) {
@@ -613,7 +617,7 @@ HalfNormalGOF <- R6::R6Class(
 )
 
 ##### Laplace
-LaplaceGOF <- R6::R6Class(
+LaplaceGOFGen <- R6::R6Class(
   "LaplaceGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(mu = NULL, sigma = NULL) {
@@ -636,7 +640,7 @@ LaplaceGOF <- R6::R6Class(
 )
 
 ##### Log-Normal
-LogNormalGOF <- R6::R6Class(
+LogNormalGOFGen <- R6::R6Class(
   "LogNormalGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(meanlog = NULL, sdlog = NULL) {
@@ -671,7 +675,7 @@ LogNormalGOF <- R6::R6Class(
 
 
 ##### Asymmetric Laplace
-AsymmetricLaplaceGOF <- R6::R6Class(
+AsymmetricLaplaceGOFGen <- R6::R6Class(
   "AsymmetricLaplaceGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(mu = NULL, sigma = NULL) {
@@ -707,7 +711,7 @@ AsymmetricLaplaceGOF <- R6::R6Class(
 
 
 ##### Weibull
-WeibullGOF <- R6::R6Class(
+WeibullGOFGen <- R6::R6Class(
   "WeibullGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(shape = NULL, scale = NULL) {
@@ -736,7 +740,7 @@ WeibullGOF <- R6::R6Class(
 
 
 ##### Gamma
-GammaGOF <- R6::R6Class(
+GammaGOFGen <- R6::R6Class(
   "GammaGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(shape = NULL, rate = NULL) {
@@ -760,7 +764,7 @@ GammaGOF <- R6::R6Class(
 )
 
 ##### Chi-Square
-ChiSquaredGOF <- R6::R6Class(
+ChiSquaredGOFGen <- R6::R6Class(
   "ChiSquaredGOF", inherit = DistributionGOF,
   public = list(
     initialize = function(df = NULL) {
@@ -776,7 +780,7 @@ ChiSquaredGOF <- R6::R6Class(
     EXYhat = function(x, par = self$parameter) {
       mean((par$df - x) + 2 * x * pchisq(x, par$df, 0) - 2 * par$df * pchisq(x, par$df + 2, 0))
     },
-    EYY.chisq = function(par = self$parameter) {
+    EYY = function(par = self$parameter) {
       4 * gamma((par$df + 1) / 2) / (sqrt(pi) * gamma(par$df / 2))
     }
   )
@@ -791,7 +795,7 @@ ChiSquaredGOF <- R6::R6Class(
 #### Generalized Goodness-of-fit Tests
 
 ##### Standard Cauchy
-StandardCauchyGOF <- R6::R6Class(
+StandardCauchyGOFGen <- R6::R6Class(
   "StandardCauchyGOF",
   inherit = DistributionGOF,
   public = list(
