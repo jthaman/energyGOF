@@ -8,3 +8,4 @@ License: GPL (>= 2)
 Encoding: UTF-8
 imports: memoise, R6
 URL: github (fixme)
+RoxygenNote: 7.3.2
