@@ -314,7 +314,7 @@ EGOFTestGen <- R6::R6Class(
       2 * mean(prefix * xs) / n
     },
 
-    #### As htest objecti
+    #### As htest objective
     as_htest = function() {
       structure(list(
         method = paste0((if (self$composite_p) "Composite" else "Simple"),
@@ -322,11 +322,6 @@ EGOFTestGen <- R6::R6Class(
         data.name = deparse(substitute(x)),
         parameter = c("Distribution" = self$dist$name,
                       self$dist$parameter),
-        null.value = paste0(self$dist$name,
-                            " distribution",
-                            (if (!self$composite_p)
-                              paste0(" with parameters ",
-                                     deparse(self$dist$parameter)))),
         R = self$R,
         composite_p = self$composite_p,
         statistic = self$E_stat,
