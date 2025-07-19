@@ -318,10 +318,10 @@ EGOFTestGen <- R6::R6Class(
     as_htest = function() {
       structure(list(
         method = paste0((if (self$composite_p) "Composite" else "Simple"),
-                        " Energy goodness-of-fit test for ",
-                        self$dist$name, " distribution"),
+                        " energy goodness-of-fit test"),
         data.name = deparse(substitute(x)),
-        parameters = self$dist$parameters,
+        parameter = c("Distribution" = self$dist$name,
+                      self$dist$parameter),
         null.value = paste0(self$dist$name,
                             " distribution",
                             (if (!self$composite_p)
@@ -366,7 +366,6 @@ DistributionGOFGen <- R6::R6Class(
 
 #### Distributions
 
-#### TODO: the logic for composite testing Seems to be broken.
 ##### Normal
 NormalGOFGen <- R6::R6Class(
   "NormalGOF",
@@ -404,7 +403,7 @@ NormalGOFGen <- R6::R6Class(
 
 ##### Uniform
 UniformGOFGen <- R6::R6Class(
-  "UniformGOF", inherit = DistributionGOF,
+  "UniformGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(min = NULL, max = NULL) {
       super$initialize("uniform",
@@ -427,7 +426,7 @@ UniformGOFGen <- R6::R6Class(
 
 ##### Exponential
 ExponentialGOFGen <- R6::R6Class(
-  "ExponentialGOF", inherit = DistributionGOF,
+  "ExponentialGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(rate = NULL) {
       super$initialize("exponential",
@@ -452,7 +451,7 @@ ExponentialGOFGen <- R6::R6Class(
 
 ##### Poisson
 PoissonGOFGen <- R6::R6Class(
-  "PoissonGOF", inherit = DistributionGOF,
+  "PoissonGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(lambda = NULL) {
       super$initialize("poisson",
@@ -484,8 +483,8 @@ PoissonGOFGen <- R6::R6Class(
 ##### Skew-Normal?
 
 ##### Bernoulli
-BernoulliGOFGen <- R6::R6Class(
-  "BernoulliGOF", inherit = DistributionGOF,
+BernoulliGOFGenGen <- R6::R6Class(
+  "BernoulliGOFGen", inherit = DistributionGOF,
   public = list(
     initialize = function(prob = NULL) {
       super$initialize("bernoulli",
@@ -522,7 +521,7 @@ BernoulliGOFGen <- R6::R6Class(
 
 ##### Beta
 BetaGOFGen <- R6::R6Class(
-  "BetaGOF", inherit = DistributionGOF,
+  "BetaGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(shape1 = NULL,
                           shape2 = NULL) {
@@ -553,7 +552,7 @@ BetaGOFGen <- R6::R6Class(
 
 ##### Geometric
 GeometricGOFGen <- R6::R6Class(
-  "GeometricGOF", inherit = DistributionGOF,
+  "GeometricGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(prob = NULL) {
       super$initialize("geometric",
@@ -578,7 +577,7 @@ GeometricGOFGen <- R6::R6Class(
 
 ##### Standard Half-Normal
 StandardHalfNormalGOFGen <- R6::R6Class(
-  "StandardHalfNormalGOF", inherit = DistributionGOF,
+  "StandardHalfNormalGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function() {
       super$initialize("standardhalfnormal",
@@ -598,7 +597,7 @@ StandardHalfNormalGOFGen <- R6::R6Class(
 
 ##### Half-Normal
 HalfNormalGOFGen <- R6::R6Class(
-  "HalfNormalGOF", inherit = DistributionGOF,
+  "HalfNormalGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(theta = NULL) {
       super$initialize("halfnormal", composite_allowed = FALSE)
@@ -618,7 +617,7 @@ HalfNormalGOFGen <- R6::R6Class(
 
 ##### Laplace
 LaplaceGOFGen <- R6::R6Class(
-  "LaplaceGOF", inherit = DistributionGOF,
+  "LaplaceGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(mu = NULL, sigma = NULL) {
       super$initialize("laplace", composite_allowed = TRUE)
@@ -641,7 +640,7 @@ LaplaceGOFGen <- R6::R6Class(
 
 ##### Log-Normal
 LogNormalGOFGen <- R6::R6Class(
-  "LogNormalGOF", inherit = DistributionGOF,
+  "LogNormalGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(meanlog = NULL, sdlog = NULL) {
       super$initialize("lognormal",
@@ -676,7 +675,7 @@ LogNormalGOFGen <- R6::R6Class(
 
 ##### Asymmetric Laplace
 AsymmetricLaplaceGOFGen <- R6::R6Class(
-  "AsymmetricLaplaceGOF", inherit = DistributionGOF,
+  "AsymmetricLaplaceGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(mu = NULL, sigma = NULL) {
       super$initialize("asymmetriclaplace",
@@ -712,7 +711,7 @@ AsymmetricLaplaceGOFGen <- R6::R6Class(
 
 ##### Weibull
 WeibullGOFGen <- R6::R6Class(
-  "WeibullGOF", inherit = DistributionGOF,
+  "WeibullGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(shape = NULL, scale = NULL) {
       super$initialize("weibull",
@@ -741,7 +740,7 @@ WeibullGOFGen <- R6::R6Class(
 
 ##### Gamma
 GammaGOFGen <- R6::R6Class(
-  "GammaGOF", inherit = DistributionGOF,
+  "GammaGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(shape = NULL, rate = NULL) {
       super$initialize("gamma",
@@ -765,7 +764,7 @@ GammaGOFGen <- R6::R6Class(
 
 ##### Chi-Square
 ChiSquaredGOFGen <- R6::R6Class(
-  "ChiSquaredGOF", inherit = DistributionGOF,
+  "ChiSquaredGOF", inherit = DistributionGOFGen,
   public = list(
     initialize = function(df = NULL) {
       super$initialize("chisquared",
@@ -797,7 +796,7 @@ ChiSquaredGOFGen <- R6::R6Class(
 ##### Standard Cauchy
 StandardCauchyGOFGen <- R6::R6Class(
   "StandardCauchyGOF",
-  inherit = DistributionGOF,
+  inherit = DistributionGOFGen,
   public = list(
     initialize = function(exponent = 0.5) {
       super$initialize("standardcauchy", composite_allowed = TRUE)
