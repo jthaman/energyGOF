@@ -249,6 +249,7 @@ EGOFTest <- R6::R6Class(
   public = list(
     dist = NULL,
     R = 0,
+    sim_reps = NULL,
     x = NULL,
     composite_p = FALSE,
     E_stat = NULL,
@@ -297,8 +298,8 @@ EGOFTest <- R6::R6Class(
                               (if (self$composite_p)
                                 self$dist$ref_parameter
                                 else
-                                  self$dist$parameter),
-                            EYY = self$EYY)
+                                  self$dist$parameter))
+      self$sim_reps <- bootobj$t
       mean(bootobj$t > bootobj$t0)
     },
 
