@@ -492,11 +492,11 @@ make_geometric_dist  <- function(prob = NULL) {
       support = function(x) all(x == floor(x)) && all(x > 0),
       sampler = function(n, par) rgeom(n, par$prob),
       EYY = function(p = self$parameter$prob) {
-        q <- 1 - p
+        q <- 1 - prob
         (2 * q) / (1 - q^2)
       },
       EXYhat = function(x, par) {
-        mean(x + 1 + (1 - 2 * pgeom(x)) / par$prob)
+        mean(x + 1 + (1 - 2 * pgeom(x, par$prob)) / par$prob)
       }
     ), class = c("GeometricDist", "GOFDist")
   )
@@ -506,6 +506,7 @@ make_geometric_dist  <- function(prob = NULL) {
 ##### Negative Binomial?
 
 ##### Half-Normal
+## TODO, this seems to be bugged
 make_halfnormal_dist <- function(theta = NULL) {
   structure(
     list(
