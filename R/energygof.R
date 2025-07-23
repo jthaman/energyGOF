@@ -835,6 +835,12 @@ deats <- data.frame(
 
 deats <- rbind(deats, list("Normal", "mean, sd", "Yes"))
 deats <- rbind(deats, list("Uniform", "min, max", "No"))
+deats <- rbind(deats, list("Exponential", "rate", "Yes"))
+deats <- rbind(deats, list("Poisson", "lambda", "Yes"))
+deats <- rbind(deats, list("Bernoulli", "prob", "No"))
+deats <- rbind(deats, list("Binomial", "prob", "Yes"))
+deats <- rbind(deats, list("Beta", "shape1, shape2", "No"))
+deats <- rbind(deats, list("Half-Normal", "theta", "No"))
 
 ## ##### Cauchy
 ##
