@@ -6,6 +6,6 @@ Authors@R:
 Description: This package provides the `energygof` function, which provides a powerful method of conducting one-sample goodness-of-fit tests for many common distributions. Methods goodness-of-fit testing both the simple and composite cases are available.
 License: GPL (>= 2)
 Encoding: UTF-8
-imports: memoise, R6
+imports:
 URL: github (fixme)
 RoxygenNote: 7.3.2
