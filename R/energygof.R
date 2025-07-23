@@ -507,46 +507,52 @@ make_geometric_dist  <- function(prob = NULL) {
 
 ##### Half-Normal
 ## TODO, this seems to be bugged
-make_halfnormal_dist <- function(theta = NULL) {
+make_halfnormal_dist <- function(scale = NULL) {
   structure(
     list(
       name = "Half-Normal",
       composite_allowed = TRUE,
-      parameter = list(theta = theta),
+      parameter = list(scale = scale),
       support = function(x) all(x > 0),
       sampler = function(n, par) {
-        abs(rnorm(n, 0, sd = par$theta))},
+        abs(rnorm(n, 0, sd = par$scale))},
       EXYhat = function(x, par) {
-        mean(2 * x * (2 * pnorm(x, 0, theta) - 1)
-             - x + par$theta * sqrt(2 / pi) -
-               2 * sqrt(2 / pi) * par$theta * (1 - exp(-x^2 / (2 * par$theta^2))))
+        mean(2 * x * (2 * pnorm(x, 0, scale) - 1)
+             - x + par$scale * sqrt(2 / pi) -
+               2 * sqrt(2 / pi) * par$scale * (1 - exp(-x^2 / (2 * par$scale^2))))
       },
       EYY = function(par) {
-        par$theta * 2 * (2 - sqrt(2)) / sqrt(pi)
+        par$scale * 2 * (2 - sqrt(2)) / sqrt(pi)
       },
-      xform = function (x) x / sd(x)
+      xform = function (x) x / sd(x),
+      statistic = list(scale = function(x) sd(x))
     ), class = c("HalfNormalDist", "GOFDist")
   )
 }
 
 ##### Laplace
-make_laplace_dist <- function(theta = NULL, sigma = NULL) {
+make_laplace_dist <- function(location = NULL, scale = NULL) {
   structure(
     list(
       name = "Laplace",
       composite_allowed = TRUE,
-      parameter = list(mu = mu, sigma = sigma),
-      parameter = list(mu = 0, sigma = 1),
-      support = function(x) is.finite(x),
+      parameter = list(location = location, scale = scale),
+      parameter = list(location = 0, scale = 1),
+      support = function(x) all(is.finite(x)),
       sampler =  function(n, par) {
-        u <- runif(n, -0.5, 0.5)
-        par$mu - par$sigma * sign(u) * log(1 - 2 * abs(u))
+        par$location + sign(runif(n) - 0.5) * rexp(n, 1 / par$scale)
       },
       EXYhat = function(x, par) {
-        mean(par$sigma * exp(-abs(x - par$mu) / par$sigma) + abs(x - par$mu))
+        mean(abs(x - par$location) + sqrt(2) * par$scale
+             * exp(-sqrt(2) * abs(x - par$location) / par$scale))
       },
       EYY = function(par) {
-        2 * par$sigma
+        2 * par$scale
+      },
+      statistic = list(location = function(x) median(x),
+                       scale = function(x) mean(abs(x - median(x)))),
+      xform = function(x) {
+        (x - median(x)) / mean(abs(x - median(x)))
       }
     ), class = c("LaplaceDist", "GOFDist")
   )
