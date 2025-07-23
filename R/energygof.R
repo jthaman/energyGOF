@@ -511,17 +511,20 @@ make_halfnormal_dist <- function(theta = NULL) {
   structure(
     list(
       name = "Half-Normal",
-      composite_allowed = FALSE,
+      composite_allowed = TRUE,
       parameter = list(theta = theta),
       support = function(x) all(x > 0),
       sampler = function(n, par) {
         abs(rnorm(n, 0, sd = par$theta))},
       EXYhat = function(x, par) {
-        mean(2 * par$theta * (dnorm(x / par$theta) + (x / par$theta) * (pnorm(x / par$theta) - 1)))
+        mean(2 * x * (2 * pnorm(x, 0, theta) - 1)
+             - x + par$theta * sqrt(2 / pi) -
+               2 * sqrt(2 / pi) * par$theta * (1 - exp(-x^2 / (2 * par$theta^2))))
       },
       EYY = function(par) {
-        par$theta * sqrt(2) * (1 - 2 / pi)
-      }
+        par$theta * 2 * (2 - sqrt(2)) / sqrt(pi)
+      },
+      xform = function (x) x / sd(x)
     ), class = c("HalfNormalDist", "GOFDist")
   )
 }
