@@ -519,7 +519,8 @@ make_halfnormal_dist <- function(scale = NULL) {
       EXYhat = function(x, par) {
         mean(2 * x * (2 * pnorm(x, 0, scale) - 1)
              - x + par$scale * sqrt(2 / pi) -
-               2 * sqrt(2 / pi) * par$scale * (1 - exp(-x^2 / (2 * par$scale^2))))
+               2 * sqrt(2 / pi) * par$scale *
+                 (1 - exp(-x^2 / (2 * par$scale^2))))
       },
       EYY = function(par) {
         par$scale * 2 * (2 - sqrt(2)) / sqrt(pi)
@@ -543,11 +544,11 @@ make_laplace_dist <- function(location = NULL, scale = NULL) {
         par$location + sign(runif(n) - 0.5) * rexp(n, 1 / par$scale)
       },
       EXYhat = function(x, par) {
-        mean(abs(x - par$location) + sqrt(2) * par$scale
-             * exp(-sqrt(2) * abs(x - par$location) / par$scale))
+        mean(abs(x - par$location) + par$scale
+             * exp(-abs(x - par$location) / par$scale))
       },
       EYY = function(par) {
-        2 * par$scale
+        par$scale * (3 / 2)
       },
       statistic = list(location = function(x) median(x),
                        scale = function(x) mean(abs(x - median(x)))),
@@ -567,7 +568,7 @@ make_lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       parameter = list(meanlog = meanlog, sdlog = sdlog),
       ref_parameter = list(meanlog = 0, sdlog = 1),
       support = function(x) {
-        all(x > 0)
+        all(x > 0) && all(is.finite(x))
       },
       sampler = function(n, par) {
         rlnorm(n, par$meanlog, par$sdlog)
@@ -577,16 +578,23 @@ make_lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
         s <- par$sdlog
         A <- exp(m + s^2 / 2)
         z <- (log(x) - m) / s
-        z_prime <- (log(x) - m - s^2) / s
-        mean(x * (2 * pnorm(z) - 1) + A * (2 * pnorm(z_prime) - 1))
+        w <- (m + s^2 - log(x)) / s
+        mean(x * (2 * pnorm(z) - 1) + A * (2 * pnorm(w) - 1))
       },
       EYY = function(par) {
-        integrand <- function(w) {
-          abs(exp(w) - 1) * dnorm(w, mean = 0, sd = sqrt(2) * par$sdlog)
+        integrand <- function(t, par) {
+          m <- par$meanlog
+          s <- par$sdlog
+          A <- exp(m + s^2 / 2)
+          z <- (log(t) - m) / s
+          w <- (m + s^2 - log(t)) / s
+          ExYhat <- t * (2 * pnorm(z) - 1) + A * (2 * pnorm(w) - 1)
+          ExYhat * dlnorm(t, m, s)
         }
-        scaling <- exp(par$meanlog + par$sdlog^2 / 2)
-        scaling * integrate(integrand, lower = -Inf, upper = Inf)$value
-      }
+        integrate(integrand, lower = 0, upper = Inf, par = par)$value
+      },
+      xform = function(x) x,
+      statistic = list(meanlog = x, sdlog = x)
     ), class = c("LogNormalDist", "GOFDist")
   )
 }
@@ -594,35 +602,42 @@ make_lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 
 
 ##### Asymmetric Laplace
-make_asymmetric_laplace_dist <- function(mu = NULL, sigma = NULL, kappa = NULL) {
+make_asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
+                                         k = NULL) {
   structure(
     list(
       name = "Asymmetric Laplace",
       composite_allowed = TRUE,
-      parameter = list(mu = mu, sigma = sigma, kappa = kappa),
-      ref_parameter = list(mu = 0, sigma = 1, kappa = 1), # yes?
+      parameter = list(location = location, scale = scale, k = k),
+      ref_parameter = list(location = 0, scale = 1, k = 1), # yes?
       support = function(x) is.finite(x),
-      sampler = function(n, par = self$parameter) {
+      sampler = function(n, par) {
         #stuff
         #TODO
       },
       EXYhat = function(x, par) {
-        mu <- (1 / par$kappa - par$kappa) / sqrt(2)
-        lambda <- sqrt(2) * par$kappa / par$sigma
-        beta <- sqrt(2) / (par$kappa * par$sigma)
-        pk <- 1 / ( 1 + par$kappa^2)
+        loc <- par$location
+        scale <- par$scale
+        k <- par$k
+        mu <- (1 / k - k) / sqrt(2)
+        lam <- sqrt(2) * k / scale
+        beta <- sqrt(2) / (k * scale)
+        pk <- 1 / ( 1 + k^2)
         qk <- 1 - pk
-        mean(ifelse(x >= par$theta,
-                    x - par$theta - mu + (2 * pk / lambda) * exp(-lambda * abs(x - par$theta)),
-                    -x + par$theta + mu + (2 * qk / beta) * exp(-beta * abs(x - par$theta))))
+        mean(ifelse(x >= loc,
+                    x - loc - mu + (2 * pk / lam) * exp(-lam * abs(x - loc)),
+                    -x + loc + mu + (2 * qk / beta) * exp(-beta * abs(x - loc))))
       },
       EYY = function(par){
-        mu <- (1 / par$kappa - par$kappa) / sqrt(2)
-        lambda <- sqrt(2) * par$kappa / par$sigma
-        beta <- sqrt(2) / (par$kappa * par$sigma)
-        pk <- 1 / (1 + par$kappa^2)
+        loc <- par$location
+        scale <- par$scale
+        k <- par$k
+        mu <- (1 / k - k) / sqrt(2)
+        lam <- sqrt(2) * k / scale
+        beta <- sqrt(2) / (k * scale)
+        pk <- 1 / (1 + k^2)
         qk <- 1 - pk
-        pk / beta + qk / lambda + pk^2 / lambda + qk^2 / beta
+        pk / beta + qk / lam + pk^2 / lam + qk^2 / beta
       }
     ), class = c("AsymmetricLaplaceDist", "GOFDist")
   )
