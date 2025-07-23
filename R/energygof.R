@@ -257,12 +257,19 @@ distribution_factory <- function(name, ...) {
          )
 }
 
+egof_test.function <- function (x, dist, R, ...) {
+
+}
 
 egof_test.GOFDist <- function(x, dist, R, ...) {
   composite_p <- all(sapply(dist$parameter, is.null))
   EYY <- dist$EYY(if (composite_p) dist$ref_parameter else dist$parameter)
   E_stat <- compute_E_stat(x, dist, EYY, composite_p)
   sim <- simulate_pval(x, dist, R, E_stat, composite_p)
+  output_htest(x, dist, R, E_stat, sim, composite_p)
+}
+
+output_htest <- function(x, dist, R, E_stat, sim, composite_p) {
   structure(list(
     method = paste0((if (composite_p) "Composite" else "Simple"),
                     " energy goodness-of-fit test"),
