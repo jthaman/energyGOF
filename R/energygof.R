@@ -144,7 +144,7 @@ egof <- function(x, dist = c("uniform",
                              "poisson",
                              "lognormal", "lnorm",
                              "laplace", "doubleexponential",
-                             "asymmetriclaplace",
+                             "asymmetriclaplace", "alaplace",
                              "inversegaussian",
                              "halfnormal",
                              "chisq", "chisquared",
@@ -229,29 +229,30 @@ validate_R <- function(R) {
 
 distribution_factory <- function(name, ...) {
   switch(name,
-         "normal" = make_normal_dist(...),
-         "gaussian" = make_normal_dist(...),
-         "uniform" = make_uniform_dist(...),
-         "exponential" = make_exponential_dist(...),
-         "beta" = make_beta_dist(...),
-         "gamma" = make_gamma_dist(...),
-         "weibull" = make_weibull_dist(...),
-         "cauchy" = make_cauchy_dist(...),
-         "pareto" = make_pareto_dist(...),
-         "lognormal" = make_lognormal_dist(...),
-         "lnorm" = make_lognormal_dist(...),
-         "laplace" = make_laplace_dist(...),
-         "doubleexponential" = make_laplace_dist(...),
-         "asymmetriclaplace" = make_asymmetric_laplace_dist(...),
-         "inversegaussian" = make_inverse_gaussian_dist(...),
-         "standardhalfnormal" = make_halfnormal_dist(...),
-         "halfnormal" = make_halfnormal_dist(...),
-         "chisq" = make_chisq_dist(...),
-         "chisquared" = make_chisq_dist(...),
-         "binomial" = make_binomial_dist(...),
-         "bernoulli" = make_bernoulli_dist(...),
-         "geometric" = make_geometric_dist(...),
-         "poisson" = make_poisson_dist(...),
+         "normal" = normal_dist(...),
+         "gaussian" = normal_dist(...),
+         "uniform" = uniform_dist(...),
+         "exponential" = exponential_dist(...),
+         "beta" = beta_dist(...),
+         "gamma" = gamma_dist(...),
+         "weibull" = weibull_dist(...),
+         "cauchy" = cauchy_dist(...),
+         "pareto" = pareto_dist(...),
+         "lognormal" = lognormal_dist(...),
+         "lnorm" = lognormal_dist(...),
+         "laplace" = laplace_dist(...),
+         "doubleexponential" = laplace_dist(...),
+         "asymmetriclaplace" = asymmetric_laplace_dist(...),
+         "alaplace" = asymmetric_laplace_dist(...),
+         "inversegaussian" = inverse_gaussian_dist(...),
+         "standardhalfnormal" = halfnormal_dist(...),
+         "halfnormal" = halfnormal_dist(...),
+         "chisq" = chisq_dist(...),
+         "chisquared" = chisq_dist(...),
+         "binomial" = binomial_dist(...),
+         "bernoulli" = bernoulli_dist(...),
+         "geometric" = geometric_dist(...),
+         "poisson" = poisson_dist(...),
          stop("Unsupported distribution: ", name)
          )
 }
@@ -271,6 +272,7 @@ egof_test.GOFDist <- function(x, dist, R, ...) {
     R = R,
     composite_p = composite_p,
     statistic = E_stat,
+    expected_value_E_stat = if(!composite_p) EYY else NULL,
     p.value = sim$p_value,
     sim_reps = sim$sim_reps,
     estimate = if (composite_p) lapply(dist$statistic, function(f) f(x)) else NULL
@@ -278,7 +280,8 @@ egof_test.GOFDist <- function(x, dist, R, ...) {
 }
 
 compute_E_stat <- function(x, dist, EYY, composite_p) {
-  if (composite_p) x <- dist$xform(x)
+  mle <- lapply(dist$statistic, function(f) f(x))
+  if (composite_p) x <- dist$xform(x, mle)
   n <- length(x)
   EXYpar <- if (composite_p) dist$ref_parameter else dist$parameter
   EXY <- dist$EXYhat(x, EXYpar)
@@ -318,7 +321,7 @@ simulate_pval <- function(x, dist, R, E_stat, composite_p) {
 
 ##### Normal
 
-make_normal_dist <- function(mean = NULL, sd = NULL) {
+normal_dist <- function(mean = NULL, sd = NULL) {
   structure(
     list(
       name = "Normal",
@@ -342,7 +345,7 @@ make_normal_dist <- function(mean = NULL, sd = NULL) {
 
 ##### Uniform
 
-make_uniform_dist <- function(min = NULL, max = NULL) {
+uniform_dist <- function(min = NULL, max = NULL) {
   structure(
     list(
       name = "Uniform",
@@ -362,7 +365,7 @@ make_uniform_dist <- function(min = NULL, max = NULL) {
   )
 }
 ##### Exponential
-make_exponential_dist <- function(rate = NULL) {
+exponential_dist <- function(rate = NULL) {
   structure(
     list(
       name = "Exponential",
@@ -382,7 +385,7 @@ make_exponential_dist <- function(rate = NULL) {
 }
 
 ##### Poisson
-make_poisson_dist <- function(lambda = NULL) {
+poisson_dist <- function(lambda = NULL) {
   structure(
     list(
       name = "Poisson",
@@ -413,7 +416,7 @@ make_poisson_dist <- function(lambda = NULL) {
 
 ##### Bernoulli
 
-make_bernoulli_dist <- function(prob = NULL) {
+bernoulli_dist <- function(prob = NULL) {
   structure(
     list(
       name = "Bernoulli",
@@ -452,7 +455,7 @@ make_bernoulli_dist <- function(prob = NULL) {
 ## }
 
 ##### Beta
-make_beta_dist <- function(shape1 = NULL, shape2 = NULL) {
+beta_dist <- function(shape1 = NULL, shape2 = NULL) {
   structure(
     list(
       name = "Beta",
@@ -483,7 +486,7 @@ make_beta_dist <- function(shape1 = NULL, shape2 = NULL) {
 ##### Dirchlet?
 
 ##### Geometric
-make_geometric_dist  <- function(prob = NULL) {
+geometric_dist  <- function(prob = NULL) {
   structure(
     list(
       name = "Geometric",
@@ -507,7 +510,7 @@ make_geometric_dist  <- function(prob = NULL) {
 
 ##### Half-Normal
 ## TODO, this seems to be bugged
-make_halfnormal_dist <- function(scale = NULL) {
+halfnormal_dist <- function(scale = NULL) {
   structure(
     list(
       name = "Half-Normal",
@@ -532,7 +535,7 @@ make_halfnormal_dist <- function(scale = NULL) {
 }
 
 ##### Laplace
-make_laplace_dist <- function(location = NULL, scale = NULL) {
+laplace_dist <- function(location = NULL, scale = NULL) {
   structure(
     list(
       name = "Laplace",
@@ -560,7 +563,7 @@ make_laplace_dist <- function(location = NULL, scale = NULL) {
 }
 
 ##### Log-Normal
-make_lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
+lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
   structure(
     list(
       name = "Log-Normal",
@@ -602,18 +605,22 @@ make_lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 
 
 ##### Asymmetric Laplace
-make_asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
-                                         k = NULL) {
+asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
+                                    k = NULL) {
   structure(
     list(
       name = "Asymmetric Laplace",
       composite_allowed = TRUE,
       parameter = list(location = location, scale = scale, k = k),
       ref_parameter = list(location = 0, scale = 1, k = 1), # yes?
-      support = function(x) is.finite(x),
+      support = function(x) all(is.finite(x)),
       sampler = function(n, par) {
-        #stuff
-        #TODO
+        loc <- par$location
+        scale <- par$scale
+        k <- par$k
+        u1 <- runif(n)
+        u2 <- runif(n)
+        loc + scale / sqrt(2) * log(u1^k / (u2^(1 / k)))
       },
       EXYhat = function(x, par) {
         loc <- par$location
@@ -638,20 +645,21 @@ make_asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
         pk <- 1 / (1 + k^2)
         qk <- 1 - pk
         pk / beta + qk / lam + pk^2 / lam + qk^2 / beta
-      }
+      },
+      notes = "Composite Test conditional on estimation of skewness parameter k"
     ), class = c("AsymmetricLaplaceDist", "GOFDist")
   )
 }
 
 
 ##### Weibull
-make_weibull_dist <- function(shape = NULL, scale = NULL) {
+weibull_dist <- function(shape = NULL, scale = NULL) {
   structure(
     list(
       name = "Weibull",
       composite_allowed = TRUE,
-      parameters = list(shape = shape, scale = scale),
-      parameters = list(shape = 1, scale = 1),
+      parameter = list(shape = shape, scale = scale),
+      ref_parameter = list(shape = 1, scale = 1),
       support = function(x) {
         all(x > 0)
       },
@@ -660,12 +668,14 @@ make_weibull_dist <- function(shape = NULL, scale = NULL) {
       EXYhat = function(x, par) {
         z = (x / par$scale)^par$shape
         mean(2 * x * pweibull(x, par$shape, par$scale) - x +
-               par$scale * gamma(1 + 1 / par$shape) * (1 - 2 * pgamma(z, 1 + 1 / par$shape, 1)))
+               par$scale * gamma(1 + 1 / par$shape) *
+               (1 - 2 * pgamma(z, 1 + 1 / par$shape, 1)))
       },
       EYY = function(par) {
         # par$shape = k
         # scale = lambda
-        (2 * par$scale / par$shape) * gamma(1 / par$shape) * (1 - 2^(-1 / par$shape))
+        (2 * par$scale / par$shape) * gamma(1 / par$shape) *
+          (1 - 2^(-1 / par$shape))
       },
       xform = function(x, par) {
         (x / par$shape)^par$scale
@@ -674,28 +684,29 @@ make_weibull_dist <- function(shape = NULL, scale = NULL) {
   )
 }
 
-
-
-
 ##### Gamma
-make_gamma_dist <- function(shape = NULL, rate = NULL) {
+gamma_dist <- function(shape = NULL, rate = NULL) {
   structure(
     list(
-      name = "gamma",
+      name = "Gamma",
       composite_allowed = TRUE,
       parameter = list(shape = shape, rate = rate),
       ref_parameter = list(shape = 1, rate = 1),
       support = function(x) {
-        all(x > 0)
+        all(x > 0) && all(is.finite(x))
       },
       sampler = function(n, par) {
         rgamma(n, shape = par$shape, rate = par$rate)},
       EXYhat = function(x, par) {
-        mean(x * (2 * pgamma(x, par$shape, par$rate) - 1) +
-               gamma(par$shape + 1) / (par$rate * gamma(par$shape)))
+        a <- par$shape
+        b <- par$rate
+        mean(2 * x * pgamma(x, a, b) - x + a / b -
+               2 * a / b * pgamma(x, a + 1, b))
       },
       EYY = function(par) {
-        2 * gamma(par$shape + 1 / 2) / (par$rate * gamma(par$shape) * sqrt(pi))
+        a <- par$shape
+        b <- par$rate
+        2 * gamma(a + 1 / 2) / (b * gamma(a) * sqrt(pi))
       }
     ), class = c("GammaDist", "GOFDist")
   )
@@ -703,30 +714,75 @@ make_gamma_dist <- function(shape = NULL, rate = NULL) {
 
 
 ##### Chi-Square
-ChiSquaredGOFGen <- function(df = NULL) {
+chisq_dist <- function(df = NULL) {
   structure(
     list(
-      name = "Chi-Squared",
-      composite_allowed = FALSE,
-      parameter = list(df = df),
-      parameter = list(df = NULL),
-      support = function(x) {
-        all(x > 0) && all(is.finite(x))
-      },
-      sampler = function(n, par) {
-        rchisq(n, df = par$df, ncp = 0)},
-      EXYhat = function(x, par) {
-        mean((par$df - x) + 2 * x * pchisq(x, par$df, 0) - 2 * par$df * pchisq(x, par$df + 2, 0))
-      },
-      EYY = function(par) {
-        4 * gamma((par$df + 1) / 2) / (sqrt(pi) * gamma(par$df / 2))
-      }
+       name = "Chi-Squared",
+       composite_allowed = FALSE,
+       parameter = list(df = df),
+       parameter = list(df = NULL),
+       support = function(x) {
+         all(x > 0) && all(is.finite(x))
+       },
+       sampler = function(n, par) {
+         rchisq(n, df = par$df, ncp = 0)},
+       EXYhat = function(x, par) {
+         v <- par$df
+         mean(2 * x * pchisq(x, v) - x + v -
+                2 * v * pchisq(x, v + 2))
+       },
+       EYY = function(par) {
+         v <- par$df
+         4 * gamma((v + 1) / 2) / gamma(v / 2) / sqrt(pi)
+       }
     ), class = c("ChiSquaredDist", "GOFDist")
-  )
+   )
 }
 
 
 ##### Inverse Gaussian
+inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
+  structure(
+    list(
+      name = "Inverse Gaussion",
+      composite_allowed = TRUE,
+      parameter = list(mu = mu, lambda = lambda),
+      support = function(x) {
+        all(x > 0) && all(is.finite(x))
+      },
+      sampler = function(n, par) {
+        mu <- par$mu
+        lam <- par$lambda
+        v <- rnorm(n)^2
+        x <- mu + mu^2 * y / 2 / lam - mu / 2 / lam *
+          sqrt(4 * mu * lam * y + mu^2 * y^2)
+        ifelse(runif(n) < mu / (mu + x), x, mu^2 / x)
+      },
+      EXYhat = function(x, par) {
+        mu <- par$mu
+        lam <- par$lambda
+        A <- sqrt(lam / x) * (x / mu - 1)
+        B <- exp(2 * lam / mu)
+        C <- sqrt(lam / x) * (x / mu + 1)
+        pinvg <- function(x, mu, lam, A, B, C) {
+          pnorm(A) + B * pnorm(-C)
+        }
+        2 * x * pinvg(x, mu, lam, A, B, C) + mu - x - 2 *
+          (mu * pnorm(A) - mu * B * pnorm(-C))
+      },
+      EYY = function(par) {
+        mu <- par$mu
+        lam <- par$lambda
+        integrand <- function(t, mu, lam) {
+          phi <- sqrt(mu / lam)
+          erf <- function(w) 2 * pnorm(w * sqrt(2)) - 1
+          8 * exp(-t^2) * erf(t) / sqrt(pi) / sqrt(t^2 + 2 * phi^2)
+        }
+        mu * integrate(integrand, 0, Inf, mu = mu, lam = lam)$value
+      }
+    ), class = c("ChiSquaredDist", "GOFDist")
+  )
+}
 
 
 ##### Inverse Gamma?
