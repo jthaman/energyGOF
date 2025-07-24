@@ -150,13 +150,14 @@ egof.test <- function(x, dist = c("uniform",
                                   "cauchy", "stable",
                                   "pareto"),
                       R = 100,
-                      pow = 1,
+                      pow = NA,
                       ...) {
   valid_dists <- eval(formals(egof.test)$dist)
   distname <- match.arg(tolower(dist), choices = valid_dists)
   validate_R(R)
   dots <- list(...)
   dist <- distribution_factory(distname, ...)
+  validate_pow(pow, dist, par)
   validate_dots(dots, distname)
   validate_x(x, dist)
   egof_test(x, dist, R, ...)
@@ -169,7 +170,18 @@ egof_test <- function(x, dist, R, ...) {
 }
 
 #### Validation
+validate_pow <- function(pow, dist, par) {
+  if (inherits(dist, "GeneralizedGOFDist")) {
+    if (!dist$pow_domain(pow, par)) {
+      stop(sprintf("Invalid Energy exponent (pow). Failed check %s",
+                   paste0(deparse(body(dist$pow_domain)),
+                          collapse = "") ))
+    }
+  }
+}
+
 validate_dist <- function(dist) {
+  # Not done!
   stopifnot(all(c("name", "parameter", "ref_parameter", "support", "sampler",
                   "EYY", "EXYhat") %in% names(dist)))
   stopifnot(is.logical(dist$composite_allow))
@@ -238,6 +250,7 @@ distribution_factory <- function(name, ...) {
          "gamma" = gamma_dist(...),
          "weibull" = weibull_dist(...),
          "cauchy" = cauchy_dist(...),
+         "stable" = stable_dist(...),
          "pareto" = pareto_dist(...),
          "lognormal" = lognormal_dist(...),
          "lnorm" = lognormal_dist(...),
@@ -259,7 +272,7 @@ distribution_factory <- function(name, ...) {
 }
 
 egof_test.function <- function (x, dist, R, ...) {
-
+  # TODO, for supplying a quantile function.
 }
 
 egof_test.GOFDist <- function(x, dist, R, ...) {
@@ -288,8 +301,9 @@ output_htest <- function(x, dist, R, E_stat, sim, composite_p) {
 }
 
 compute_E_stat <- function(x, dist, EYY, composite_p) {
-  mle <- lapply(dist$statistic, function(f) f(x))
+  if (composite_p) mle <- lapply(dist$statistic, function(f) f(x))
   if (composite_p) x <- dist$xform(x, mle)
+  if (inherits(dist, "CauchyDist")) x <- dist$xform(dist$parameter)
   n <- length(x)
   EXYpar <- if (composite_p) dist$ref_parameter else dist$parameter
   EXY <- dist$EXYhat(x, EXYpar)
@@ -659,6 +673,7 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
   )
 }
 
+##### F??
 
 ##### Weibull
 weibull_dist <- function(shape = NULL, scale = NULL) {
@@ -822,7 +837,7 @@ cauchy_dist <- function(location = NULL, scale = NULL) {
       xform = function(x, par) {
         (x - par$location) / par$scale
       }
-    ), class = c("CauchyDist", "GOFDist")
+    ), class = c("CauchyDist", "GeneralizedGOFDist", "GOFDist")
   )
 }
 
@@ -957,7 +972,7 @@ stable_dist <- function(location = NULL, scale = NULL,
         }
         A * x + s * B
       }
-    ), class = c("StableDist", "GOFDist")
+    ), class = c("StableDist", "GeneralizedGOFDist", "GOFDist")
   )
 }
 
