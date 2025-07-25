@@ -150,35 +150,28 @@ egof.test <- function(x, dist = c("uniform",
                                   "cauchy", "stable",
                                   "pareto"),
                       R = 100,
-                      pow = NA,
                       ...) {
   valid_dists <- eval(formals(egof.test)$dist)
   distname <- match.arg(tolower(dist), choices = valid_dists)
   validate_R(R)
   dots <- list(...)
   dist <- char_to_dist(distname, ...)
-  validate_pow(pow, dist)
   validate_dots(dots, distname)
   validate_x(x, dist)
+  validate_pow(dist)
   egof_test(x, dist, R, ...)
 }
 
 egof <- egof.test
 
-egof_test <- function(x, dist, R, ...) {
-  UseMethod("egof_test", dist)
-}
-
 #### Validation
 ##### Validate Power
-validate_pow <- function(pow, dist) {
-  if (!is.na(pow)) {
-    if (inherits(dist, "GeneralizedGOFDist")) {
-      if (!dist$pow_domain(pow, dist$parameter)) {
-        stop(sprintf("Invalid Energy exponent (pow). Failed check %s",
-                     paste0(deparse(body(dist$pow_domain)),
-                            collapse = "") ))
-      }
+validate_pow <- function(dist) {
+  if (inherits(dist, "GeneralizedGOFDist")) {
+    if (!dist$pow_domain(dist$pow, dist$parameter)) {
+      stop(sprintf("Invalid Energy exponent (pow). Failed check %s",
+                   paste0(deparse(body(dist$pow_domain)),
+                          collapse = "") ))
     }
   }
 }
@@ -191,7 +184,8 @@ validate_par <- function(dist) {
 ##### Validate Distribution Obj
 validate_dist <- function(dist) {
   # Not done!
-  stopifnot(all(c("name", "parameter", "ref_parameter", "support", "sampler",
+  stopifnot(all(c("name", "parameter", "ref_parameter",
+                  "support", "sampler",
                   "EYY", "EXYhat") %in% names(dist)))
   stopifnot(is.logical(dist$composite_allow))
   stopifnot(setequal(names(dist$parameter), formals(dist)))
@@ -253,7 +247,9 @@ validate_R <- function(R) {
 ### Switchers
 #### Distribution Switcher
 char_to_dist <- function(name, ...) {
+  ## ... should have the params and pow
   switch(name,
+         ## Euclidean GOF Dists
          "normal" = normal_dist(...),
          "gaussian" = normal_dist(...),
          "uniform" = uniform_dist(...),
@@ -261,9 +257,6 @@ char_to_dist <- function(name, ...) {
          "beta" = beta_dist(...),
          "gamma" = gamma_dist(...),
          "weibull" = weibull_dist(...),
-         "cauchy" = cauchy_dist(...),
-         "stable" = stable_dist(...),
-         "pareto" = pareto_dist(...),
          "lognormal" = lognormal_dist(...),
          "lnorm" = lognormal_dist(...),
          "laplace" = laplace_dist(...),
@@ -278,6 +271,10 @@ char_to_dist <- function(name, ...) {
          "bernoulli" = bernoulli_dist(...),
          "geometric" = geometric_dist(...),
          "poisson" = poisson_dist(...),
+         ## Generalized GOF Dists
+         "cauchy" = cauchy_dist(...),
+         "stable" = stable_dist(...),
+         "pareto" = pareto_dist(...),
          stop("Unsupported distribution: ", name)
          )
 }
@@ -290,89 +287,47 @@ validate_switch <- function() {
        setdiff(f, b))
 }
 
-#### Select a default power for Generalized GOF tests
-default_pow_maybe <- function(pow, dist) {
-  ## If pow is NA and dist is Generalized, then set a default pow, otherwise return pow.
-  if (is.na(pow)) {
-    if (inherits(dist, "CauchyDist")) 0.5
-    else if (inherits(dist, "StableDist")) {
-      dist$parameter$stability / 4}
-  } else {
-    pow
-  }
-}
 
 #### egof_test Generic & Methods
-egof_test.function <- function (x, dist, R, ...) {
+egof_test <- function(x, dist, R, ...) {
+  UseMethod("egof_test", dist)
+}
+
+egof_test.function <- function (x, dist, R) {
   # TODO, for supplying a quantile function.
 }
 
-egof_test.EuclideanGOFDist <- function(x, dist, R, ...) {
+egof_test.GOFDist <- function(x, dist, R) {
+  ## Setup
   composite_p <- all(sapply(dist$parameter, is.null))
-  EYY <- dist$EYY(if (composite_p) dist$ref_parameter else dist$parameter)
+  EYYpar <- if (composite_p) dist$ref_parameter else dist$parameter
+  ## Run functions
+  EYY <- dist$EYY(EYYpar)
   E_stat <- compute_E_stat(x, dist, EYY, composite_p)
   sim <- simulate_pval(x, dist, R, E_stat, composite_p)
   output_htest(x, dist, R, E_stat, sim, composite_p)
 }
 
-egof_test.GeneralizedGOFDist <- function(x, dist, R, pow, ...) {
-  pow <- default_pow_maybe(pow, dist)
-  composite_p <- all(sapply(dist$parameter, is.null))
-  EYY <- dist$EYY(if (composite_p) dist$ref_parameter else dist$parameter, pow)
-  E_stat <- compute_E_stat(x, dist, EYY, composite_p, pow)
-  sim <- simulate_pval(x, dist, R, E_stat, composite_p)
-  output_htest(x, dist, R, E_stat, sim, composite_p, pow)
-}
-
-
-#### Output Htest
-output_htest <- function(x, dist, R, E_stat, sim, composite_p, pow) {
-  structure(list(
-    method = paste0((if (composite_p) "Composite" else "Simple"),
-                    " energy goodness-of-fit test"),
-    data.name = deparse(substitute(x)),
-    distribution = dist,
-    parameter = c("distribution" = dist$name, (if (composite_p) NULL else dist$parameter)),
-    R = R,
-    pow = if (inherits(dist, "GeneralizedGOFTest")) pow else NULL,
-    composite_p = composite_p,
-    statistic = E_stat,
-    expected_value_E_stat = if(!composite_p) EYY else NULL,
-    p.value = sim$p_value,
-    sim_reps = sim$sim_reps,
-    estimate = if (composite_p) lapply(dist$statistic, function(f) f(x)) else NULL
-  ), class = "htest")
-}
-
 #### Compute Energy GOF statistic
-compute_E_stat.GOFTest <- function(x, dist, EYY, composite_p) {
-  if (composite_p) mle <- lapply(dist$statistic, function(f) f(x))
-  if (composite_p) x <- dist$xform(x, mle)
-  if (inherits(dist, "CauchyDist")) x <- dist$xform(dist$parameter)
+
+compute_E_stat <- function(x, dist, EYY, composite_p) {
+  if (composite_p)
+    mle <- lapply(dist$statistic, function(f) f(x))
+  if (composite_p)
+    x <- dist$xform(x, mle)
+  if (inherits(dist, "CauchyDist"))
+    x <- dist$xform(x, dist$parameter)
   n <- length(x)
   EXYpar <- if (composite_p) dist$ref_parameter else dist$parameter
   EXY <- dist$EXYhat(x, EXYpar)
-  EXX <- EXXhat(x)
-  stat <- n * (2 * EXY - EYY - EXX)
-  names(stat) <- paste0("E-statistic", if (composite_p) " (standardized data)" else "")
-  stat
-}
-
-compute_E_stat.GeneralizedGOFTest <- function(x, dist, EYY, composite_p, pow) {
-  if (composite_p) mle <- lapply(dist$statistic, function(f) f(x))
-  if (composite_p) x <- dist$xform(x, mle)
-  if (inherits(dist, "CauchyDist")) x <- dist$xform(dist$parameter)
-  n <- length(x)
-  EXYpar <- if (composite_p) dist$ref_parameter else dist$parameter
-  EXY <- dist$EXYhat(x, EXYpar, pow)
-  EXX <- EXXhat(x, dist, pow)
-  stat <- n * (2 * EXY - EYY - EXX)
-  names(stat) <- paste0("E-statistic", if (composite_p) " (standardized data)" else "")
-  stat
+  EXX <- EXXhat(x, dist) # Method Dispatch
+  E_stat <- n * (2 * EXY - EYY - EXX)
+  names(E_stat) <- paste0("E-statistic",
+                          if (composite_p) " (standardized data)" else "")
+  E_stat
 }
 
 #### EXXhat
-
 EXXhat <- function(x, dist, ...) {
   UseMethod("EXXhat", dist)
 }
@@ -384,7 +339,8 @@ EXXhat.EuclideanGOFDist <- function(x, dist) {
   2 * mean(prefix * xs) / n
 }
 
-EXXhat.GeneralizedGOFDist <- function(x, dist, pow) {
+EXXhat.GeneralizedGOFDist <- function(x, dist) {
+  pow <- dist$pow
   mean(as.matrix(dist(x, "minkowski", p = pow))^pow)
 }
 
@@ -405,6 +361,25 @@ simulate_pval <- function(x, dist, R, E_stat, composite_p) {
     sim_reps = bootobj$t,
     p_value = mean(bootobj$t > bootobj$t0)
   )
+}
+
+
+#### Output Htest
+output_htest <- function(x, dist, R, E_stat, sim, composite_p) {
+  structure(list(
+    method = paste0((if (composite_p) "Composite" else "Simple"),
+                    " energy goodness-of-fit test"),
+    data.name = deparse(substitute(x)),
+    distribution = dist,
+    parameter = c("distribution" = dist$name, (if (composite_p) NULL else dist$parameter)),
+    R = R,
+    pow = if (inherits(dist, "GeneralizedGOFTest")) dist$pow else NULL,
+    composite_p = composite_p,
+    statistic = E_stat,
+    p.value = sim$p_value,
+    sim_reps = sim$sim_reps,
+    estimate = if (composite_p) lapply(dist$statistic, function(f) f(x)) else NULL
+  ), class = "htest")
 }
 
 #### Distributions
@@ -449,7 +424,7 @@ uniform_dist <- function(min = NULL, max = NULL) {
       support = function(x) is.numeric(x),
       sampler = function(n, par) runif(n, par$min, par$max),
       EYY = function(par) (par$max - par$min) / 3,
-      EXYhat = function(x, par = self$parameter) {
+      EXYhat = function(x, par) {
         mean((x - par$min)^2 / (par$max - par$min) - x +
                (par$max - par$min) / 2)},
       xform = function(x) (x - min(x)) / (max(x) - min(x)),
@@ -469,7 +444,7 @@ exponential_dist <- function(rate = NULL) {
       support = function(x) all(x > 0),
       sampler = function(n, par) rexp(n, par$rate),
       EYY = function(par) 1 / par$rate,
-      EXYhat = function(x, par = self$parameter) {
+      EXYhat = function(x, par) {
         mean(x + par$rate * (1 - 2 * pexp(x, par$rate)))
       },
       xform = function(x) x / mean(x),
@@ -588,8 +563,8 @@ geometric_dist  <- function(prob = NULL) {
       parameter = list(prob = prob),
       support = function(x) all(x == floor(x)) && all(x > 0),
       sampler = function(n, par) rgeom(n, par$prob),
-      EYY = function(p = self$parameter$prob) {
-        q <- 1 - prob
+      EYY = function(par) {
+        q <- 1 - par$prob
         (2 * q) / (1 - q^2)
       },
       EXYhat = function(x, par) {
@@ -887,24 +862,29 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
 #### Generalized Goodness-of-fit Tests
 
 ##### Cauchy
-cauchy_dist <- function(location = NULL, scale = NULL) {
+cauchy_dist <- function(location = NULL, scale = NULL,
+                        pow = NULL) {
+  pow <- if (is.null(pow)) 0.5 else pow
   structure(
     list(
       name = "Cauchy",
       composite_allowed = TRUE,
-      parameter = list(location = NULL, scale = NULL),
+      parameter = list(location = location, scale = scale, pow = pow),
       ref_parameter = list(location = 0, scale = 1),
+      pow = pow,
       support = function(x) {
         all(is.finite(x))
       },
-      pow_domain = function(pow) pow < 1 && pow > 0,
+      pow_domain = function(par) par$pow < 1 && par$pow > 0,
       sampler = function(n, par) {
         rcauchy(n, location = par$location, scale = par$scale)},
-      EXYhat = function(x, par, pow) {
-        mean((1 + x^2)^(pow / 2) * cos(pow * arctan(x)) / cos(pi * pow / 2))
+      EXYhat = function(x, par) {
+        pow <- par$pow
+        mean((1 + x^2)^(pow / 2) * cos(pow * atan(x)) / cospi(pow / 2))
       },
-      EYY = function(par, pow) {
-        2^pow / cos(pi * pow / 2)
+      EYY = function(par) {
+        pow <- par$pow
+        2^pow / cospi(pow / 2)
       },
       xform = function(x, par) {
         (x - par$location) / par$scale
@@ -915,15 +895,18 @@ cauchy_dist <- function(location = NULL, scale = NULL) {
 
 ##### Stable
 stable_dist <- function(location = NULL, scale = NULL,
-                        skew = NULL, stability = NULL) {
+                        skew = NULL, stability = NULL,
+                        pow = NULL) {
+  pow <- if (is.null(pow)) stability / 4 else pow
   structure(
     list(
       name = "Stable",
       composite_allowed = TRUE,
       parameter = list(location = location, scale = scale, skew = skew,
-                       stability = stability),
+                       stability = stability, pow = pow),
       ref_parameter = list(location = 0, scale = 1, skew = skew,
                            stability = stability),
+      pow = pow,
       support = function(x, par) {
         if (par$skew < 1 && par$scale == 1) {
           all(x > par$location) && is.finite(x)
@@ -951,7 +934,7 @@ stable_dist <- function(location = NULL, scale = NULL,
         u <- runif(n, -pi / 2, pi / 2)
         w <- rexp(n)
         zeta <- -b * tan(pi * a / 2)
-        xi <- if (a == 1) pi / 2 else arctan(-zeta) / a
+        xi <- if (a == 1) pi / 2 else atan(-zeta) / a
         X <- if (a == 1) {
           A <- (pi / 2 + b * u) * tan(u)
           B <- b * log(pi * w / 2 * cos(u) / (pi / 2 + b * u))
@@ -967,10 +950,11 @@ stable_dist <- function(location = NULL, scale = NULL,
         else
           s * X + d + 2 * b * s * log(s) / pi
       },
-      EXYhat = function(x, par, pow) {
+      EXYhat = function(x, par) {
         n <- length(x)
         a <- par$stability
         b <- par$skew
+        pow <- par$pow
         if (a == 1 && b != 0) {
           A <- 2 / pi * gamma(pow + 1)
           B <- sin(pi * pow / 2)
@@ -1021,14 +1005,15 @@ stable_dist <- function(location = NULL, scale = NULL,
             }
           }
           return(I / n)
-          } else {
-            # Cauchy Case
-            mean((1 + x^2)^(pow / 2) * cos(pow * arctan(x)) / cos(pi * pow / 2))
-          }
-        },
-      EYY = function(par, pow) {
+        } else {
+          # Cauchy Case
+          mean((1 + x^2)^(pow / 2) * cos(pow * atan(x)) / cos(pi * pow / 2))
+        }
+      },
+      EYY = function(par) {
         a <- par$stability
         b <- par$skew
+        pow <- par$pow
         2^(pow / a + 1) * gamma(1 - pow / a) * gamma(pow) * sin(pi * pow / 2) / pi
       },
       xform = function(x, par) {
