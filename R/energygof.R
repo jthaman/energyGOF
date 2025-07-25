@@ -156,29 +156,21 @@ egof.test <- function(x, dist = c("uniform",
   validate_R(R)
   dots <- list(...)
   dist <- char_to_dist(distname, ...)
-  validate_dots(dots, distname)
+  validate_par(dist)
   validate_x(x, dist)
-  validate_pow(dist)
-  egof_test(x, dist, R, ...)
+  egof_test(x, dist, R)
 }
 
 egof <- egof.test
 
 #### Validation
-##### Validate Power
-validate_pow <- function(dist) {
-  if (inherits(dist, "GeneralizedGOFDist")) {
-    if (!dist$pow_domain(dist$pow, dist$parameter)) {
-      stop(sprintf("Invalid Energy exponent (pow). Failed check %s",
-                   paste0(deparse(body(dist$pow_domain)),
-                          collapse = "") ))
-    }
-  }
-}
 
 ##### Validate Parameters
 validate_par <- function(dist) {
-  ## TODO
+  if (!dist$parameter_domain(dist$parameter)) {
+    stop(sprintf(
+      "Parameters passed in ... failed domain check:  %s", paste0(deparse(body(dist$parameter_domain)), collapse = "")))
+  }
 }
 
 ##### Validate Distribution Obj
@@ -192,36 +184,8 @@ validate_dist <- function(dist) {
   stopifnot(setequal(names(dist$ref_parameter), formals(dist)))
 }
 
-##### Validate ...
-validate_dots <- function(dots, distname) {
-  dist <- char_to_dist(distname)
-  required_params <- names(dist$parameter)
-  supplied_params <- names(dots)
-  missing_params <- setdiff(required_params, supplied_params)
-  extra_params <- setdiff(supplied_params, required_params)
-  no_required_params_in_dots_p <- setequal(missing_params, required_params)
+##### Validate Dots
 
-  ## composite case
-  if (no_required_params_in_dots_p) {
-    if (dist$composite_allowed) {
-      # OK
-    } else {
-      ## Stop if the distribution does not permit composite test.
-      stop(sprintf("Cannot conduct a composite test of distribution %s.",
-                   dist$name))
-    }
-  } else if (length(missing_params) > 0){
-    ## Error if partially composite test
-    stop(sprintf("Missing required parameter(s) needed for *simple* test of '%s' distribution: %s",
-                 dist$name, paste(missing_params, collapse = ", ")))
-  }
-  ## Warning if extra stuff in ...
-  if (length(extra_params) > 0) {
-    warning(sprintf("Ignoring unexpected parameter(s) passed to %s distribution: %s.",
-                    dist$name,
-                    paste(extra_params, collapse = ", ")))
-  }
-}
 
 ##### Validate x
 validate_x <- function(x, dist) {
@@ -421,6 +385,9 @@ uniform_dist <- function(min = NULL, max = NULL) {
       composite_allowed = FALSE,
       parameter = list(min = min, max = max),
       ref_parameter = list(min = 0, max = 1),
+      parameter_domain = function (par) {
+        par$max - par$min > 0
+      },
       support = function(x) is.numeric(x),
       sampler = function(n, par) runif(n, par$min, par$max),
       EYY = function(par) (par$max - par$min) / 3,
@@ -441,6 +408,9 @@ exponential_dist <- function(rate = NULL) {
       composite_allowed = TRUE,
       parameter = list(rate = rate),
       ref_parameter = list(rate = 1),
+      parameter_domain = function (par) {
+        par$rate > 0
+      },
       support = function(x) all(x > 0),
       sampler = function(n, par) rexp(n, par$rate),
       EYY = function(par) 1 / par$rate,
@@ -461,6 +431,9 @@ poisson_dist <- function(lambda = NULL) {
       composite_allowed = TRUE,
       parameter = list(lambda = lambda),
       ref_parameter = list(lambda = mean(x)),
+      parameter_domain = function (par) {
+        par$lambda > 0
+      },
       support = function (x) {
         all(x >= 0) && all(is.integer(x))},
       sampler = function(n, par) {
@@ -492,6 +465,9 @@ bernoulli_dist <- function(prob = NULL) {
       composite_allowed = FALSE,
       parameter = list(prob = prob),
       ref_parameter = list(prob = NULL),
+      parameter_domain = function (par) {
+        par$prob > 0 && par$prob < 1
+      },
       support = function(x) all(x %in% c(0L, 1L)),
       sampler = function(n, par) {
         rbinom(n, size = 1, prob = par$prob)},
@@ -530,6 +506,9 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
       name = "Beta",
       composite_allowed = FALSE,
       parameter = list(shape1 = shape1, shape2 = shape2),
+      parameter_domain = function (par) {
+        par$shape1 > 0 && par$shape2 > 0
+      },
       sampler = function(n, par) {
         rbeta(n, shape1 = par$shape1, shape2 = par$shape2)},
       support = function(x) all(x < 1) && all(x > 0),
@@ -561,6 +540,9 @@ geometric_dist  <- function(prob = NULL) {
       name = "Geometric",
       composite_allowed = FALSE,
       parameter = list(prob = prob),
+      parameter_domain = function (par) {
+        par$prob > 0 && par$prob < 1
+      },
       support = function(x) all(x == floor(x)) && all(x > 0),
       sampler = function(n, par) rgeom(n, par$prob),
       EYY = function(par) {
@@ -585,6 +567,9 @@ halfnormal_dist <- function(scale = NULL) {
       name = "Half-Normal",
       composite_allowed = TRUE,
       parameter = list(scale = scale),
+      parameter_domain = function (par) {
+        par$scale > 0
+      },
       support = function(x) all(x > 0),
       sampler = function(n, par) {
         abs(rnorm(n, 0, sd = par$scale))},
@@ -610,7 +595,10 @@ laplace_dist <- function(location = NULL, scale = NULL) {
       name = "Laplace",
       composite_allowed = TRUE,
       parameter = list(location = location, scale = scale),
-      parameter = list(location = 0, scale = 1),
+      ref_parameter = list(location = 0, scale = 1),
+      parameter_domain = function (par) {
+        par$scale > 0
+      },
       support = function(x) all(is.finite(x)),
       sampler =  function(n, par) {
         par$location + sign(runif(n) - 0.5) * rexp(n, 1 / par$scale)
@@ -641,6 +629,9 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       ref_parameter = list(meanlog = 0, sdlog = 1),
       support = function(x) {
         all(x > 0) && all(is.finite(x))
+      },
+      parameter_domain = function (par) {
+        par$sdlog > 0
       },
       sampler = function(n, par) {
         rlnorm(n, par$meanlog, par$sdlog)
@@ -682,6 +673,9 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
       composite_allowed = TRUE,
       parameter = list(location = location, scale = scale, skew = skew),
       ref_parameter = list(location = 0, scale = 1, skew = 1), # yes?
+      parameter_domain = function (par) {
+        par$scale > 0 && par$skew > 0
+      },
       support = function(x) all(is.finite(x)),
       sampler = function(n, par) {
         loc <- par$location
@@ -733,6 +727,9 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
       support = function(x) {
         all(x > 0)
       },
+      parameter_domain = function (par) {
+        par$shape > 0 && par$scale > 0
+      },
       sampler = function(n, par) {
         rweibull(n, shape = par$shape, scale = par$scale)},
       EXYhat = function(x, par) {
@@ -765,19 +762,22 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
       support = function(x) {
         all(x > 0) && all(is.finite(x))
       },
+      parameter_domain = function (par) {
+        par$shape > 0 && par$rate > 0
+      },
       sampler = function(n, par) {
         rgamma(n, shape = par$shape, rate = par$rate)},
-      EXYhat = function(x, par) {
-        a <- par$shape
-        b <- par$rate
-        mean(2 * x * pgamma(x, a, b) - x + a / b -
-               2 * a / b * pgamma(x, a + 1, b))
-      },
-      EYY = function(par) {
-        a <- par$shape
-        b <- par$rate
-        2 * gamma(a + 1 / 2) / (b * gamma(a) * sqrt(pi))
-      }
+   EXYhat = function(x, par) {
+     a <- par$shape
+     b <- par$rate
+     mean(2 * x * pgamma(x, a, b) - x + a / b -
+            2 * a / b * pgamma(x, a + 1, b))
+   },
+   EYY = function(par) {
+     a <- par$shape
+     b <- par$rate
+     2 * gamma(a + 1 / 2) / (b * gamma(a) * sqrt(pi))
+   }
     ), class = c("GammaDist", "EuclideanGOFDist", "GOFDist")
   )
 }
@@ -793,6 +793,9 @@ chisq_dist <- function(df = NULL) {
       ref_parameter = list(df = NULL),
       support = function(x) {
         all(x > 0) && all(is.finite(x))
+      },
+      parameter_domain = function (par) {
+        par$df > 0
       },
       sampler = function(n, par) {
         rchisq(n, df = par$df, ncp = 0)},
@@ -819,6 +822,9 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
       parameter = list(mu = mu, lambda = lambda),
       support = function(x) {
         all(x > 0) && all(is.finite(x))
+      },
+      parameter_domain = function (par) {
+        par$mu > 0 && par$lambda > 0
       },
       sampler = function(n, par) {
         mu <- par$mu
@@ -864,6 +870,7 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
 ##### Cauchy
 cauchy_dist <- function(location = NULL, scale = NULL,
                         pow = NULL) {
+  # Note, this one requires standardization in the simple case as well.
   pow <- if (is.null(pow)) 0.5 else pow
   structure(
     list(
@@ -875,7 +882,10 @@ cauchy_dist <- function(location = NULL, scale = NULL,
       support = function(x) {
         all(is.finite(x))
       },
-      pow_domain = function(par) par$pow < 1 && par$pow > 0,
+      parameter_domain = function (par) {
+        all(par$scale > 0,
+            par$pow < 1 && par$pow > 0)
+      },
       sampler = function(n, par) {
         rcauchy(n, location = par$location, scale = par$scale)},
       EXYhat = function(x, par) {
@@ -920,11 +930,9 @@ stable_dist <- function(location = NULL, scale = NULL,
           par$stability > 0 && par$stability <= 2,
           is.finite(par$location),
           par$scale > 0,
-          par$skew > -1 && par$stability < 1
+          par$skew > -1 && par$stability < 1,
+          par$pow < par$stability / 2
         )
-      },
-      pow_domain = function (pow, par) {
-        pow < par$stability / 2
       },
       sampler = function(n, par) {
         d <- par$location
@@ -946,89 +954,89 @@ stable_dist <- function(location = NULL, scale = NULL,
           A * B * C
         }
         if (a != 1)
-          s * X + d
-        else
-          s * X + d + 2 * b * s * log(s) / pi
-      },
-      EXYhat = function(x, par) {
-        n <- length(x)
-        a <- par$stability
-        b <- par$skew
-        pow <- par$pow
-        if (a == 1 && b != 0) {
-          A <- 2 / pi * gamma(pow + 1)
-          B <- sin(pi * pow / 2)
-          integrand <- function(t, x, par, pow) {
-            a <- par$stability
-            b <- par$skew
-            (1 - exp(-t^a) * cos(b * t^a * log(t) + x * t)) / t^(pow + 1)
-          }
-          I <- 0
-          for (i in 1:n) {
-            I <- if (x[i] > 2000) {
-              I + abs(x[i])
-            } else {
-              I + integrate(integrand, x = x[i], par = par, pow = pow)$value
-            }
-            return (A * B * I / n)
-          }
-        } else if (a != 1 && b != 0) {
-          # General case
-          A <- 2 / pi * gamma(pow + 1)
-          B <- sin(pi * pow / 2)
-          integrand <- function(t, x, par, pow) {
-            a <- par$stability
-            b <- par$skew
-            (1 - exp(-t^a) * cos(b * t^a * tan(pi * a / 2) - x * t)) / t^(pow + 1)
-          }
-          I <- 0
-          for (i in 1:n) {
-            I <- if (x[i] > 2000) {
-              I + abs(x[i])
-            } else {
-              I + integrate(integrand, x = x[i], par = par, pow = pow)$value
-            }
-          }
-          return(A * B * I / n)
-        } else if (a != 1 && b == 0){
-          #Symmetric Case
-          integrand <- function(t, x, par, pow) {
-            a <- par$stability
-            (1 - exp(-t^a) * cos(x * t)) / t^(pow + 1)
-          }
-          I <- 0
-          for (i in 1:n) {
-            I <- if (x[i] > 2000) {
-              I + abs(x[i])
-            } else {
-              I + integrate(integrand, x = x[i], par = par, pow = pow)$value
-            }
-          }
-          return(I / n)
-        } else {
-          # Cauchy Case
-          mean((1 + x^2)^(pow / 2) * cos(pow * atan(x)) / cos(pi * pow / 2))
+        s * X + d
+      else
+        s * X + d + 2 * b * s * log(s) / pi
+    },
+    EXYhat = function(x, par) {
+      n <- length(x)
+      a <- par$stability
+      b <- par$skew
+      pow <- par$pow
+      if (a == 1 && b != 0) {
+        A <- 2 / pi * gamma(pow + 1)
+        B <- sin(pi * pow / 2)
+        integrand <- function(t, x, par, pow) {
+          a <- par$stability
+          b <- par$skew
+          (1 - exp(-t^a) * cos(b * t^a * log(t) + x * t)) / t^(pow + 1)
         }
-      },
-      EYY = function(par) {
-        a <- par$stability
-        b <- par$skew
-        pow <- par$pow
-        2^(pow / a + 1) * gamma(1 - pow / a) * gamma(pow) * sin(pi * pow / 2) / pi
-      },
-      xform = function(x, par) {
-        d <- par$location
-        s <- par$scale
-        a <- par$stability
-        b <- par$skew
-        A <- (1 / s)^(1 / a)
-        B <- if (a != 1) {
-          -d * (1 / s)^(1 / a - 1)
-        } else {
-          -d + 2 * b * log(1 / s) / pi
+        I <- 0
+        for (i in 1:n) {
+          I <- if (x[i] > 2000) {
+            I + abs(x[i])
+          } else {
+            I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+          }
+          return (A * B * I / n)
         }
-        A * x + s * B
+      } else if (a != 1 && b != 0) {
+        # General case
+        A <- 2 / pi * gamma(pow + 1)
+        B <- sin(pi * pow / 2)
+        integrand <- function(t, x, par, pow) {
+          a <- par$stability
+          b <- par$skew
+          (1 - exp(-t^a) * cos(b * t^a * tan(pi * a / 2) - x * t)) / t^(pow + 1)
+        }
+        I <- 0
+        for (i in 1:n) {
+          I <- if (x[i] > 2000) {
+            I + abs(x[i])
+          } else {
+            I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+          }
+        }
+        return(A * B * I / n)
+      } else if (a != 1 && b == 0){
+        #Symmetric Case
+        integrand <- function(t, x, par, pow) {
+          a <- par$stability
+          (1 - exp(-t^a) * cos(x * t)) / t^(pow + 1)
+        }
+        I <- 0
+        for (i in 1:n) {
+          I <- if (x[i] > 2000) {
+            I + abs(x[i])
+          } else {
+            I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+          }
+        }
+        return(I / n)
+      } else {
+        # Cauchy Case
+        mean((1 + x^2)^(pow / 2) * cos(pow * atan(x)) / cos(pi * pow / 2))
       }
+    },
+    EYY = function(par) {
+      a <- par$stability
+      b <- par$skew
+      pow <- par$pow
+      2^(pow / a + 1) * gamma(1 - pow / a) * gamma(pow) * sin(pi * pow / 2) / pi
+    },
+    xform = function(x, par) {
+      d <- par$location
+      s <- par$scale
+      a <- par$stability
+      b <- par$skew
+      A <- (1 / s)^(1 / a)
+      B <- if (a != 1) {
+        -d * (1 / s)^(1 / a - 1)
+      } else {
+        -d + 2 * b * log(1 / s) / pi
+      }
+      A * x + s * B
+    }
     ), class = c("StableDist", "GeneralizedGOFDist", "GOFDist")
   )
 }
