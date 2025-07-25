@@ -153,11 +153,8 @@ egof.test <- function(x, dist = c("uniform",
                       ...) {
   valid_dists <- eval(formals(egof.test)$dist)
   distname <- match.arg(tolower(dist), choices = valid_dists)
-  validate_R(R)
   dots <- list(...)
   dist <- char_to_dist(distname, ...)
-  validate_par(dist)
-  validate_x(x, dist)
   egof_test(x, dist, R)
 }
 
@@ -254,6 +251,9 @@ validate_switch <- function() {
 
 #### egof_test Generic & Methods
 egof_test <- function(x, dist, R, ...) {
+  validate_par(dist)
+  validate_x(x, dist)
+  validate_R(R)
   UseMethod("egof_test", dist)
 }
 
@@ -310,7 +310,7 @@ EXXhat.GeneralizedGOFDist <- function(x, dist) {
 
 #### Simulate P-values
 simulate_pval <- function(x, dist, R, E_stat, composite_p) {
-  if (R == 0) return(NA)
+  if (R == 0) return(list(sim_reps = 0, p_value = NA))
   ran.gen.args <- if (composite_p) dist$ref_parameter else dist$parameter
   bootobj <- boot::boot(x,
                         statistic = compute_E_stat,
@@ -342,7 +342,7 @@ output_htest <- function(x, dist, R, E_stat, sim, composite_p) {
     statistic = E_stat,
     p.value = sim$p_value,
     sim_reps = sim$sim_reps,
-    estimate = if (composite_p) lapply(dist$statistic, function(f) f(x)) else NULL
+    estimate = if (composite_p) unlist(lapply(dist$statistic, function(f) f(x))) else NULL
   ), class = "htest")
 }
 
@@ -359,7 +359,9 @@ normal_dist <- function(mean = NULL, sd = NULL) {
       parameter = list(mean = mean, sd = sd),
       ref_parameter = list(mean = 0, sd = 1),
       parameter_domain = function (par) {
-        par$sd > 0
+        all(
+          par$sd > 0 || is.null(par$sd),
+          is.finite(par$mean) || is.null(par$mean))
       },
       support = function(x) all(is.finite(x)),
       sampler = function(n, par) rnorm(n, par$mean, par$sd),
@@ -368,7 +370,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
         mean(2 * (x - par$mean) * pnorm(x, par$mean, par$sd) +
                2 * par$sd^2 * dnorm(x, par$mean, par$sd) - (x - par$mean))
       },
-      xform = function(x) (x - mean(x)) / sd(x),
+      xform = function(x, par) (x - par$mean) / par$sd,
       statistic = list(mean = function(x) mean(x),
                        sd = function(x) sd(x))
     ), class = c("NormalDist", "EuclideanGOFDist", "GOFDist")
@@ -394,7 +396,7 @@ uniform_dist <- function(min = NULL, max = NULL) {
       EXYhat = function(x, par) {
         mean((x - par$min)^2 / (par$max - par$min) - x +
                (par$max - par$min) / 2)},
-      xform = function(x) (x - min(x)) / (max(x) - min(x)),
+      xform = function(x, par) (x - par$min) / (par$max - par$min),
       statistic = list(min = function(x) min(x),
                        max = function(x) max(x))
     ), class = c("UniformDist", "EuclideanGOFDist", "GOFDist")
@@ -417,7 +419,7 @@ exponential_dist <- function(rate = NULL) {
       EXYhat = function(x, par) {
         mean(x + par$rate * (1 - 2 * pexp(x, par$rate)))
       },
-      xform = function(x) x / mean(x),
+      xform = function(x, par) x / par$rate,
       statistic = list(rate = function(x) mean(x))
     ), class = c("ExponentialDist", "EuclideanGOFDist", "GOFDist")
   )
