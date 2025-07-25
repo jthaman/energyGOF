@@ -131,7 +131,7 @@
 
 ### Code
 
-#### EGOF
+#### egof.test (egof) user function
 egof.test <- function(x, dist = c("uniform",
                                   "exponential",
                                   "bernoulli", "binomial",
@@ -156,8 +156,8 @@ egof.test <- function(x, dist = c("uniform",
   distname <- match.arg(tolower(dist), choices = valid_dists)
   validate_R(R)
   dots <- list(...)
-  dist <- distribution_factory(distname, ...)
-  validate_pow(pow, dist, par)
+  dist <- char_to_dist(distname, ...)
+  validate_pow(pow, dist)
   validate_dots(dots, distname)
   validate_x(x, dist)
   egof_test(x, dist, R, ...)
@@ -170,16 +170,25 @@ egof_test <- function(x, dist, R, ...) {
 }
 
 #### Validation
-validate_pow <- function(pow, dist, par) {
-  if (inherits(dist, "GeneralizedGOFDist")) {
-    if (!dist$pow_domain(pow, par)) {
-      stop(sprintf("Invalid Energy exponent (pow). Failed check %s",
-                   paste0(deparse(body(dist$pow_domain)),
-                          collapse = "") ))
+##### Validate Power
+validate_pow <- function(pow, dist) {
+  if (!is.na(pow)) {
+    if (inherits(dist, "GeneralizedGOFDist")) {
+      if (!dist$pow_domain(pow, dist$parameter)) {
+        stop(sprintf("Invalid Energy exponent (pow). Failed check %s",
+                     paste0(deparse(body(dist$pow_domain)),
+                            collapse = "") ))
+      }
     }
   }
 }
 
+##### Validate Parameters
+validate_par <- function(dist) {
+  ## TODO
+}
+
+##### Validate Distribution Obj
 validate_dist <- function(dist) {
   # Not done!
   stopifnot(all(c("name", "parameter", "ref_parameter", "support", "sampler",
@@ -189,8 +198,9 @@ validate_dist <- function(dist) {
   stopifnot(setequal(names(dist$ref_parameter), formals(dist)))
 }
 
+##### Validate ...
 validate_dots <- function(dots, distname) {
-  dist <- distribution_factory(distname)
+  dist <- char_to_dist(distname)
   required_params <- names(dist$parameter)
   supplied_params <- names(dots)
   missing_params <- setdiff(required_params, supplied_params)
@@ -219,6 +229,7 @@ validate_dots <- function(dots, distname) {
   }
 }
 
+##### Validate x
 validate_x <- function(x, dist) {
   if (any(is.na(x)) || any(is.null(x)) || any(is.infinite(x))) {
     stop ("Missing data are not supported.")
@@ -231,6 +242,7 @@ dist$name, paste0(deparse(body(dist$support)),
   }
 }
 
+##### Validate R
 validate_R <- function(R) {
   if (!is.numeric(R))
     stop("R must be numeric.")
@@ -238,9 +250,9 @@ validate_R <- function(R) {
     stop("R must be non-negative.")
 }
 
-### Distribution Factory
-
-distribution_factory <- function(name, ...) {
+### Switchers
+#### Distribution Switcher
+char_to_dist <- function(name, ...) {
   switch(name,
          "normal" = normal_dist(...),
          "gaussian" = normal_dist(...),
@@ -259,7 +271,6 @@ distribution_factory <- function(name, ...) {
          "asymmetriclaplace" = asymmetric_laplace_dist(...),
          "alaplace" = asymmetric_laplace_dist(...),
          "inversegaussian" = inverse_gaussian_dist(...),
-         "standardhalfnormal" = halfnormal_dist(...),
          "halfnormal" = halfnormal_dist(...),
          "chisq" = chisq_dist(...),
          "chisquared" = chisq_dist(...),
@@ -271,11 +282,32 @@ distribution_factory <- function(name, ...) {
          )
 }
 
+validate_switch <- function() {
+  b <- names(as.list(body(char_to_dist))[[2]][-c(1, 2)])
+  b <- b[b != ""] # drop the ""
+  f <- unlist(as.list(formals(egof.test)$dist)[-1])
+  list(setdiff(b, f),
+       setdiff(f, b))
+}
+
+#### Select a default power for Generalized GOF tests
+default_pow_maybe <- function(pow, dist) {
+  ## If pow is NA and dist is Generalized, then set a default pow, otherwise return pow.
+  if (is.na(pow)) {
+    if (inherits(dist, "CauchyDist")) 0.5
+    else if (inherits(dist, "StableDist")) {
+      dist$parameter$stability / 4}
+  } else {
+    pow
+  }
+}
+
+#### egof_test Generic & Methods
 egof_test.function <- function (x, dist, R, ...) {
   # TODO, for supplying a quantile function.
 }
 
-egof_test.GOFDist <- function(x, dist, R, ...) {
+egof_test.EuclideanGOFDist <- function(x, dist, R, ...) {
   composite_p <- all(sapply(dist$parameter, is.null))
   EYY <- dist$EYY(if (composite_p) dist$ref_parameter else dist$parameter)
   E_stat <- compute_E_stat(x, dist, EYY, composite_p)
@@ -283,7 +315,18 @@ egof_test.GOFDist <- function(x, dist, R, ...) {
   output_htest(x, dist, R, E_stat, sim, composite_p)
 }
 
-output_htest <- function(x, dist, R, E_stat, sim, composite_p) {
+egof_test.GeneralizedGOFDist <- function(x, dist, R, pow, ...) {
+  pow <- default_pow_maybe(pow, dist)
+  composite_p <- all(sapply(dist$parameter, is.null))
+  EYY <- dist$EYY(if (composite_p) dist$ref_parameter else dist$parameter, pow)
+  E_stat <- compute_E_stat(x, dist, EYY, composite_p, pow)
+  sim <- simulate_pval(x, dist, R, E_stat, composite_p)
+  output_htest(x, dist, R, E_stat, sim, composite_p, pow)
+}
+
+
+#### Output Htest
+output_htest <- function(x, dist, R, E_stat, sim, composite_p, pow) {
   structure(list(
     method = paste0((if (composite_p) "Composite" else "Simple"),
                     " energy goodness-of-fit test"),
@@ -291,6 +334,7 @@ output_htest <- function(x, dist, R, E_stat, sim, composite_p) {
     distribution = dist,
     parameter = c("distribution" = dist$name, (if (composite_p) NULL else dist$parameter)),
     R = R,
+    pow = if (inherits(dist, "GeneralizedGOFTest")) pow else NULL,
     composite_p = composite_p,
     statistic = E_stat,
     expected_value_E_stat = if(!composite_p) EYY else NULL,
@@ -300,7 +344,8 @@ output_htest <- function(x, dist, R, E_stat, sim, composite_p) {
   ), class = "htest")
 }
 
-compute_E_stat <- function(x, dist, EYY, composite_p) {
+#### Compute Energy GOF statistic
+compute_E_stat.GOFTest <- function(x, dist, EYY, composite_p) {
   if (composite_p) mle <- lapply(dist$statistic, function(f) f(x))
   if (composite_p) x <- dist$xform(x, mle)
   if (inherits(dist, "CauchyDist")) x <- dist$xform(dist$parameter)
@@ -313,13 +358,37 @@ compute_E_stat <- function(x, dist, EYY, composite_p) {
   stat
 }
 
-EXXhat <- function(x) {
+compute_E_stat.GeneralizedGOFTest <- function(x, dist, EYY, composite_p, pow) {
+  if (composite_p) mle <- lapply(dist$statistic, function(f) f(x))
+  if (composite_p) x <- dist$xform(x, mle)
+  if (inherits(dist, "CauchyDist")) x <- dist$xform(dist$parameter)
+  n <- length(x)
+  EXYpar <- if (composite_p) dist$ref_parameter else dist$parameter
+  EXY <- dist$EXYhat(x, EXYpar, pow)
+  EXX <- EXXhat(x, dist, pow)
+  stat <- n * (2 * EXY - EYY - EXX)
+  names(stat) <- paste0("E-statistic", if (composite_p) " (standardized data)" else "")
+  stat
+}
+
+#### EXXhat
+
+EXXhat <- function(x, dist, ...) {
+  UseMethod("EXXhat", dist)
+}
+
+EXXhat.EuclideanGOFDist <- function(x, dist) {
   n <- length(x)
   xs <- sort(x)
   prefix <- 2 * seq_len(n) - 1 - n
   2 * mean(prefix * xs) / n
 }
 
+EXXhat.GeneralizedGOFDist <- function(x, dist, pow) {
+  mean(as.matrix(dist(x, "minkowski", p = pow))^pow)
+}
+
+#### Simulate P-values
 simulate_pval <- function(x, dist, R, E_stat, composite_p) {
   if (R == 0) return(NA)
   ran.gen.args <- if (composite_p) dist$ref_parameter else dist$parameter
@@ -350,6 +419,9 @@ normal_dist <- function(mean = NULL, sd = NULL) {
       composite_allowed = TRUE,
       parameter = list(mean = mean, sd = sd),
       ref_parameter = list(mean = 0, sd = 1),
+      parameter_domain = function (par) {
+        par$sd > 0
+      },
       support = function(x) all(is.finite(x)),
       sampler = function(n, par) rnorm(n, par$mean, par$sd),
       EYY = function(par) 2 * par$sd / sqrt(pi),
@@ -360,7 +432,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
       xform = function(x) (x - mean(x)) / sd(x),
       statistic = list(mean = function(x) mean(x),
                        sd = function(x) sd(x))
-    ), class = c("NormalDist", "GOFDist")
+    ), class = c("NormalDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -383,7 +455,7 @@ uniform_dist <- function(min = NULL, max = NULL) {
       xform = function(x) (x - min(x)) / (max(x) - min(x)),
       statistic = list(min = function(x) min(x),
                        max = function(x) max(x))
-    ), class = c("UniformDist", "GOFDist")
+    ), class = c("UniformDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 ##### Exponential
@@ -402,7 +474,7 @@ exponential_dist <- function(rate = NULL) {
       },
       xform = function(x) x / mean(x),
       statistic = list(rate = function(x) mean(x))
-    ), class = c("ExponentialDist", "GOFDist")
+    ), class = c("ExponentialDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -429,7 +501,7 @@ poisson_dist <- function(lambda = NULL) {
       },
       xform = function(x) x,
       statistic = list(lambda = function(x) mean(x))
-    ), class = c("PoissonDist", "GOFDist")
+    ), class = c("PoissonDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -456,7 +528,7 @@ bernoulli_dist <- function(prob = NULL) {
         (h * (1 - par$prob) + (n - h) * par$prob) / n
       },
       statistic = list(prob = function(x) mean(x))
-    ), class = c("BernoulliDist", "GOFDist")
+    ), class = c("BernoulliDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -501,7 +573,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
                2 * (beta(par$shape1 + 1, par$shape2) / beta(par$shape1, par$shape2)) *
                  pbeta(x, par$shape1 + 1, par$shape2))
       }
-    ), class = c("BetaDist", "GOFDist")
+    ), class = c("BetaDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -523,7 +595,7 @@ geometric_dist  <- function(prob = NULL) {
       EXYhat = function(x, par) {
         mean(x + 1 + (1 - 2 * pgeom(x, par$prob)) / par$prob)
       }
-    ), class = c("GeometricDist", "GOFDist")
+    ), class = c("GeometricDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -552,7 +624,7 @@ halfnormal_dist <- function(scale = NULL) {
       },
       xform = function (x) x / sd(x),
       statistic = list(scale = function(x) sd(x))
-    ), class = c("HalfNormalDist", "GOFDist")
+    ), class = c("HalfNormalDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -580,7 +652,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
       xform = function(x) {
         (x - median(x)) / mean(abs(x - median(x)))
       }
-    ), class = c("LaplaceDist", "GOFDist")
+    ), class = c("LaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -620,7 +692,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       },
       xform = function(x) x,
       statistic = list(meanlog = x, sdlog = x)
-    ), class = c("LogNormalDist", "GOFDist")
+    ), class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -669,7 +741,7 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
         pk / beta + qk / lam + pk^2 / lam + qk^2 / beta
       },
       notes = "Composite Test conditional on estimation of skewness parameter."
-    ), class = c("AsymmetricLaplaceDist", "GOFDist")
+    ), class = c("AsymmetricLaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -703,7 +775,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
       xform = function(x, par) {
         (x / par$shape)^par$scale
       }
-    ), class = c("WeibullDist", "GOFDist")
+    ), class = c("WeibullDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -731,7 +803,7 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
         b <- par$rate
         2 * gamma(a + 1 / 2) / (b * gamma(a) * sqrt(pi))
       }
-    ), class = c("GammaDist", "GOFDist")
+    ), class = c("GammaDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -758,7 +830,7 @@ chisq_dist <- function(df = NULL) {
         v <- par$df
         4 * gamma((v + 1) / 2) / gamma(v / 2) / sqrt(pi)
       }
-    ), class = c("ChiSquaredDist", "GOFDist")
+    ), class = c("ChiSquaredDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
@@ -803,7 +875,7 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
         }
         mu * integrate(integrand, 0, Inf, mu = mu, lam = lam)$value
       }
-    ), class = c("ChiSquaredDist", "GOFDist")
+    ), class = c("InverseGaussianDist", "EuclideanGOFDist", "GOFDist")
   )
 }
 
