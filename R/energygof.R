@@ -188,7 +188,7 @@ validate_x <- function(x, dist) {
   if (any(is.na(x)) || any(is.null(x)) || any(is.infinite(x))) {
     stop ("Missing data are not supported.")
   }
-  if (!dist$support(x)) {
+  if (!dist$support(x, dist$parameter)) {
     stop(sprintf("Not all elements of x lie in the support of distribution: %s
 Support test:  %s",
 dist$name, paste0(deparse(body(dist$support)),
@@ -376,7 +376,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
           par$sd > 0 || is.null(par$sd),
           is.finite(par$mean) || is.null(par$mean))
       },
-      support = function(x) all(is.finite(x)),
+      support = function(x, par) all(is.finite(x)),
       sampler = function(n, par) rnorm(n, par$mean, par$sd),
       EYY = function(par) 2 * par$sd / sqrt(pi),
       EXYhat = function(x, par) {
@@ -403,7 +403,7 @@ uniform_dist <- function(min = NULL, max = NULL) {
       parameter_domain = function (par) {
         par$max - par$min > 0
       },
-      support = function(x) is.numeric(x),
+      support = function(x, par) is.numeric(x),
       sampler = function(n, par) runif(n, par$min, par$max),
       EYY = function(par) (par$max - par$min) / 3,
       EXYhat = function(x, par) {
@@ -426,7 +426,7 @@ exponential_dist <- function(rate = NULL) {
       parameter_domain = function (par) {
         par$rate > 0
       },
-      support = function(x) all(x > 0),
+      support = function(x, par) all(x > 0),
       sampler = function(n, par) rexp(n, par$rate),
       EYY = function(par) 1 / par$rate,
       EXYhat = function(x, par) {
@@ -483,7 +483,7 @@ bernoulli_dist <- function(prob = NULL) {
       parameter_domain = function (par) {
         par$prob > 0 && par$prob < 1
       },
-      support = function(x) all(x %in% c(0L, 1L)),
+      support = function(x, par) all(x %in% c(0L, 1L)),
       sampler = function(n, par) {
         rbinom(n, size = 1, prob = par$prob)},
       EYY = function(par) {
@@ -526,7 +526,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
       },
       sampler = function(n, par) {
         rbeta(n, shape1 = par$shape1, shape2 = par$shape2)},
-      support = function(x) all(x < 1) && all(x > 0),
+      support = function(x, par) all(x < 1) && all(x > 0),
       EYY = function(par)  {
         integrand <- function(x, par) {
           shape1 <- par$shape1
@@ -558,7 +558,7 @@ geometric_dist  <- function(prob = NULL) {
       parameter_domain = function (par) {
         par$prob > 0 && par$prob < 1
       },
-      support = function(x) all(x == floor(x)) && all(x > 0),
+      support = function(x, par) all(x == floor(x)) && all(x > 0),
       sampler = function(n, par) rgeom(n, par$prob),
       EYY = function(par) {
         q <- 1 - par$prob
@@ -585,7 +585,7 @@ halfnormal_dist <- function(scale = NULL) {
       parameter_domain = function (par) {
         par$scale > 0 || is.null(par$scale)
       },
-      support = function(x) all(x > 0),
+      support = function(x, par) all(x > 0),
       sampler = function(n, par) {
         abs(rnorm(n, 0, sd = par$scale))},
       EXYhat = function(x, par) {
@@ -614,7 +614,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
       parameter_domain = function (par) {
         par$scale > 0 || is.null(par$scale)
       },
-      support = function(x) all(is.finite(x)),
+      support = function(x, par) all(is.finite(x)),
       sampler =  function(n, par) {
         par$location + sign(runif(n) - 0.5) * rexp(n, 1 / par$scale)
       },
@@ -642,7 +642,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       composite_p = is_composite(meanlog, sdlog),
       parameter = list(meanlog = meanlog, sdlog = sdlog),
       ref_parameter = list(meanlog = 0, sdlog = 1),
-      support = function(x) {
+      support = function(x, par) {
         all(x > 0) && all(is.finite(x))
       },
       parameter_domain = function (par) {
@@ -692,7 +692,7 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
         all(par$scale > 0 || is.null(par$scale),
             par$skew > 0 || is.null(par$skew))
       },
-      support = function(x) all(is.finite(x)),
+      support = function(x, par) all(is.finite(x)),
       sampler = function(n, par) {
         loc <- par$location
         scale <- par$scale
@@ -740,7 +740,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
       composite_p = is_composite(shape, scale),
       parameter = list(shape = shape, scale = scale),
       ref_parameter = list(shape = 1, scale = 1),
-      support = function(x) {
+      support = function(x, par) {
         all(x > 0)
       },
       parameter_domain = function (par) {
@@ -776,7 +776,7 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
       composite_p = is_composite(shape, rate),
       parameter = list(shape = shape, rate = rate),
       ref_parameter = list(shape = 1, rate = 1),
-      support = function(x) {
+      support = function(x, par) {
         all(x > 0) && all(is.finite(x))
       },
       parameter_domain = function (par) {
@@ -811,7 +811,7 @@ chisq_dist <- function(df = NULL) {
       composite_p = FALSE,
       parameter = list(df = df),
       ref_parameter = list(df = NULL),
-      support = function(x) {
+      support = function(x, par) {
         all(x > 0) && all(is.finite(x))
       },
       parameter_domain = function (par) {
@@ -840,7 +840,7 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
       name = "Inverse Gaussion",
       composite_p = is_composite(mu, lambda),
       parameter = list(mu = mu, lambda = lambda),
-      support = function(x) {
+      support = function(x, par) {
         all(x > 0) && all(is.finite(x))
       },
       parameter_domain = function (par) {
@@ -888,11 +888,54 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
 
 #### Generalized Goodness-of-fit Tests
 
+##### Pareto
+
+pareto_dist <- function(scale = NULL, shape = NULL,
+                        pow = shape / 2, r = shape + 1){
+  # Use equations 8.15
+  # r is only needed if alpha > 1
+  ## X^r ~ P(scale^r, shape / r)
+  structure(
+    list(
+      name = "Pareto (Type I)",
+      composite_p = is_composite(scale, shape),
+      parameter = list(scale = scale, shape = shape),
+      ref_parameter = list(scale = 1, shape = 1), #??
+      pow = pow,
+      support = function (x, par) {
+        all(x > par$scale)
+      },
+      parameter_domain = function (par) {
+        all(
+          par$scale > 0 || is.null(par$scale),
+          par$shape > 0 || is.null(par$shape),
+          par$pow < par$shape,
+          par$r > par$shape
+        )
+      },
+      sampler = function(n, par) {},
+      EXYhat = function(x, par) {
+        shape <- par$shape
+        scale < par$scale
+        paw <- par$pow
+        mean()
+      },
+      EYY = function(par) {
+        shape <- par$shape
+        scale <- par$scale
+        pow <- par$pow
+        2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape - pow)
+      },
+      statistic = list(),
+      xform = function(x, par) {}
+    ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
+  )
+}
+
+
 ##### Cauchy
 cauchy_dist <- function(location = NULL, scale = NULL,
-                        pow = NULL) {
-  # Note, this one requires standardization in the simple case as well.
-  pow <- if (is.null(pow)) 0.5 else pow
+                        pow = 0.5) {
   structure(
     list(
       name = "Cauchy",
@@ -900,7 +943,7 @@ cauchy_dist <- function(location = NULL, scale = NULL,
       parameter = list(location = location, scale = scale, pow = pow),
       ref_parameter = list(location = 0, scale = 1),
       pow = pow,
-      support = function(x) {
+      support = function(x, par) {
         all(is.finite(x))
       },
       parameter_domain = function (par) {
@@ -927,8 +970,7 @@ cauchy_dist <- function(location = NULL, scale = NULL,
 ##### Stable
 stable_dist <- function(location = NULL, scale = NULL,
                         skew = NULL, stability = NULL,
-                        pow = NULL) {
-  pow <- if (is.null(pow)) stability / 4 else pow
+                        pow = stability / 4) {
   structure(
     list(
       name = "Stable",
@@ -1092,31 +1134,3 @@ deats <- rbind(deats, list("Bernoulli", "prob", "No"))
 deats <- rbind(deats, list("Binomial", "prob", "Yes"))
 deats <- rbind(deats, list("Beta", "shape1, shape2", "No"))
 deats <- rbind(deats, list("Half-Normal", "theta", "No"))
-
-## ##### Cauchy
-##
-## ##### Pareto
-## ###### Case 1: alpha > 1, s = 1
-## EXYhat.pareto.alpha.greaterthan1 <- function(x, alpha, sigma, ...) {
-##   mean(y + (2 * sigma^alpha * x^(1 - alpha) - alpha * sigma) / (alpha - 1))
-## }
-##
-## EYY.pareto.alphage.greaterthan1 <- function(alpha, sigma, ...) {
-##   stopifnot(alpha > 1)
-##   EY <- alpha * sigma / (alpha - 1)
-##   EY / (alpha - 0.5)
-## }
-##
-## ###### Case 2: alpha > 1, s = alpha - 1
-##
-## ###### Case 3: 0 < s < alpha < 1
-## EXYhat.pareto.alphalessthan1<- function(x, alpha, sigma, ...) {
-##
-## }
-##
-##
-## EYY.pareto.alphalessthan1 <- function(alpha, sigma, ...) {
-##
-## }
-##
-## ###### Case 4: alpha = 1 and 0 < s < 1
