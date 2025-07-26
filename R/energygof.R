@@ -176,7 +176,6 @@ validate_dist <- function(dist) {
   stopifnot(all(c("name", "parameter", "ref_parameter",
                   "support", "sampler",
                   "EYY", "EXYhat") %in% names(dist)))
-  stopifnot(is.logical(dist$composite_allow))
   stopifnot(setequal(names(dist$parameter), formals(dist)))
   stopifnot(setequal(names(dist$ref_parameter), formals(dist)))
 }
@@ -203,6 +202,7 @@ validate_R <- function(R) {
     stop("R must be numeric.")
   if (!(R >= 0))
     stop("R must be non-negative.")
+  floor(R)
 }
 
 ### Switchers
@@ -253,7 +253,7 @@ validate_switch <- function() {
 egof_test <- function(x, dist, R, ...) {
   validate_par(dist)
   validate_x(x, dist)
-  validate_R(R)
+  R <- validate_R(R)
   UseMethod("egof_test", dist)
 }
 
@@ -263,31 +263,31 @@ egof_test.function <- function (x, dist, R) {
 
 egof_test.GOFDist <- function(x, dist, R) {
   ## Setup
-  composite_p <- all(sapply(dist$parameter, is.null))
-  EYYpar <- if (composite_p) dist$ref_parameter else dist$parameter
+  EYYpar <- if (dist$composite_p) dist$ref_parameter else dist$parameter
   ## Run functions
   EYY <- dist$EYY(EYYpar)
-  E_stat <- compute_E_stat(x, dist, EYY, composite_p)
-  sim <- simulate_pval(x, dist, R, E_stat, composite_p)
-  output_htest(x, dist, R, E_stat, sim, composite_p)
+  E_stat <- compute_E_stat(x, dist, EYY)
+  sim <- simulate_pval(x, dist, R, E_stat)
+  sim <- simulate_pval(x, dist, R, E_stat)
+  output_htest(x, dist, R, E_stat, sim)
 }
 
 #### Compute Energy GOF statistic
 
-compute_E_stat <- function(x, dist, EYY, composite_p) {
-  if (composite_p)
+compute_E_stat <- function(x, dist, EYY) {
+  if (dist$composite_p)
     mle <- lapply(dist$statistic, function(f) f(x))
-  if (composite_p)
+  if (dist$composite_p)
     x <- dist$xform(x, mle)
   if (inherits(dist, "CauchyDist"))
     x <- dist$xform(x, dist$parameter)
   n <- length(x)
-  EXYpar <- if (composite_p) dist$ref_parameter else dist$parameter
+  EXYpar <- if (dist$composite_p) dist$ref_parameter else dist$parameter
   EXY <- dist$EXYhat(x, EXYpar)
   EXX <- EXXhat(x, dist) # Method Dispatch
   E_stat <- n * (2 * EXY - EYY - EXX)
   names(E_stat) <- paste0("E-statistic",
-                          if (composite_p) " (standardized data)" else "")
+                          if (dist$composite_p) " (standardized data)" else "")
   E_stat
 }
 
@@ -309,9 +309,9 @@ EXXhat.GeneralizedGOFDist <- function(x, dist) {
 }
 
 #### Simulate P-values
-simulate_pval <- function(x, dist, R, E_stat, composite_p) {
+simulate_pval <- function(x, dist, R, E_stat) {
   if (R == 0) return(list(sim_reps = 0, p_value = NA))
-  ran.gen.args <- if (composite_p) dist$ref_parameter else dist$parameter
+  ran.gen.args <- if (dist$composite_p) dist$ref_parameter else dist$parameter
   bootobj <- boot::boot(x,
                         statistic = compute_E_stat,
                         R = R,
@@ -319,8 +319,7 @@ simulate_pval <- function(x, dist, R, E_stat, composite_p) {
                         ran.gen = dist$sampler,
                         mle = ran.gen.args,
                         dist = dist,
-                        EYY = dist$EYY(ran.gen.args),
-                        composite_p = composite_p)
+                        EYY = dist$EYY(ran.gen.args))
   list(
     sim_reps = bootobj$t,
     p_value = mean(bootobj$t > bootobj$t0)
@@ -329,24 +328,38 @@ simulate_pval <- function(x, dist, R, E_stat, composite_p) {
 
 
 #### Output Htest
-output_htest <- function(x, dist, R, E_stat, sim, composite_p) {
+output_htest <- function(x, dist, R, E_stat, sim) {
+  cp <- dist$composite_p
+  if (cp) mle <- unlist(lapply(dist$statistic, function(f) f(x)))
   structure(list(
-    method = paste0((if (composite_p) "Composite" else "Simple"),
+    method = paste0((if (cp) "Composite" else "Simple"),
                     " energy goodness-of-fit test"),
     data.name = deparse(substitute(x)),
     distribution = dist,
-    parameter = c("distribution" = dist$name, (if (composite_p) NULL else dist$parameter)),
+    parameter = c("distribution" = dist$name, (if (cp) NULL else dist$parameter)),
     R = R,
     pow = if (inherits(dist, "GeneralizedGOFTest")) dist$pow else NULL,
-    composite_p = composite_p,
+    composite_p = cp,
     statistic = E_stat,
     p.value = sim$p_value,
     sim_reps = sim$sim_reps,
-    estimate = if (composite_p) unlist(lapply(dist$statistic, function(f) f(x))) else NULL
+    estimate = if (cp) mle  else NULL
   ), class = "htest")
 }
 
 #### Distributions
+is_composite <- function(...) {
+  nulls <- sapply(list(...), is.null)
+  n_null <- sum(nulls)
+
+  if (n_null == 0) {
+    FALSE  # simple test: all parameters supplied
+  } else if (n_null == length(nulls)) {
+    TRUE   # composite test: all parameters NULL
+  } else {
+    stop("Partially composite tests not implemented.")
+  }
+}
 
 
 ##### Normal
@@ -355,7 +368,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
   structure(
     list(
       name = "Normal",
-      composite_allowed = TRUE,
+      composite_p = is_composite(mean, sd),
       parameter = list(mean = mean, sd = sd),
       ref_parameter = list(mean = 0, sd = 1),
       parameter_domain = function (par) {
@@ -384,7 +397,7 @@ uniform_dist <- function(min = NULL, max = NULL) {
   structure(
     list(
       name = "Uniform",
-      composite_allowed = FALSE,
+      composite_p = FALSE,
       parameter = list(min = min, max = max),
       ref_parameter = list(min = 0, max = 1),
       parameter_domain = function (par) {
@@ -407,7 +420,7 @@ exponential_dist <- function(rate = NULL) {
   structure(
     list(
       name = "Exponential",
-      composite_allowed = TRUE,
+      composite_p = is.null(rate),
       parameter = list(rate = rate),
       ref_parameter = list(rate = 1),
       parameter_domain = function (par) {
@@ -430,11 +443,11 @@ poisson_dist <- function(lambda = NULL) {
   structure(
     list(
       name = "Poisson",
-      composite_allowed = TRUE,
+      composite_p = is.null(lambda),
       parameter = list(lambda = lambda),
       ref_parameter = list(lambda = mean(x)),
       parameter_domain = function (par) {
-        par$lambda > 0
+        par$lambda > 0 || is.null(par$lambda)
       },
       support = function (x) {
         all(x >= 0) && all(is.integer(x))},
@@ -464,7 +477,7 @@ bernoulli_dist <- function(prob = NULL) {
   structure(
     list(
       name = "Bernoulli",
-      composite_allowed = FALSE,
+      composite_p = FALSE,
       parameter = list(prob = prob),
       ref_parameter = list(prob = NULL),
       parameter_domain = function (par) {
@@ -506,7 +519,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
   structure(
     list(
       name = "Beta",
-      composite_allowed = FALSE,
+      composite_p = FALSE,
       parameter = list(shape1 = shape1, shape2 = shape2),
       parameter_domain = function (par) {
         par$shape1 > 0 && par$shape2 > 0
@@ -540,7 +553,7 @@ geometric_dist  <- function(prob = NULL) {
   structure(
     list(
       name = "Geometric",
-      composite_allowed = FALSE,
+      composite_p = FALSE,
       parameter = list(prob = prob),
       parameter_domain = function (par) {
         par$prob > 0 && par$prob < 1
@@ -567,10 +580,10 @@ halfnormal_dist <- function(scale = NULL) {
   structure(
     list(
       name = "Half-Normal",
-      composite_allowed = TRUE,
+      composite_p = is.null(scale),
       parameter = list(scale = scale),
       parameter_domain = function (par) {
-        par$scale > 0
+        par$scale > 0 || is.null(par$scale)
       },
       support = function(x) all(x > 0),
       sampler = function(n, par) {
@@ -595,11 +608,11 @@ laplace_dist <- function(location = NULL, scale = NULL) {
   structure(
     list(
       name = "Laplace",
-      composite_allowed = TRUE,
+      composite_p = is_composite(location, scale),
       parameter = list(location = location, scale = scale),
       ref_parameter = list(location = 0, scale = 1),
       parameter_domain = function (par) {
-        par$scale > 0
+        par$scale > 0 || is.null(par$scale)
       },
       support = function(x) all(is.finite(x)),
       sampler =  function(n, par) {
@@ -626,14 +639,14 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
   structure(
     list(
       name = "Log-Normal",
-      composite_allowed = TRUE,
+      composite_p = is_composite(meanlog, sdlog),
       parameter = list(meanlog = meanlog, sdlog = sdlog),
       ref_parameter = list(meanlog = 0, sdlog = 1),
       support = function(x) {
         all(x > 0) && all(is.finite(x))
       },
       parameter_domain = function (par) {
-        par$sdlog > 0
+        par$sdlog > 0 || is.null(par$sdlog)
       },
       sampler = function(n, par) {
         rlnorm(n, par$meanlog, par$sdlog)
@@ -658,7 +671,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
         }
         integrate(integrand, lower = 0, upper = Inf, par = par)$value
       },
-      xform = function(x) x,
+      xform = function(x) x, #todo
       statistic = list(meanlog = x, sdlog = x)
     ), class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
   )
@@ -672,11 +685,12 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
   structure(
     list(
       name = "Asymmetric Laplace",
-      composite_allowed = TRUE,
+      composite_p = is_composite(location, scale, skew),
       parameter = list(location = location, scale = scale, skew = skew),
       ref_parameter = list(location = 0, scale = 1, skew = 1), # yes?
       parameter_domain = function (par) {
-        par$scale > 0 && par$skew > 0
+        all(par$scale > 0 || is.null(par$scale),
+            par$skew > 0 || is.null(par$skew))
       },
       support = function(x) all(is.finite(x)),
       sampler = function(n, par) {
@@ -723,14 +737,15 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
   structure(
     list(
       name = "Weibull",
-      composite_allowed = TRUE,
+      composite_p = is_composite(shape, scale),
       parameter = list(shape = shape, scale = scale),
       ref_parameter = list(shape = 1, scale = 1),
       support = function(x) {
         all(x > 0)
       },
       parameter_domain = function (par) {
-        par$shape > 0 && par$scale > 0
+        all(par$shape > 0 || is.null(par$shape),
+            par$scale > 0 || is.null(par$shape))
       },
       sampler = function(n, par) {
         rweibull(n, shape = par$shape, scale = par$scale)},
@@ -758,28 +773,31 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
   structure(
     list(
       name = "Gamma",
-      composite_allowed = TRUE,
+      composite_p = is_composite(shape, rate),
       parameter = list(shape = shape, rate = rate),
       ref_parameter = list(shape = 1, rate = 1),
       support = function(x) {
         all(x > 0) && all(is.finite(x))
       },
       parameter_domain = function (par) {
-        par$shape > 0 && par$rate > 0
+        all(
+          par$shape > 0 || is.null(par$shape),
+          par$rate > 0 || is.null(par$rate)
+        )
       },
       sampler = function(n, par) {
         rgamma(n, shape = par$shape, rate = par$rate)},
-   EXYhat = function(x, par) {
-     a <- par$shape
-     b <- par$rate
-     mean(2 * x * pgamma(x, a, b) - x + a / b -
-            2 * a / b * pgamma(x, a + 1, b))
-   },
-   EYY = function(par) {
-     a <- par$shape
-     b <- par$rate
-     2 * gamma(a + 1 / 2) / (b * gamma(a) * sqrt(pi))
-   }
+      EXYhat = function(x, par) {
+        a <- par$shape
+        b <- par$rate
+        mean(2 * x * pgamma(x, a, b) - x + a / b -
+               2 * a / b * pgamma(x, a + 1, b))
+      },
+      EYY = function(par) {
+        a <- par$shape
+        b <- par$rate
+        2 * gamma(a + 1 / 2) / (b * gamma(a) * sqrt(pi))
+      }
     ), class = c("GammaDist", "EuclideanGOFDist", "GOFDist")
   )
 }
@@ -790,7 +808,7 @@ chisq_dist <- function(df = NULL) {
   structure(
     list(
       name = "Chi-Squared",
-      composite_allowed = FALSE,
+      composite_p = FALSE,
       parameter = list(df = df),
       ref_parameter = list(df = NULL),
       support = function(x) {
@@ -820,13 +838,14 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
   structure(
     list(
       name = "Inverse Gaussion",
-      composite_allowed = TRUE,
+      composite_p = is_composite(mu, lambda),
       parameter = list(mu = mu, lambda = lambda),
       support = function(x) {
         all(x > 0) && all(is.finite(x))
       },
       parameter_domain = function (par) {
-        par$mu > 0 && par$lambda > 0
+        all(par$mu > 0 || is.null(par$mu),
+            par$lambda > 0 || is.null(par$mu))
       },
       sampler = function(n, par) {
         mu <- par$mu
@@ -877,7 +896,7 @@ cauchy_dist <- function(location = NULL, scale = NULL,
   structure(
     list(
       name = "Cauchy",
-      composite_allowed = TRUE,
+      composite_p = is_composite(location, scale),
       parameter = list(location = location, scale = scale, pow = pow),
       ref_parameter = list(location = 0, scale = 1),
       pow = pow,
@@ -885,7 +904,7 @@ cauchy_dist <- function(location = NULL, scale = NULL,
         all(is.finite(x))
       },
       parameter_domain = function (par) {
-        all(par$scale > 0,
+        all(par$scale > 0 || is.null(par$scale),
             par$pow < 1 && par$pow > 0)
       },
       sampler = function(n, par) {
@@ -913,7 +932,7 @@ stable_dist <- function(location = NULL, scale = NULL,
   structure(
     list(
       name = "Stable",
-      composite_allowed = TRUE,
+      composite_p = FALSE,
       parameter = list(location = location, scale = scale, skew = skew,
                        stability = stability, pow = pow),
       ref_parameter = list(location = 0, scale = 1, skew = skew,
