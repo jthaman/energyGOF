@@ -1,4 +1,4 @@
-### energygf: Goodness-of-fit tests via the energy of data
+### energyfit: Goodness-of-fit tests via the energy of data
 
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -32,11 +32,12 @@
 #'   \link[energy]{poission.mtest} for a different poisson goodness-of-fit test
 #'   based on mean distances. The tests for Normal and Poisson distribution in
 #'   the \link[energy] package are implemented in C/C++ , and are faster than
-#'   the ones available in the egf package.
+#'   the ones available in the energyfit package.
 #'
 #' @return An object of class `htest' representing the result of the energy
 #'   goodness-of-fit hypothesis test. The htest object has the elements:
 #'
+#' # TODO out of date
 #' \describe{
 #'   \item{\code{method}}{A test description.}
 #'   \item{\code{data.name}}{Name of data passed in x.}
@@ -49,23 +50,21 @@
 #'   \item{\code{estimate}}{A numeric value of the energy statistic for testing \code{x} against {dist}.}
 #' }
 #'
-#' @export
-#
 #'
 #' @details
 #'
 #' [TODO description of Energy GOF test here.]
 #'
-#' There are two types of goodness-of-fit tests covered by the egf function,
+#' There are two types of goodness-of-fit tests covered by the energyfit function,
 #' simple and composite. Simple GOF tests test the data `x` against a specific
-#' distribution with _known parameters_ that you must pass to egf in the
+#' distribution with _known parameters_ that you must pass to energyfit in the
 #' ellipsis agrument (...). You should use a simple GOF test if you wish to
-#' test questions like "my data is Normal with mean 1 and sd 2". egf can also
+#' test questions like "my data is Normal with mean 1 and sd 2". energyfit can also
 #' conduct _some_ composite GOF tests. A composite test is performed if no
 #' parameters are passed in the ellpisis argument (...). You should conduct a
 #' composite test if your research question is "my data is Normal."
 #'
-#' All the composite tests in egf assume that none of the parameters are
+#' All the composite tests in energyfit assume that none of the parameters are
 #' known. So while there is a statistical test of Normality with known mean and
 #' unknown sd, this is not implemented in the energygof package. So, either
 #' pass all the distribution parameters or none of them. (In the special case
@@ -81,30 +80,33 @@
 #' ## Composite energy goodness-of-fit test (test for Normality with unknown
 #' ## parameters)
 #'
-#' egf.test(x, "normal", R = 10)
+#' energyfit.test(x, "normal", R = 10)
 #'
 #' ## Simple energy goodness-of-fit test (test for Normality with known
-#' ## parameters). egf is an alias for egf.test.
+#' ## parameters). egf is an alias for energyfit.test.
 #'
-#' egf(x, "normal", R = 10, mean = 0, sd = 1)
+#' egf.test(x, "normal", R = 10, mean = 0, sd = 1)
 #'
-#' ## Alternatively, use the egf_test generic directly so that you do not need to pass parameter names into \code{...}
+#' ## Alternatively, use the energyfit generic directly so that you do not need
+#' ## to pass parameter names into `...`
 #'
-#' egf_test(x, normal_dist(0, 1), R = 10)
+#' energyfit(x, normal_dist(0, 1), R = 10)
 #'
 #' ## Simple energy goodness-of-fit test for Weibull distribution
 #'
 #' y <- rweibull(10, 1, 1)
-#' egf(y, "weibull", shape = 1, scale = 3, R = 10)
+#' energyfit.test(y, "weibull", shape = 1, scale = 3, R = 10)
 #'
-#' ## Alternatively, use the egf_test generic directly, which is slightly less verbose
+#' ## Alternatively, use the energyfit generic directly, which is slightly less
+#' ## verbose. egf is an alias for energyfit.
 #'
-#' egf_test(y, weibull_dist(1, 3), R = 10
+#' egf(y, weibull_dist(1, 3), R = 10
 #'
-#' ## egf does not support "partially composite" GOF tests, so this will result in an error.
+#' ## energyfit does not support "partially composite" GOF tests, so this will
+#' ## result in an error.
 #'
 #' ## Not run:
-#' egf(x, "normal", mean = 0, R = 10)
+#' energyfit.test(x, "normal", mean = 0, R = 10) # sd is missing
 #' ## End(Not run)
 #'
 #' @references
@@ -139,34 +141,34 @@
 
 ### Code
 
-#### egf.test (egf) user function
-egf.test <- function(x, dist = c("uniform",
-                                 "exponential",
-                                  "bernoulli", "binomial",
-                                  "geometric",
-                                  "normal", "gaussian",
-                                  "beta",
-                                  "poisson",
-                                  "lognormal", "lnorm",
-                                  "laplace", "doubleexponential",
-                                  "asymmetriclaplace", "alaplace",
-                                  "inversegaussian",
-                                  "halfnormal",
-                                  "chisq", "chisquared",
-                                  "gamma",
-                                  "weibull",
-                                  "cauchy", "stable",
-                                  "pareto"),
-                      R = 100,
-                      ...) {
-  valid_dists <- eval(formals(egf.test)$dist)
+#### energyfit.test (egf.test) user function
+energyfit.test <- function(x, dist = c("uniform",
+                                       "exponential",
+                                       "bernoulli", "binomial",
+                                       "geometric",
+                                       "normal", "gaussian",
+                                       "beta",
+                                       "poisson",
+                                       "lognormal", "lnorm",
+                                       "laplace", "doubleexponential",
+                                       "asymmetriclaplace", "alaplace",
+                                       "inversegaussian",
+                                       "halfnormal",
+                                       "chisq", "chisquared",
+                                       "gamma",
+                                       "weibull",
+                                       "cauchy", "stable",
+                                       "pareto"),
+                           R = 100,
+                           ...) {
+  valid_dists <- eval(formals(energyfit.test)$dist)
   distname <- match.arg(tolower(dist), choices = valid_dists)
   dots <- list(...)
   dist <- char_to_dist(distname, ...)
-  egf_test(x, dist, R)
+  energyfit(x, dist, R)
 }
 
-egf <- egf.test
+egf.test <- energyfit.test
 
 #### Validation
 
@@ -248,44 +250,60 @@ char_to_dist <- function(name, ...) {
          )
 }
 
-validate_switch <- function() {
-  b <- names(as.list(body(char_to_dist))[[2]][-c(1, 2)])
-  b <- b[b != ""] # drop the ""
-  f <- unlist(as.list(formals(egf.test)$dist)[-1])
-  list(setdiff(b, f),
-       setdiff(f, b))
-}
 
 
-#### egf_test Generic & Methods
-egf_test <- function(x, dist, R = 100, ...) {
+
+#### energyfit_test Generic & Methods
+energyfit <- function(x, dist, R = 100, ...) {
   validate_par(dist)
   validate_x(x, dist)
   R <- validate_R(R)
-  UseMethod("egf_test", dist)
+  UseMethod("energyfit", dist)
 }
 
-egf_test.function <- function (x, dist, R) {
+egf <- energyfit
+
+energyfit.function <- function (x, dist, R = 100) {
   # TODO, for supplying a quantile function.
 }
 
-egf_test.GOFDist <- function(x, dist, R) {
+energyfit.GOFDist <- function(x, dist, R = 100) {
   ## Setup
   EYYpar <- if (dist$composite_p) dist$ref_parameter else dist$parameter
   ## Run functions
   EYY <- dist$EYY(EYYpar)
-  E_stat <- compute_E_stat(x, dist, EYY)
-  sim <- simulate_pval(x, dist, R, E_stat)
+  E_stat <- Q(x, dist, EYY)
   sim <- simulate_pval(x, dist, R, E_stat)
   output_htest(x, dist, R, E_stat, sim)
 }
 
 #### Compute Energy GOF statistic
-compute_E_stat <- function(x, dist, EYY, ...) {
-  UseMethod("compute_E_stat", dist)
+Q <- function(x, dist, EYY, ...) {
+  UseMethod("Q", dist)
 }
 
-compute_E_stat.GOFDist <- function(x, dist, EYY) {
+Q.CauchyDist <- function(x, dist, EYY) {
+  x <- dist$xform(x, dist$parameter)
+  NextMethod(object = dist)
+}
+
+Q.ParetoDist <- function(x, dist, EYY) {
+  init.shape <- dist$parameter$shape
+  init.scale <- dist$parameter$scale
+  init.pow <- dist$parameter$pow
+  if (init.shape > 1) {
+    x <- dist$xform(x, par)
+    xform.scale <- init.scale^r
+    xform.shape <- init.shape / r
+    pow <- if (init.pow > xform.shape) xform.shape / 2 else init.pow
+    dist <- pareto_dist(scale = xform.scale,
+                        shape = xform.shape,
+                        pow = pow, r = 1)
+  }
+  NextMethod(object = dist)
+}
+
+Q.GOFDist <- function(x, dist, EYY) {
   if (dist$composite_p)
     mle <- lapply(dist$statistic, function(f) f(x))
   if (dist$composite_p)
@@ -300,15 +318,6 @@ compute_E_stat.GOFDist <- function(x, dist, EYY) {
   E_stat
 }
 
-compute_E_stat.CauchyDist <- function(x, dist, EYY) {
-  x <- dist$xform(x, dist$parameter)
-  NextMethod(object = dist)
-}
-
-compute_E_stat.ParetoDist <- function(x, dist, EYY) {
-  ## Transform data if needed
-  NextMethod(object = dist)
-}
 
 #### EXXhat
 EXXhat <- function(x, dist, ...) {
@@ -332,7 +341,7 @@ simulate_pval <- function(x, dist, R, E_stat) {
   if (R == 0) return(list(sim_reps = 0, p_value = NA))
   ran.gen.args <- if (dist$composite_p) dist$ref_parameter else dist$parameter
   bootobj <- boot::boot(x,
-                        statistic = compute_E_stat,
+                        statistic = Q,
                         R = R,
                         sim = "parametric",
                         ran.gen = dist$sampler,
@@ -383,7 +392,7 @@ is_composite <- function(...) {
 
 ##### Normal
 
-normal_dist <- function(mean = NULL, sd = NULL) {
+normal <- function(mean = NULL, sd = NULL) {
   structure(
     list(
       name = "Normal",
@@ -412,7 +421,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
 
 ##### Uniform
 
-uniform_dist <- function(min = NULL, max = NULL) {
+uniform <- function(min = 0, max = 1) {
   structure(
     list(
       name = "Uniform",
@@ -435,7 +444,7 @@ uniform_dist <- function(min = NULL, max = NULL) {
   )
 }
 ##### Exponential
-exponential_dist <- function(rate = NULL) {
+exponential <- function(rate = NULL) {
   structure(
     list(
       name = "Exponential",
@@ -458,7 +467,7 @@ exponential_dist <- function(rate = NULL) {
 }
 
 ##### Poisson
-poisson_dist <- function(lambda = NULL) {
+poisson <- function(lambda = NULL) {
   structure(
     list(
       name = "Poisson",
@@ -492,7 +501,7 @@ poisson_dist <- function(lambda = NULL) {
 
 ##### Bernoulli
 
-bernoulli_dist <- function(prob = NULL) {
+bernoulli <- function(prob = 0.5) {
   structure(
     list(
       name = "Bernoulli",
@@ -534,7 +543,7 @@ bernoulli_dist <- function(prob = NULL) {
 ## }
 
 ##### Beta
-beta_dist <- function(shape1 = NULL, shape2 = NULL) {
+beta <- function(shape1 = 1, shape2 = 1) {
   structure(
     list(
       name = "Beta",
@@ -568,7 +577,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
 ##### Dirchlet?
 
 ##### Geometric
-geometric_dist  <- function(prob = NULL) {
+geometric  <- function(prob = 0.5) {
   structure(
     list(
       name = "Geometric",
@@ -595,7 +604,7 @@ geometric_dist  <- function(prob = NULL) {
 
 ##### Half-Normal
 ## TODO, this seems to be bugged
-halfnormal_dist <- function(scale = NULL) {
+halfnormal <- function(scale = NULL) {
   structure(
     list(
       name = "Half-Normal",
@@ -623,7 +632,7 @@ halfnormal_dist <- function(scale = NULL) {
 }
 
 ##### Laplace
-laplace_dist <- function(location = NULL, scale = NULL) {
+laplace <- function(location = NULL, scale = NULL) {
   structure(
     list(
       name = "Laplace",
@@ -654,7 +663,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
 }
 
 ##### Log-Normal
-lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
+lognormal <- function(meanlog = NULL, sdlog = NULL) {
   structure(
     list(
       name = "Log-Normal",
@@ -699,8 +708,8 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 
 
 ##### Asymmetric Laplace
-asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
-                                    skew = NULL) {
+asymmetric_laplace <- function(location = NULL, scale = NULL,
+                               skew = NULL) {
   structure(
     list(
       name = "Asymmetric Laplace",
@@ -752,7 +761,7 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
 ##### F??
 
 ##### Weibull
-weibull_dist <- function(shape = NULL, scale = NULL) {
+weibull <- function(shape = NULL, scale = NULL) {
   structure(
     list(
       name = "Weibull",
@@ -788,7 +797,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
 }
 
 ##### Gamma
-gamma_dist <- function(shape = NULL, rate = NULL) {
+gamma <- function(shape = NULL, rate = NULL) {
   structure(
     list(
       name = "Gamma",
@@ -823,7 +832,7 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
 
 
 ##### Chi-Square
-chisq_dist <- function(df = NULL) {
+chisq <- function(df = 2) {
   structure(
     list(
       name = "Chi-Squared",
@@ -853,7 +862,7 @@ chisq_dist <- function(df = NULL) {
 
 
 ##### Inverse Gaussian
-inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
+inverse_gaussian <- function(mu = NULL, lambda = NULL) {
   structure(
     list(
       name = "Inverse Gaussion",
@@ -909,8 +918,9 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
 
 ##### Pareto
 
-pareto_dist <- function(scale = NULL, shape = NULL,
-                        pow = shape / 2, r = shape + 1){
+pareto <- function(scale = NULL, shape = NULL,
+                   pow = shape / 2,
+                   r = shape){
   # Use equations 8.15
   # r is only needed if alpha > 1
   ## X^r ~ P(scale^r, shape / r)
@@ -929,35 +939,53 @@ pareto_dist <- function(scale = NULL, shape = NULL,
           par$scale > 0 || is.null(par$scale),
           par$shape > 0 || is.null(par$shape),
           par$pow < par$shape,
-          par$r > par$shape
+          par$shape <= 1 || par$r >= par$shape
         )
       },
-      sampler = function(n, par) {},
+      sampler = function(n, par) {
+        u <- runif(n)
+        par$scale / u^(1/par$shape)
+      },
       EXYhat = function(x, par) {
         shape <- par$shape
         scale < par$scale
         paw <- par$pow
         x0 <- (x - scale) / x
-        mean((x - scale)^pow - scale^shape *
-               (scale * beta(pow, 1 - shape) * pbeta(x0, pow, 1 - shape) -
-                  shape * beta(shape - pow, pow + 1) / x^(shape - pow)))
+        if (shape == 1) {
+          A <- (x - scale)^pow
+          B <- scale * pow * x^(pow - 1)
+          C <- x0^pow / pow + x0^(pow + 1) / (pow + 1) *
+            gsl::hyperg_2F1(1, pow + 1, pow + 2, x0)
+          D <- scale * x^(pow - 1) * beta(pow + 1, 1 - pow)
+          mean(A - B * C + D)
+        } else {
+          mean((x - scale)^pow - scale^shape *
+                 (scale * beta(pow, 1 - shape) * pbeta(x0, pow, 1 - shape) -
+                    shape * beta(shape - pow, pow + 1) / x^(shape - pow)))
+        }
       },
       EYY = function(par) {
         shape <- par$shape
         scale <- par$scale
         pow <- par$pow
-        2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape - pow)
+        if (shape == 1) {
+          2^scale / (2 - pow) * beta(1 - pow, pow + 1)
+        } else {
+          2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape - pow)
+        }
       },
       statistic = list(),
-      xform = function(x, par) {}
+      xform = function(x, par) {x^par$r},
+      notes = if(shape > 1)
+        message("Transforming data by data^r to conduct energy GOF test.")
     ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
   )
 }
 
 
 ##### Cauchy
-cauchy_dist <- function(location = NULL, scale = NULL,
-                        pow = 0.5) {
+cauchy <- function(location = NULL, scale = NULL,
+                   pow = 0.5) {
   structure(
     list(
       name = "Cauchy",
@@ -990,9 +1018,9 @@ cauchy_dist <- function(location = NULL, scale = NULL,
 }
 
 ##### Stable
-stable_dist <- function(location = NULL, scale = NULL,
-                        skew = NULL, stability = NULL,
-                        pow = stability / 4) {
+stable <- function(location = NULL, scale = NULL,
+                   skew = NULL, stability = NULL,
+                   pow = stability / 4) {
   structure(
     list(
       name = "Stable",
@@ -1039,89 +1067,89 @@ stable_dist <- function(location = NULL, scale = NULL,
           A * B * C
         }
         if (a != 1)
-        s * X + d
-      else
-        s * X + d + 2 * b * s * log(s) / pi
-    },
-    EXYhat = function(x, par) {
-      n <- length(x)
-      a <- par$stability
-      b <- par$skew
-      pow <- par$pow
-      if (a == 1 && b != 0) {
-        A <- 2 / pi * gamma(pow + 1)
-        B <- sin(pi * pow / 2)
-        integrand <- function(t, x, par, pow) {
-          a <- par$stability
-          b <- par$skew
-          (1 - exp(-t^a) * cos(b * t^a * log(t) + x * t)) / t^(pow + 1)
-        }
-        I <- 0
-        for (i in 1:n) {
-          I <- if (x[i] > 2000) {
-            I + abs(x[i])
-          } else {
-            I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+          s * X + d
+        else
+          s * X + d + 2 * b * s * log(s) / pi
+      },
+      EXYhat = function(x, par) {
+        n <- length(x)
+        a <- par$stability
+        b <- par$skew
+        pow <- par$pow
+        if (a == 1 && b != 0) {
+          A <- 2 / pi * gamma(pow + 1)
+          B <- sin(pi * pow / 2)
+          integrand <- function(t, x, par, pow) {
+            a <- par$stability
+            b <- par$skew
+            (1 - exp(-t^a) * cos(b * t^a * log(t) + x * t)) / t^(pow + 1)
           }
-          return (A * B * I / n)
-        }
-      } else if (a != 1 && b != 0) {
-        # General case
-        A <- 2 / pi * gamma(pow + 1)
-        B <- sin(pi * pow / 2)
-        integrand <- function(t, x, par, pow) {
-          a <- par$stability
-          b <- par$skew
-          (1 - exp(-t^a) * cos(b * t^a * tan(pi * a / 2) - x * t)) / t^(pow + 1)
-        }
-        I <- 0
-        for (i in 1:n) {
-          I <- if (x[i] > 2000) {
-            I + abs(x[i])
-          } else {
-            I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+          I <- 0
+          for (i in 1:n) {
+            I <- if (x[i] > 2000) {
+              I + abs(x[i])
+            } else {
+              I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+            }
+            return (A * B * I / n)
           }
-        }
-        return(A * B * I / n)
-      } else if (a != 1 && b == 0){
-        #Symmetric Case
-        integrand <- function(t, x, par, pow) {
-          a <- par$stability
-          (1 - exp(-t^a) * cos(x * t)) / t^(pow + 1)
-        }
-        I <- 0
-        for (i in 1:n) {
-          I <- if (x[i] > 2000) {
-            I + abs(x[i])
-          } else {
-            I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+        } else if (a != 1 && b != 0) {
+          # General case
+          A <- 2 / pi * gamma(pow + 1)
+          B <- sin(pi * pow / 2)
+          integrand <- function(t, x, par, pow) {
+            a <- par$stability
+            b <- par$skew
+            (1 - exp(-t^a) * cos(b * t^a * tan(pi * a / 2) - x * t)) / t^(pow + 1)
           }
+          I <- 0
+          for (i in 1:n) {
+            I <- if (x[i] > 2000) {
+              I + abs(x[i])
+            } else {
+              I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+            }
+          }
+          return(A * B * I / n)
+        } else if (a != 1 && b == 0){
+          #Symmetric Case
+          integrand <- function(t, x, par, pow) {
+            a <- par$stability
+            (1 - exp(-t^a) * cos(x * t)) / t^(pow + 1)
+          }
+          I <- 0
+          for (i in 1:n) {
+            I <- if (x[i] > 2000) {
+              I + abs(x[i])
+            } else {
+              I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+            }
+          }
+          return(I / n)
+        } else {
+          # Cauchy Case
+          mean((1 + x^2)^(pow / 2) * cos(pow * atan(x)) / cos(pi * pow / 2))
         }
-        return(I / n)
-      } else {
-        # Cauchy Case
-        mean((1 + x^2)^(pow / 2) * cos(pow * atan(x)) / cos(pi * pow / 2))
+      },
+      EYY = function(par) {
+        a <- par$stability
+        b <- par$skew
+        pow <- par$pow
+        2^(pow / a + 1) * gamma(1 - pow / a) * gamma(pow) * sin(pi * pow / 2) / pi
+      },
+      xform = function(x, par) {
+        d <- par$location
+        s <- par$scale
+        a <- par$stability
+        b <- par$skew
+        A <- (1 / s)^(1 / a)
+        B <- if (a != 1) {
+          -d * (1 / s)^(1 / a - 1)
+        } else {
+          -d + 2 * b * log(1 / s) / pi
+        }
+        A * x + s * B
       }
-    },
-    EYY = function(par) {
-      a <- par$stability
-      b <- par$skew
-      pow <- par$pow
-      2^(pow / a + 1) * gamma(1 - pow / a) * gamma(pow) * sin(pi * pow / 2) / pi
-    },
-    xform = function(x, par) {
-      d <- par$location
-      s <- par$scale
-      a <- par$stability
-      b <- par$skew
-      A <- (1 / s)^(1 / a)
-      B <- if (a != 1) {
-        -d * (1 / s)^(1 / a - 1)
-      } else {
-        -d + 2 * b * log(1 / s) / pi
-      }
-      A * x + s * B
-    }
     ), class = c("StableDist", "GeneralizedGOFDist", "GOFDist")
   )
 }
