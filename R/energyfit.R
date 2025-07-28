@@ -83,9 +83,9 @@
 #' energyfit.test(x, "normal", R = 10)
 #'
 #' ## Simple energy goodness-of-fit test (test for Normality with known
-#' ## parameters). egf is an alias for energyfit.test.
+#' ## parameters). ef is an alias for energyfit.test.
 #'
-#' egf.test(x, "normal", R = 10, mean = 0, sd = 1)
+#' ef.test(x, "normal", R = 10, mean = 0, sd = 1)
 #'
 #' ## Alternatively, use the energyfit generic directly so that you do not need
 #' ## to pass parameter names into `...`
@@ -98,9 +98,9 @@
 #' energyfit.test(y, "weibull", shape = 1, scale = 3, R = 10)
 #'
 #' ## Alternatively, use the energyfit generic directly, which is slightly less
-#' ## verbose. egf is an alias for energyfit.
+#' ## verbose. ef is an alias for energyfit.
 #'
-#' egf(y, weibull_dist(1, 3), R = 10
+#' ef(y, weibull_dist(1, 3), R = 10
 #'
 #' ## energyfit does not support "partially composite" GOF tests, so this will
 #' ## result in an error.
@@ -141,7 +141,7 @@
 
 ### Code
 
-#### energyfit.test (egf.test) user function
+#### energyfit.test (ef.test) user function
 energyfit.test <- function(x, dist = c("uniform",
                                        "exponential",
                                        "bernoulli", "binomial",
@@ -168,7 +168,7 @@ energyfit.test <- function(x, dist = c("uniform",
   energyfit(x, dist, R)
 }
 
-egf.test <- energyfit.test
+ef.test <- energyfit.test
 
 #### Validation
 
@@ -261,7 +261,7 @@ energyfit <- function(x, dist, R = 100, ...) {
   UseMethod("energyfit", dist)
 }
 
-egf <- energyfit
+ef <- energyfit
 
 energyfit.function <- function (x, dist, R = 100) {
   # TODO, for supplying a quantile function.
