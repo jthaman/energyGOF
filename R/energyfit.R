@@ -1007,7 +1007,7 @@ pareto_dist <- function(scale = NULL, shape = NULL,
                          n / (sum(log(x / min(x))))}),
       xform = function(x, par) {x^par$r},
       notes = if(!is.null(shape) && shape > 1 && pow != 1)
-        message("Shape > 1 and pow != 1. Transforming data by data^r to conduct energy GOF test.")
+        message("Shape > 1 and pow != 1. Transforming data by data^r to conduct energy GOF test.\n")
     ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
   )
 }
