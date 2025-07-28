@@ -397,6 +397,18 @@ is_composite <- function(...) {
   }
 }
 
+print.GOFDist <- function(dist, ...) {
+  cat(" Energy goodness-of-fit test for:\n")
+  cat("  ", dist$name, "Distribution\n")
+  cat("   Parmeters: ", paste(names(dist$parameter),
+                           unlist(dist$parameter),
+                           sep = "=", collapse = ", "), "\n")
+  cat("   Test type:",
+      if (dist$composite_p)
+        "Composite (parameters unknown)"
+      else
+        "Simple (parameters known)", "\n")
+}
 
 ##### Normal
 
