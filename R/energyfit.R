@@ -272,46 +272,54 @@ energyfit.GOFDist <- function(x, dist, R = 100) {
   EYYpar <- if (dist$composite_p) dist$ref_parameter else dist$parameter
   ## Run functions
   EYY <- dist$EYY(EYYpar)
-  E_stat <- Q(x, dist, EYY)
+  E_stat <- Qhat(x, dist, EYY)
   sim <- simulate_pval(x, dist, R, E_stat)
   output_htest(x, dist, R, E_stat, sim)
 }
 
 #### Compute Energy GOF statistic
-Q <- function(x, dist, EYY, ...) {
-  UseMethod("Q", dist)
+Qhat <- function(x, dist, EYY, ...) {
+  UseMethod("Qhat", dist)
 }
 
-Q.CauchyDist <- function(x, dist, EYY) {
+Qhat.CauchyDist <- function(x, dist, EYY) {
   x <- dist$xform(x, dist$parameter)
   NextMethod(object = dist)
 }
 
-Q.ParetoDist <- function(x, dist, EYY) {
-  init.shape <- dist$parameter$shape
-  init.scale <- dist$parameter$scale
-  init.pow <- dist$parameter$pow
-  if (init.shape > 1) {
-    x <- dist$xform(x, par)
-    xform.scale <- init.scale^r
-    xform.shape <- init.shape / r
-    pow <- if (init.pow > xform.shape) xform.shape / 2 else init.pow
-    dist <- pareto_dist(scale = xform.scale,
-                        shape = xform.shape,
-                        pow = pow, r = 1)
+Qhat.ParetoDist <- function(x, dist, EYY) {
+  initpar <- dist$parameter
+  initshape <- initpar$shape
+  initscale <- initpar$scale
+  initpow <- initpar$pow
+  r <- initpar$r
+  if (initshape > 1 && initpow != 1) {
+    xshape <- initshape / r
+    xpow <- if (initpow >= xshape) initpow / r else initpow
+    xpar <- list(scale = initscale^r,
+                 shape = xshape,
+                 pow = xpow,
+                 r = 1)
+    # New ingredients
+    x <- dist$xform(x, initpar)
+    dist <- do.call("pareto_dist", xpar)
+    validate_par(dist) # My fault if this is broken
+    EYY <- dist$EYY(xpar)
   }
   NextMethod(object = dist)
 }
 
-Q.GOFDist <- function(x, dist, EYY) {
-  if (dist$composite_p)
+Qhat.GOFDist <- function(x, dist, EYY) {
+  if (dist$composite_p) {
     mle <- lapply(dist$statistic, function(f) f(x))
-  if (dist$composite_p)
     x <- dist$xform(x, mle)
+    EXYpar <- dist$ref_parameter
+  } else {
+    EXYpar <- dist$parameter
+  }
   n <- length(x)
-  EXYpar <- if (dist$composite_p) dist$ref_parameter else dist$parameter
   EXY <- dist$EXYhat(x, EXYpar)
-  EXX <- EXXhat(x, dist) # Method Dispatch
+  EXX <- EXXhat(x, dist)
   E_stat <- n * (2 * EXY - EYY - EXX)
   names(E_stat) <- paste0("E-statistic",
                           if (dist$composite_p) " (standardized data)" else "")
@@ -341,7 +349,7 @@ simulate_pval <- function(x, dist, R, E_stat) {
   if (R == 0) return(list(sim_reps = 0, p_value = NA))
   ran.gen.args <- if (dist$composite_p) dist$ref_parameter else dist$parameter
   bootobj <- boot::boot(x,
-                        statistic = Q,
+                        statistic = Qhat,
                         R = R,
                         sim = "parametric",
                         ran.gen = dist$sampler,
@@ -392,7 +400,7 @@ is_composite <- function(...) {
 
 ##### Normal
 
-normal <- function(mean = NULL, sd = NULL) {
+normal_dist <- function(mean = NULL, sd = NULL) {
   structure(
     list(
       name = "Normal",
@@ -421,7 +429,7 @@ normal <- function(mean = NULL, sd = NULL) {
 
 ##### Uniform
 
-uniform <- function(min = 0, max = 1) {
+uniform_dist<- function(min = 0, max = 1) {
   structure(
     list(
       name = "Uniform",
@@ -444,7 +452,7 @@ uniform <- function(min = 0, max = 1) {
   )
 }
 ##### Exponential
-exponential <- function(rate = NULL) {
+exponential_dist <- function(rate = NULL) {
   structure(
     list(
       name = "Exponential",
@@ -467,7 +475,7 @@ exponential <- function(rate = NULL) {
 }
 
 ##### Poisson
-poisson <- function(lambda = NULL) {
+poisson_dist <- function(lambda = NULL) {
   structure(
     list(
       name = "Poisson",
@@ -501,7 +509,7 @@ poisson <- function(lambda = NULL) {
 
 ##### Bernoulli
 
-bernoulli <- function(prob = 0.5) {
+bernoulli_dist <- function(prob = 0.5) {
   structure(
     list(
       name = "Bernoulli",
@@ -543,7 +551,7 @@ bernoulli <- function(prob = 0.5) {
 ## }
 
 ##### Beta
-beta <- function(shape1 = 1, shape2 = 1) {
+beta_dist <- function(shape1 = 1, shape2 = 1) {
   structure(
     list(
       name = "Beta",
@@ -577,7 +585,7 @@ beta <- function(shape1 = 1, shape2 = 1) {
 ##### Dirchlet?
 
 ##### Geometric
-geometric  <- function(prob = 0.5) {
+geometric_dist  <- function(prob = 0.5) {
   structure(
     list(
       name = "Geometric",
@@ -604,7 +612,7 @@ geometric  <- function(prob = 0.5) {
 
 ##### Half-Normal
 ## TODO, this seems to be bugged
-halfnormal <- function(scale = NULL) {
+halfnormal_dist <- function(scale = NULL) {
   structure(
     list(
       name = "Half-Normal",
@@ -632,7 +640,7 @@ halfnormal <- function(scale = NULL) {
 }
 
 ##### Laplace
-laplace <- function(location = NULL, scale = NULL) {
+laplace_dist <- function(location = NULL, scale = NULL) {
   structure(
     list(
       name = "Laplace",
@@ -663,7 +671,7 @@ laplace <- function(location = NULL, scale = NULL) {
 }
 
 ##### Log-Normal
-lognormal <- function(meanlog = NULL, sdlog = NULL) {
+lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
   structure(
     list(
       name = "Log-Normal",
@@ -708,7 +716,7 @@ lognormal <- function(meanlog = NULL, sdlog = NULL) {
 
 
 ##### Asymmetric Laplace
-asymmetric_laplace <- function(location = NULL, scale = NULL,
+asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
                                skew = NULL) {
   structure(
     list(
@@ -753,7 +761,8 @@ asymmetric_laplace <- function(location = NULL, scale = NULL,
         qk <- 1 - pk
         pk / beta + qk / lam + pk^2 / lam + qk^2 / beta
       },
-      notes = "Composite Test conditional on estimation of skewness parameter."
+      notes = if (composite_p)
+        message("Composite Test conditional on estimation of skewness parameter.")
     ), class = c("AsymmetricLaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
 }
@@ -761,7 +770,7 @@ asymmetric_laplace <- function(location = NULL, scale = NULL,
 ##### F??
 
 ##### Weibull
-weibull <- function(shape = NULL, scale = NULL) {
+weibull_dist <- function(shape = NULL, scale = NULL) {
   structure(
     list(
       name = "Weibull",
@@ -797,7 +806,7 @@ weibull <- function(shape = NULL, scale = NULL) {
 }
 
 ##### Gamma
-gamma <- function(shape = NULL, rate = NULL) {
+gamma_dist <- function(shape = NULL, rate = NULL) {
   structure(
     list(
       name = "Gamma",
@@ -832,7 +841,7 @@ gamma <- function(shape = NULL, rate = NULL) {
 
 
 ##### Chi-Square
-chisq <- function(df = 2) {
+chisq_dist <- function(df = 2) {
   structure(
     list(
       name = "Chi-Squared",
@@ -862,7 +871,7 @@ chisq <- function(df = 2) {
 
 
 ##### Inverse Gaussian
-inverse_gaussian <- function(mu = NULL, lambda = NULL) {
+inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
   structure(
     list(
       name = "Inverse Gaussion",
@@ -917,19 +926,20 @@ inverse_gaussian <- function(mu = NULL, lambda = NULL) {
 #### Generalized Goodness-of-fit Tests
 
 ##### Pareto
-
-pareto <- function(scale = NULL, shape = NULL,
-                   pow = shape / 2,
-                   r = shape){
+pareto_dist <- function(scale = NULL, shape = NULL,
+                        pow = shape / 2,
+                        r = shape){
   # Use equations 8.15
-  # r is only needed if alpha > 1
+  # r is only needed if shape > 1 and pow != 1.
   ## X^r ~ P(scale^r, shape / r)
   structure(
     list(
       name = "Pareto (Type I)",
       composite_p = is_composite(scale, shape),
-      parameter = list(scale = scale, shape = shape),
-      ref_parameter = list(scale = 1, shape = 1), #??
+      parameter = list(scale = scale, shape = shape,
+                       pow = pow, r = r),
+      ref_parameter = list(scale = 1, shape = 1,
+                           pow = .5, r = 1), #??
       pow = pow,
       support = function (x, par) {
         all(x > par$scale)
@@ -939,7 +949,7 @@ pareto <- function(scale = NULL, shape = NULL,
           par$scale > 0 || is.null(par$scale),
           par$shape > 0 || is.null(par$shape),
           par$pow < par$shape,
-          par$shape <= 1 || par$r >= par$shape
+          par$shape < 1 || (par$pow == 1 || par$r >= par$shape)
         )
       },
       sampler = function(n, par) {
@@ -949,7 +959,7 @@ pareto <- function(scale = NULL, shape = NULL,
       EXYhat = function(x, par) {
         shape <- par$shape
         scale < par$scale
-        paw <- par$pow
+        pow <- par$pow
         x0 <- (x - scale) / x
         if (shape == 1) {
           A <- (x - scale)^pow
@@ -958,10 +968,13 @@ pareto <- function(scale = NULL, shape = NULL,
             gsl::hyperg_2F1(1, pow + 1, pow + 2, x0)
           D <- scale * x^(pow - 1) * beta(pow + 1, 1 - pow)
           mean(A - B * C + D)
+        } else if (shape > 1){
+          mean(x + (2 * scale^shape * x^(1 - shape) - shape * scale) /
+                 (shape - 1))
         } else {
           mean((x - scale)^pow - scale^shape *
-                 (scale * beta(pow, 1 - shape) * pbeta(x0, pow, 1 - shape) -
-                    shape * beta(shape - pow, pow + 1) / x^(shape - pow)))
+                 (pow * beta(pow, 1 - shape) * pbeta(x0, pow, 1 - shape) -
+                    shape * beta(shape - pow, pow + 1)) / x^(shape - pow))
         }
       },
       EYY = function(par) {
@@ -969,29 +982,34 @@ pareto <- function(scale = NULL, shape = NULL,
         scale <- par$scale
         pow <- par$pow
         if (shape == 1) {
-          2^scale / (2 - pow) * beta(1 - pow, pow + 1)
+          2 * scale^pow / (2 - pow) * beta(1 - pow, pow + 1)
+        } else if (shape > 1) {
+          2 * shape * scale / (shape - 1) / (2 * shape - 1)
         } else {
           2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape - pow)
         }
       },
-      statistic = list(),
+      statistic = list(scale = function(x) min(x),
+                       shape = function(x) {
+                         n <- length(x)
+                         n / (sum(log(x / min(x))))}),
       xform = function(x, par) {x^par$r},
-      notes = if(shape > 1)
-        message("Transforming data by data^r to conduct energy GOF test.")
+      notes = if(!is.null(shape) && shape > 1 && pow != 1)
+        message("Shape > 1 and pow != 1. Transforming data by data^r to conduct energy GOF test.")
     ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
   )
 }
 
 
 ##### Cauchy
-cauchy <- function(location = NULL, scale = NULL,
-                   pow = 0.5) {
+cauchy_dist <- function(location = NULL, scale = NULL,
+                        pow = 0.5) {
   structure(
     list(
       name = "Cauchy",
       composite_p = is_composite(location, scale),
       parameter = list(location = location, scale = scale, pow = pow),
-      ref_parameter = list(location = 0, scale = 1),
+      ref_parameter = list(location = 0, scale = 1, pow = 0.5),
       pow = pow,
       support = function(x, par) {
         all(is.finite(x))
@@ -1018,9 +1036,9 @@ cauchy <- function(location = NULL, scale = NULL,
 }
 
 ##### Stable
-stable <- function(location = NULL, scale = NULL,
-                   skew = NULL, stability = NULL,
-                   pow = stability / 4) {
+stable_dist <- function(location = NULL, scale = NULL,
+                        skew = NULL, stability = NULL,
+                        pow = stability / 4) {
   structure(
     list(
       name = "Stable",
