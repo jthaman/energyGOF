@@ -26,12 +26,11 @@
 #'   according to the _family of distributions_ \code{dist}, don't pass
 #'   parameters in \code{...}. #'
 #' @seealso \link[stats]{Distributions} for a list of distributions available
-#'   in most R installations. \link[energy]{normal.test} for the energy
-#'   goodness-of-fit test with unknown parameters. \link[energy]{normal.e} for
-#'   the energy goodness-of-fit statistic. See the
-#'   \link[energy]{poission.mtest} for a different poisson goodness-of-fit test
+#'   in most R installations. [energy::normal.test] for the energy
+#'   goodness-of-fit test with unknown parameters. See
+#'   [energy::poission.mtest] for a different poisson goodness-of-fit test
 #'   based on mean distances. The tests for (multivariate) Normal in the
-#'   \link[energy] package are implemented with compiled code, and are faster
+#'   [energy] package are implemented with compiled code, and are faster
 #'   than the one available in the energyfit package.
 #'
 #' @return An object of class `htest' representing the result of the energy
@@ -253,6 +252,7 @@ char_to_dist <- function(name, ...) {
 
 
 
+
 #### energyfit_test Generic & Methods
 energyfit <- function(x, dist, R = 100, ...) {
   validate_par(dist)
@@ -263,10 +263,12 @@ energyfit <- function(x, dist, R = 100, ...) {
 
 ef <- energyfit
 
+#' @export
 energyfit.function <- function (x, dist, R = 100) {
   # TODO, for supplying a quantile function.
 }
 
+#' @export
 energyfit.GOFDist <- function(x, dist, R = 100) {
   ## Setup
   EYYpar <- if (dist$composite_p) dist$ref_par else dist$par
@@ -282,11 +284,13 @@ Qhat <- function(x, dist, EYY, ...) {
   UseMethod("Qhat", dist)
 }
 
+#' @export
 Qhat.CauchyDist <- function(x, dist, EYY) {
   x <- dist$xform(x, dist$par)
   NextMethod(object = dist)
 }
 
+#' @export
 Qhat.ParetoDist <- function(x, dist, EYY) {
   initpar <- dist$par
   initshape <- initpar$shape
@@ -309,6 +313,7 @@ Qhat.ParetoDist <- function(x, dist, EYY) {
   NextMethod(object = dist)
 }
 
+#' @export
 Qhat.GOFDist <- function(x, dist, EYY) {
   if (dist$composite_p) {
     mle <- lapply(dist$statistic, function(f) f(x))
@@ -332,6 +337,7 @@ EXXhat <- function(x, dist, ...) {
   UseMethod("EXXhat", dist)
 }
 
+#' @export
 EXXhat.EuclideanGOFDist <- function(x, dist) {
   n <- length(x)
   xs <- sort(x)
@@ -339,6 +345,7 @@ EXXhat.EuclideanGOFDist <- function(x, dist) {
   2 * mean(prefix * xs) / n
 }
 
+#' @export
 EXXhat.GeneralizedGOFDist <- function(x, dist) {
   pow <- dist$pow
   mean(as.matrix(dist(x, "minkowski", p = pow))^pow)
@@ -397,6 +404,7 @@ is_composite <- function(...) {
   }
 }
 
+#' @export
 print.GOFDist <- function(dist, ...) {
   cat(" Energy goodness-of-fit test for:\n")
   cat("  ", dist$name, "Distribution\n")

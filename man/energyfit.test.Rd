@@ -2,7 +2,7 @@
 % Please edit documentation in R/energyfit.R
 \name{energyfit.test}
 \alias{energyfit.test}
-\title{Energy goodness-of-fit tests for univariate distributions}
+\title{Goodness-of-fit tests via the energy of data}
 \usage{
 \method{energyfit}{test}(
   x,
@@ -46,7 +46,7 @@ An object of class `htest' representing the result of the energy
 }
 }
 \description{
-Energy goodness-of-fit tests for univariate distributions
+Goodness-of-fit tests via the energy of data
 }
 \details{
 [TODO description of Energy GOF test here.]
@@ -133,13 +133,12 @@ ASTIN Bulletin: The Journal of the IAA, 39(2), 691-715.
 }
 \seealso{
 \link[stats]{Distributions} for a list of distributions available
-  in most R installations. \link[energy]{normal.test} for the energy
-  goodness-of-fit test with unknown parameters. \link[energy]{normal.e} for
-  the energy goodness-of-fit statistic. See the
-  \link[energy]{poission.mtest} for a different poisson goodness-of-fit test
-  based on mean distances. The tests for Normal and Poisson distribution in
-  the \link[energy] package are implemented in C/C++ , and are faster than
-  the ones available in the energyfit package.
+  in most R installations. [energy::normal.test] for the energy
+  goodness-of-fit test with unknown parameters. See
+  [energy::poission.mtest] for a different poisson goodness-of-fit test
+  based on mean distances. The tests for (multivariate) Normal in the
+  [energy] package are implemented with compiled code, and are faster
+  than the one available in the energyfit package.
 }
 \author{
 John T. Haman
