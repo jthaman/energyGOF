@@ -1,11 +1,11 @@
 Package: energyfit
-Title: Energy goodness-of-fit tests of univariate distributions
+Title: Goodness-of-fit tests via the energy of data
 Version: 0.1
 Authors@R: person("John", "Haman", email = "mail@johnhaman.org", role = c("aut", "cre"))
-Description: This package provides the `energyfit.test` function, which provides a powerful method of conducting one-sample goodness-of-fit tests for many common distributions. Methods goodness-of-fit testing both the simple and composite cases are available.
+Description: This package provides the `energyfit.test` (alias: `ef.test`) function, which conducts one-sample goodness-of-fit tests for normal, uniform, exponential, bernoulli, binomial, geometric,  beta, poisson, lognormal,  laplace,  asymmetriclaplace,  inversegaussian, halfnormal,  chisquared, gamma, weibull, cauchy, stable, and pareto distributions. A subset of the available distributions can be tested for the composite goodness-of-fit hypothesis, that is, one can test for distribution fit with unknown parameters.
 License: GPL (>= 2)
 Encoding: UTF-8
-imports: gsl, boot
+Imports: gsl, boot
 URL: github (fixme)
 RoxygenNote: 7.3.2
 Suggests:

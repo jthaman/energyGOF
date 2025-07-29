@@ -7,7 +7,7 @@ test_that("formals same as switch", {
 
 ##### Pareto
 test_that("Pareto: shape, scale >1", {
-  d <- pareto_dist(5, 5, 4)
+  d <- pareto_dist(5^5, 1, 4 / 5)
   x <- d$sampler(100, d$par)
   o <- ef(x, d)
   expect_s3_class(o, "htest")

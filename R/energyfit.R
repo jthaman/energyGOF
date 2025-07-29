@@ -13,7 +13,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#' @title Energy goodness-of-fit tests for univariate distributions
+#' @title Goodness-of-fit tests via the energy of data
 #' @author John T. Haman
 #'
 #' @param x A numeric vector.
@@ -30,9 +30,9 @@
 #'   goodness-of-fit test with unknown parameters. \link[energy]{normal.e} for
 #'   the energy goodness-of-fit statistic. See the
 #'   \link[energy]{poission.mtest} for a different poisson goodness-of-fit test
-#'   based on mean distances. The tests for Normal and Poisson distribution in
-#'   the \link[energy] package are implemented in C/C++ , and are faster than
-#'   the ones available in the energyfit package.
+#'   based on mean distances. The tests for (multivariate) Normal in the
+#'   \link[energy] package are implemented with compiled code, and are faster
+#'   than the one available in the energyfit package.
 #'
 #' @return An object of class `htest' representing the result of the energy
 #'   goodness-of-fit hypothesis test. The htest object has the elements:
