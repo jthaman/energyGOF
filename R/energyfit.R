@@ -308,12 +308,14 @@ Qhat <- function(x, dist, EYY) {
   UseMethod("Qhat", dist)
 }
 
+#' @inherit Qhat
 #' @export
 Qhat.CauchyDist <- function(x, dist, EYY) {
   x <- dist$xform(x, dist$par)
   NextMethod(object = dist)
 }
 
+#' @inherit Qhat
 #' @export
 Qhat.ParetoDist <- function(x, dist, EYY) {
   initpar <- dist$par
@@ -337,6 +339,7 @@ Qhat.ParetoDist <- function(x, dist, EYY) {
   NextMethod(object = dist)
 }
 
+#' @inherit Qhat
 #' @export
 Qhat.GOFDist <- function(x, dist, EYY) {
   if (dist$composite_p) {
