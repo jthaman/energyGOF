@@ -300,7 +300,7 @@ energyfit.GOFDist <- function(x, dist, R = 100) {
 #' @param x Numeric vector.
 #' @param dist Distibution object (created by `"name"_dist(...)`)
 #' @param EYY The value of \eqn{E|Y-Y'|} (which is calculated with `dist$EYY()`, but passed as a separate argument because it's computation may be costly)
-#' @return Energy goodness-of-fit statistic for testing that `x` follows the distribution `dist`. In the generalized form, this is \deqn{Q = nE, where, }
+#' @return Energy goodness-of-fit statistic for testing that `x` follows the distribution `dist`. In the generalized form, this is \deqn{Q = nE, \textrm{where,} }
 #'
 #' \deqn{E = \frac{2}{n} E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2} \sum_i \sum_j |x_i - x_j|^s}
 
