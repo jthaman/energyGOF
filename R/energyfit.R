@@ -2,7 +2,7 @@
 
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation, either version 2 of the License, or
+## the Free Software F[]oundation, either version 2 of the License, or
 ## (at your option) any later version.
 
 ## This program is distributed in the hope that it will be useful,
@@ -17,38 +17,36 @@
 #' @author John T. Haman
 #'
 #' @param x A numeric vector.
-#' @param dist A string. The distribution to test \code{x} against.
-#' @param R A positive integer. The number of parametric bootstrap replicates
+#' @param dist A string. The distribution to test `x` against.
+#' @param nsim A positive integer. The number of parametric bootstrap replicates
 #'   taken to calculate the p-value.
-#' @param ... Parameters of the distribution \code{dist}. For distributions in
-#'   the R `stats' library, parameter argument names are identical. To test the
-#'   _composite_ goodness-of-fit hypothesis that \code{x} is distributed
-#'   according to the _family of distributions_ \code{dist}, don't pass
-#'   parameters in \code{...}. #'
+#' @param ... Parameters of the distribution `dist`. For distributions in
+#'    the R `stats' library, parameter argument names are identical. To test the
+#'   _composite_ goodness-of-fit hypothesis that `x` is distributed
+#'   according to the _family of distributions_ `dist`, don't pass
+#'   parameters in `...`
 #' @seealso \link[stats]{Distributions} for a list of distributions available
 #'   in most R installations. [energy::normal.test] for the energy
 #'   goodness-of-fit test with unknown parameters. See
-#'   [energy::poission.mtest] for a different poisson goodness-of-fit test
+#'   [energy::poisson.mtest] for a different poisson goodness-of-fit test
 #'   based on mean distances. The tests for (multivariate) Normal in the
 #'   [energy] package are implemented with compiled code, and are faster
 #'   than the one available in the energyfit package.
 #'
 #' @return An object of class `htest' representing the result of the energy
-#'   goodness-of-fit hypothesis test. The htest object has the elements:
-#'
-#' # TODO out of date
-#' \describe{
-#'   \item{\code{method}}{A test description.}
-#'   \item{\code{data.name}}{Name of data passed in x.}
-#'   \item{\code{parameters}}{What was passed in ..., or NULL for composite tests.}
-#'   \item{\code{null-value}}{A description of the null hypothesis.}
-#'   \item{\code{R}}{Number of simulation replicates.}
-#'   \item{\code{composite_p}}{A logical, TRUE if composite test was performed.}
-#'   \item{\code{statistic}}{NULL, or a list of MLEs calculated, if a composite test was performed.}
-#'   \item{\code{p.value}}{A numeric p-value.}
-#'   \item{\code{estimate}}{A numeric value of the energy statistic for testing \code{x} against {dist}.}
-#' }
-#'
+#'   goodness-of-fit hypothesis test. The htest object has the list elements:
+#' * method: Simple or Composite
+#' * data.name
+#' * distribution: The distribution object created to test
+#' * parameter: List of parameters if the test is simple
+#' * nsim: Number of bootstrap replicates
+#' * pow: If generalized energy test, the exponent of the test
+#' * composite_p: TRUE/FALSE composite predicate
+#' * statistic: The value of the energy statistic (see [Qhat])
+#' * p.value
+#' * sim_reps: bootstrap simulation data
+#' * estimate: Any parameter estimates, if the test is composite
+#' @aliases ef.test
 #'
 #' @details
 #'
@@ -70,7 +68,7 @@
 #' of the Normal distribution, you can use the energy package to test the GOF
 #' hypothesis with any combination of known and known parameters.)
 #'
-#' You should set R to be a very large number in practice. I recommend at least
+#' You should set nsim to be a very large number in practice. I recommend at least
 #' 10,000. The default value is not a robust choice.
 #'
 #' @examples
@@ -79,33 +77,33 @@
 #' ## Composite energy goodness-of-fit test (test for Normality with unknown
 #' ## parameters)
 #'
-#' energyfit.test(x, "normal", R = 10)
+#' energyfit.test(x, "normal", nsim = 10)
 #'
 #' ## Simple energy goodness-of-fit test (test for Normality with known
 #' ## parameters). ef is an alias for energyfit.test.
 #'
-#' ef.test(x, "normal", R = 10, mean = 0, sd = 1)
+#' ef.test(x, "normal", nsim = 10, mean = 0, sd = 1)
 #'
 #' ## Alternatively, use the energyfit generic directly so that you do not need
 #' ## to pass parameter names into `...`
 #'
-#' energyfit(x, normal_dist(0, 1), R = 10)
+#' energyfit(x, normal_dist(0, 1), nsim = 10)
 #'
 #' ## Simple energy goodness-of-fit test for Weibull distribution
 #'
 #' y <- rweibull(10, 1, 1)
-#' energyfit.test(y, "weibull", shape = 1, scale = 3, R = 10)
+#' energyfit.test(y, "weibull", shape = 1, scale = 3, nsim = 10)
 #'
 #' ## Alternatively, use the energyfit generic directly, which is slightly less
 #' ## verbose. ef is an alias for energyfit.
 #'
-#' ef(y, weibull_dist(1, 3), R = 10
+#' ef(y, weibull_dist(1, 3), nsim = 10
 #'
 #' ## energyfit does not support "partially composite" GOF tests, so this will
 #' ## result in an error.
 #'
 #' \dontrun{
-#' energyfit.test(x, "normal", mean = 0, R = 10) # sd is missing
+#' energyfit.test(x, "normal", mean = 0, nsim = 10) # sd is missing
 #' }
 #'
 #' @references
@@ -163,13 +161,13 @@ energyfit.test <- function(x, dist = c("uniform",
                                        "weibull",
                                        "cauchy", "stable",
                                        "pareto"),
-                           R = 100,
+                           nsim = 100,
                            ...) {
   valid_dists <- eval(formals(energyfit.test)$dist)
   distname <- match.arg(tolower(dist), choices = valid_dists)
   dots <- list(...)
   dist <- char_to_dist(distname, ...)
-  energyfit(x, dist, R)
+  energyfit(x, dist, nsim)
 }
 
 ef.test <- energyfit.test
@@ -210,13 +208,13 @@ dist$name, paste0(deparse(body(dist$support)),
   }
 }
 
-##### Validate R
-validate_R <- function(R) {
-  if (!is.numeric(R))
-    stop("R must be numeric.")
-  if (!(R >= 0))
-    stop("R must be non-negative.")
-  floor(R)
+##### Validate nsim
+validate_nsim <- function(nsim) {
+  if (!is.numeric(nsim))
+    stop("nsim must be numeric.")
+  if (!(nsim >= 0))
+    stop("nsim must be non-negative.")
+  floor(nsim)
 }
 
 ### Switchers
@@ -259,38 +257,60 @@ char_to_dist <- function(name, ...) {
 
 
 #### energyfit_test Generic & Methods
-energyfit <- function(x, dist, R = 100, ...) {
+
+#' @description This is an alternative interface that provides the same test as
+#'   ef.test, but allows the user to pass a distribution object. The advantage
+#'   is that you do not need to pass distribution parameters into a `...`
+#'   argument as in `ef.test`. `ef.test` uses this function under the hood, but
+#'   it's perfectly suitable for the user to use as well.
+#' @param dist A distribution object. The distribution to test `x` against.
+#'   Distribution objects are created with the various `name_dist(...)`
+#'   functions in this package.
+#' @inherit energyfit.test return author title references details seealso
+#' @inheritParams energyfit.test
+#' @aliases ef
+#' @examples
+#'
+#' ef(rnorm(10), normal_dist(0,1), nsim = 10)
+#'
+#' ef(rpois(10,1), poisson_dist(1)) # No p-value
+#'
+#' ef(rnorm(10), normal_dist(), nsim = 10) # Composite test
+#'
+#' [TODO] example with quantile function.
+#'
+#' @export
+#'
+energyfit <- function(x, dist, nsim = 100) {
   validate_x(x, dist)
-  R <- validate_R(R)
+  nsim <- validate_nsim(nsim)
   UseMethod("energyfit", dist)
 }
 
 ef <- energyfit
 
 #' @export
-energyfit.function <- function (x, dist, R = 100) {
+energyfit.function <- function (x, dist, nsim = 100) {
   # TODO, for supplying a quantile function.
 }
 
 #' @export
-energyfit.GOFDist <- function(x, dist, R = 100) {
+energyfit.GOFDist <- function(x, dist, nsim = 100) {
   ## Setup
-  initdist <- dist
-  EYYpar <- if (dist$composite_p) dist$ref_par else dist$par
+  cp <- dist$composite_p
+  EYYpar <- if (cp) dist$sampler_par else dist$par
   ## Run functions
   EYY <- dist$EYY(EYYpar)
   E_stat <- Qhat(x, dist, EYY)
-  sim <- simulate_pval(x, dist, R, E_stat)
+  sim <- simulate_pval(x, dist, nsim, E_stat, EYY)
   ## Qhat could have modified dist, so we need to check for a change before
   ## making the htest.
-  dist <- attr(E_stat, "dist")
   names(E_stat) <- paste0("E-statistic",
-                          if (dist$composite_p ||
-                                (!identical(initdist, dist)))
+                          if (cp || dist$xformed)
                             " (transformed data)"
                           else
                             "")
-  output_htest(x, dist, R, E_stat, sim)
+  output_htest(x, dist, nsim, E_stat, sim)
 }
 
 #### Compute Energy GOF statistic
@@ -299,8 +319,8 @@ energyfit.GOFDist <- function(x, dist, R = 100) {
 #' @author John T. Haman
 #' @param x Numeric vector.
 #' @param dist Distibution object (created by `"name"_dist(...)`)
-#' @param EYY The value of \eqn{E|Y-Y'|} (which is calculated with `dist$EYY()`, but passed as a separate argument because it's computation may be costly)
-#' @return Energy goodness-of-fit statistic for testing that `x` follows the distribution `dist`. In the generalized form, this is \deqn{Q = nE, \textrm{where,} }
+#' @param EYY The value of \eqn{E|Y-Y'|} (which is calculated with `dist$EYY()`, but passed as a separate argument because its computation may be costly)
+#' @return Energy goodness-of-fit statistic for testing that `x` follows the distribution `dist`. In the generalized form, this is \deqn{Q = nE} where,
 #'
 #' \deqn{E = \frac{2}{n} E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2} \sum_i \sum_j |x_i - x_j|^s}
 
@@ -311,7 +331,9 @@ Qhat <- function(x, dist, EYY) {
 #' @inherit Qhat
 #' @export
 Qhat.CauchyDist <- function(x, dist, EYY) {
-  x <- dist$xform(x, dist$par)
+  # Must transform in Simple case.
+  if (!dist$composite)
+    x <- dist$xform(x, dist$par)
   NextMethod(object = dist)
 }
 
@@ -333,29 +355,36 @@ Qhat.ParetoDist <- function(x, dist, EYY) {
     # New ingredients
     x <- dist$xform(x, initpar)
     dist <- do.call("pareto_dist", xpar)
+    dist$xformed <- TRUE
     validate_par(dist)
-    EYY <- dist$EYY(xpar)
+    EYY <- dist$EYY(xpar) # TODO: EYY should never be recomputed for simple tests
   }
   NextMethod(object = dist)
 }
 
 #' @inherit Qhat
 #' @export
+Qhat.EuclideanGOFDist <- function(x, dist, EYY) {
+  dist$sampler_par <- dist$par
+  NextMethod(object = dist)
+}
+
+#' @inherit Qhat
+#' @export
+Qhat.GeneralizedGOFDist <- function(x, dist, EYY) {
+  mle <- lapply(dist$statistic, function(f) f(x))
+  x <- dist$xform(x, mle)
+  # No change to sampler par
+  NextMethod(object = dist)
+}
+
+#' @inherit Qhat
+#' @export
 Qhat.GOFDist <- function(x, dist, EYY) {
-  if (dist$composite_p) {
-    mle <- lapply(dist$statistic, function(f) f(x))
-    x <- dist$xform(x, mle)
-    EXYpar <- dist$ref_par
-  } else {
-    EXYpar <- dist$par
-  }
   n <- length(x)
-  EXY <- dist$EXYhat(x, EXYpar)
+  EXY <- dist$EXYhat(x, dist$sampler_par)
   EXX <- EXXhat(x, dist)
   E_stat <- n * (2 * EXY - EYY - EXX)
-  ## In case Qhat makes a new dist, we need to track that, but Qhat cannot output
-  ## a list because boot wants a vector.
-  attr(E_stat, "dist") <- dist
   E_stat
 }
 
@@ -388,17 +417,16 @@ EXXhat.GeneralizedGOFDist <- function(x, dist) {
 }
 
 #### Simulate P-values
-simulate_pval <- function(x, dist, R, E_stat) {
-  if (R == 0) return(list(sim_reps = 0, p_value = NA))
-  ran.gen.args <- if (dist$composite_p) dist$ref_par else dist$par
+simulate_pval <- function(x, dist, nsim, E_stat, EYY) {
+  if (nsim == 0) return(list(sim_reps = 0, p_value = NA))
   bootobj <- boot::boot(x,
                         statistic = Qhat,
-                        R = R,
+                        R = nsim,
                         sim = "parametric",
                         ran.gen = dist$sampler,
-                        mle = ran.gen.args,
+                        mle = dist$sampler_par,
                         dist = dist,
-                        EYY = dist$EYY(ran.gen.args))
+                        EYY = EYY)
   list(
     sim_reps = bootobj$t,
     p_value = mean(bootobj$t > bootobj$t0)
@@ -407,7 +435,8 @@ simulate_pval <- function(x, dist, R, E_stat) {
 
 
 #### Output Htest
-output_htest <- function(x, dist, R, E_stat, sim) {
+
+output_htest <- function(x, dist, nsim, E_stat, sim) {
   cp <- dist$composite_p
   if (cp) mle <- unlist(lapply(dist$statistic, function(f) f(x)))
   structure(list(
@@ -417,13 +446,13 @@ output_htest <- function(x, dist, R, E_stat, sim) {
     distribution = dist,
     parameter = c("Distribution" = dist$name,
                   if (cp) NULL else dist$par),
-    R = R,
+    nsim = nsim,
     pow = if (inherits(dist, "GeneralizedGOFTest")) dist$pow else NULL,
     composite_p = cp,
     statistic = E_stat,
     p.value = sim$p_value,
     sim_reps = sim$sim_reps,
-    estimate = if (cp) mle  else NULL
+    estimate = if (cp) mle else NULL
   ), class = "htest")
 }
 
@@ -462,7 +491,7 @@ print.GOFDist <- function(dist, ...) {
   cat(" Energy goodness-of-fit test for:\n")
   cat("   *", dist$name, "Distribution\n")
   if (!dist$composite_p)
-    cat("   * Parmeters: ", paste(names(dist$par),
+    cat("   * Parameters: ", paste(names(dist$par),
                                   unlist(dist$par),
                                   sep = "=", collapse = ", "), "\n")
   cat("   * Test type:",
@@ -481,7 +510,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
       name = "Normal",
       composite_p = is_composite(mean, sd),
       par = list(mean = mean, sd = sd),
-      ref_par = list(mean = 0, sd = 1),
+      sampler_par = list(mean = 0, sd = 1),
       par_domain = function (par) {
         all(
           par$sd > 0 || is.null(par$sd),
@@ -512,7 +541,7 @@ uniform_dist<- function(min = 0, max = 1) {
       name = "Uniform",
       composite_p = composite_not_allowed(min, max),
       par = list(min = min, max = max),
-      ref_par = list(min = 0, max = 1),
+      sampler_par = list(min = 0, max = 1),
       par_domain = function (par) {
         par$max - par$min > 0
       },
@@ -537,7 +566,7 @@ exponential_dist <- function(rate = NULL) {
       name = "Exponential",
       composite_p = is.null(rate),
       par = list(rate = rate),
-      ref_par = list(rate = 1),
+      sampler_par = list(rate = 1),
       par_domain = function (par) {
         par$rate > 0
       },
@@ -562,7 +591,7 @@ poisson_dist <- function(lambda = NULL) {
       name = "Poisson",
       composite_p = is.null(lambda),
       par = list(lambda = lambda),
-      ref_par = list(lambda = mean(x)),
+      sampler_par = list(lambda = mean(x)),
       par_domain = function (par) {
         par$lambda > 0 || is.null(par$lambda)
       },
@@ -598,7 +627,7 @@ bernoulli_dist <- function(prob = 0.5) {
       name = "Bernoulli",
       composite_p = composite_not_allowed(prob),
       par = list(prob = prob),
-      ref_par = list(prob = NULL),
+      sampler_par = list(prob = NULL),
       par_domain = function (par) {
         par$prob > 0 && par$prob < 1
       },
@@ -626,7 +655,7 @@ binomial_dist <- function(size = 1, prob = 0.5) {
       name = "Binomial",
       composite_p = composite_not_allowed(prob),
       par = list(size = size, prob = prob),
-      ref_par = list(size = 1, prob = 0.5),
+      sampler_par = list(size = 1, prob = 0.5),
       par_domain = function (par) {
         all(
           par$prob > 0 && par$prob < 1,
@@ -758,7 +787,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
       name = "Laplace",
       composite_p = is_composite(location, scale),
       par = list(location = location, scale = scale),
-      ref_par = list(location = 0, scale = 1),
+      sampler_par = list(location = 0, scale = 1),
       par_domain = function (par) {
         par$scale > 0 || is.null(par$scale)
       },
@@ -791,7 +820,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       name = "Log-Normal",
       composite_p = is_composite(meanlog, sdlog),
       par = list(meanlog = meanlog, sdlog = sdlog),
-      ref_par = list(meanlog = 0, sdlog = 1),
+      sampler_par = list(meanlog = 0, sdlog = 1),
       support = function(x, par) {
         all(x > 0) && all(is.finite(x))
       },
@@ -839,7 +868,7 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
       name = "Asymmetric Laplace",
       composite_p = is_composite(location, scale, skew),
       par = list(location = location, scale = scale, skew = skew),
-      ref_par = list(location = 0, scale = 1, skew = 1), # yes?
+      sampler_par = list(location = 0, scale = 1, skew = 1), # yes?
       par_domain = function (par) {
         all(par$scale > 0 || is.null(par$scale),
             par$skew > 0 || is.null(par$skew))
@@ -894,7 +923,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
       name = "Weibull",
       composite_p = is_composite(shape, scale),
       par = list(shape = shape, scale = scale),
-      ref_par = list(shape = 1, scale = 1),
+      sampler_par = list(shape = 1, scale = 1),
       support = function(x, par) {
         all(x > 0)
       },
@@ -932,7 +961,7 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
       name = "Gamma",
       composite_p = is_composite(shape, rate),
       par = list(shape = shape, rate = rate),
-      ref_par = list(shape = 1, rate = 1),
+      sampler_par = list(shape = 1, rate = 1),
       support = function(x, par) {
         all(x > 0) && all(is.finite(x))
       },
@@ -969,7 +998,7 @@ chisq_dist <- function(df = 2) {
       name = "Chi-Squared",
       composite_p = composite_not_allowed(df),
       par = list(df = df),
-      ref_par = list(df = NULL),
+      sampler_par = list(df = NULL),
       support = function(x, par) {
         all(x > 0) && all(is.finite(x))
       },
@@ -1064,8 +1093,8 @@ pareto_dist <- function(scale = NULL, shape = NULL,
       composite_p = is_composite(scale, shape),
       par = list(scale = scale, shape = shape,
                  pow = pow, r = r),
-      ref_par = list(scale = 1, shape = 1,
-                     pow = .5, r = 1), #??
+      sampler_par = list(scale = 1, shape = 1,
+                         pow = .5, r = 1), #??
       pow = pow,
       support = function (x, par) {
         all(x > par$scale)
@@ -1140,7 +1169,7 @@ cauchy_dist <- function(location = NULL, scale = NULL,
       name = "Cauchy",
       composite_p = is_composite(location, scale),
       par = list(location = location, scale = scale, pow = pow),
-      ref_par = list(location = 0, scale = 1, pow = 0.5),
+      sampler_par = list(location = 0, scale = 1, pow = 0.5),
       pow = pow,
       support = function(x, par) {
         all(is.finite(x))
@@ -1178,8 +1207,8 @@ stable_dist <- function(location = NULL, scale = NULL,
       composite_p = composite_not_allowed(location, scale, skew, stability),
       par = list(location = location, scale = scale, skew = skew,
                  stability = stability, pow = pow),
-      ref_par = list(location = 0, scale = 1, skew = skew,
-                     stability = stability),
+      sampler_par = list(location = 0, scale = 1, skew = skew,
+                         stability = stability),
       pow = pow,
       support = function(x, par) {
         if (par$skew < 1 && par$scale == 1) {

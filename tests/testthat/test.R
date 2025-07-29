@@ -23,7 +23,7 @@ test_that("Pareto: shape, scale >1", {
   # erratic
   d <- pareto_dist(4, 4, 3)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, R = 0)
+  o <- ef(x, d, nsim = 0)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -36,7 +36,7 @@ test_that("Pareto: shape = scale = pow > 1", {
 test_that("Pareto: shape, scale >1", {
   d <- pareto_dist(5, 5, 1)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, R = 0)
+  o <- ef(x, d, nsim = 0)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -45,7 +45,7 @@ test_that("Pareto: shape, scale >1", {
 test_that("Pareto: shape, scale <1", {
   d <- pareto_dist(.1, .1)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, R = 0)
+  o <- ef(x, d, nsim = 0)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -53,7 +53,7 @@ test_that("Pareto: shape, scale <1", {
 test_that("Pareto: shape, scale = 1", {
   d <- pareto_dist(1, 1)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, R = 0)
+  o <- ef(x, d, nsim = 0)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -61,7 +61,7 @@ test_that("Pareto: shape, scale = 1", {
 test_that("Pareto: mixed", {
   d <- pareto_dist(.1, 10)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, R = 0)
+  o <- ef(x, d, nsim = 0)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -69,7 +69,7 @@ test_that("Pareto: mixed", {
 test_that("Pareto: mixed", {
   d <- pareto_dist(10, .1)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, R = 0)
+  o <- ef(x, d, nsim = 0)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -101,11 +101,17 @@ test_that("Binomial", {
 })
 
 ##### Normal Tests
-test_that("egf should return htest, even when R is missing", {
+test_that("Normal should not be transformed", {
+  x <- rnorm(10)
+  o <- ef(x, normal_dist(0, 1))
+  expect_identical(names(o$statistic), "E-statistic")
+}
+
+test_that("egf should return htest, even when nsim is missing", {
   x <- rnorm(10)
   o <- ef(x, normal_dist(0, 1))
   expect_s3_class(o, "htest")
-})
+}))
 
 test_that("Normal p-vals should be uniform under Null hypothesis", {
   n <- 15
@@ -143,6 +149,6 @@ test_that("Power to detect sd shift.", {
 
 test_that("Composite Test should work", {
   x <- rnorm (10)
-  o <- ef(x, normal_dist(), R = 0)
+  o <- ef(x, normal_dist(), nsim = 0)
   expect_gt(o$statistic, 0)
 })

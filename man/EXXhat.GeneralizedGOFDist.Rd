@@ -9,10 +9,10 @@
 \arguments{
 \item{x}{Numeric vector.}
 
-\item{dist}{Distibution object (created by `"name"_dist(...)`)}
+\item{dist}{Distibution object (created by \verb{"name"_dist(...)})}
 }
 \value{
-\eqn{\frac{1}{n^2} \sum_i \sum_j  |x_i - x_j|^s}, where s=`pow` is `dist$pow`.
+\eqn{\frac{1}{n^2} \sum_i \sum_j  |x_i - x_j|^s}, where s=\code{pow} is \code{dist$pow}.
 }
 \description{
 Calculate expected distance from sample

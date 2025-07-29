@@ -9,12 +9,12 @@ Qhat(x, dist, EYY)
 \arguments{
 \item{x}{Numeric vector.}
 
-\item{dist}{Distibution object (created by `"name"_dist(...)`)}
+\item{dist}{Distibution object (created by \verb{"name"_dist(...)})}
 
-\item{EYY}{The value of \eqn{E|Y-Y'|} (which is calculated with `dist$EYY()`, but passed as a separate argument because it's computation may be costly)}
+\item{EYY}{The value of \eqn{E|Y-Y'|} (which is calculated with \code{dist$EYY()}, but passed as a separate argument because it's computation may be costly)}
 }
 \value{
-Energy goodness-of-fit statistic for testing that `x` follows the distribution `dist`. In the generalized form, this is \deqn{Q = nE, where, }
+Energy goodness-of-fit statistic for testing that \code{x} follows the distribution \code{dist}. In the generalized form, this is \deqn{Q = nE} where,
 
 \deqn{E = \frac{2}{n} E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2} \sum_i \sum_j |x_i - x_j|^s}
 }

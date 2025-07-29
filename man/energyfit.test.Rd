@@ -2,6 +2,7 @@
 % Please edit documentation in R/energyfit.R
 \name{energyfit.test}
 \alias{energyfit.test}
+\alias{ef.test}
 \title{Goodness-of-fit tests via the energy of data}
 \usage{
 \method{energyfit}{test}(
@@ -10,7 +11,7 @@
     "gaussian", "beta", "poisson", "lognormal", "lnorm", "laplace", "doubleexponential",
     "asymmetriclaplace", "alaplace", "inversegaussian", "halfnormal", "chisq",
     "chisquared", "gamma", "weibull", "cauchy", "stable", "pareto"),
-  R = 100,
+  nsim = 100,
   ...
 )
 }
@@ -19,44 +20,41 @@
 
 \item{dist}{A string. The distribution to test \code{x} against.}
 
-\item{R}{A positive integer. The number of parametric bootstrap replicates
+\item{nsim}{A positive integer. The number of parametric bootstrap replicates
 taken to calculate the p-value.}
 
 \item{...}{Parameters of the distribution \code{dist}. For distributions in
-the R `stats' library, parameter argument names are identical. To test the
-_composite_ goodness-of-fit hypothesis that \code{x} is distributed
-according to the _family of distributions_ \code{dist}, don't pass
-parameters in \code{...}. #'}
+the R \verb{stats' library, parameter argument names are identical. To test the _composite_ goodness-of-fit hypothesis that }x\verb{is distributed according to the _family of distributions_}dist\verb{, don't pass parameters in }...`}
 }
 \value{
 An object of class `htest' representing the result of the energy
-  goodness-of-fit hypothesis test. The htest object has the elements:
-
-# TODO out of date
-\describe{
-  \item{\code{method}}{A test description.}
-  \item{\code{data.name}}{Name of data passed in x.}
-  \item{\code{parameters}}{What was passed in ..., or NULL for composite tests.}
-  \item{\code{null-value}}{A description of the null hypothesis.}
-  \item{\code{R}}{Number of simulation replicates.}
-  \item{\code{composite_p}}{A logical, TRUE if composite test was performed.}
-  \item{\code{statistic}}{NULL, or a list of MLEs calculated, if a composite test was performed.}
-  \item{\code{p.value}}{A numeric p-value.}
-  \item{\code{estimate}}{A numeric value of the energy statistic for testing \code{x} against {dist}.}
+goodness-of-fit hypothesis test. The htest object has the list elements:
+\itemize{
+\item method: Simple or Composite
+\item data.name
+\item distribution: The distribution object created to test
+\item parameter: List of parameters if the test is simple
+\item nsim: Number of bootstrap replicates
+\item pow: If generalized energy test, the exponent of the test
+\item composite_p: TRUE/FALSE composite predicate
+\item statistic: The value of the energy statistic (see \link{Qhat})
+\item p.value
+\item sim_reps: bootstrap simulation data
+\item estimate: Any parameter estimates, if the test is composite
 }
 }
 \description{
 Goodness-of-fit tests via the energy of data
 }
 \details{
-[TODO description of Energy GOF test here.]
+\link{TODO description of Energy GOF test here.}
 
 There are two types of goodness-of-fit tests covered by the energyfit function,
-simple and composite. Simple GOF tests test the data `x` against a specific
-distribution with _known parameters_ that you must pass to energyfit in the
+simple and composite. Simple GOF tests test the data \code{x} against a specific
+distribution with \emph{known parameters} that you must pass to energyfit in the
 ellipsis agrument (...). You should use a simple GOF test if you wish to
 test questions like "my data is Normal with mean 1 and sd 2". energyfit can also
-conduct _some_ composite GOF tests. A composite test is performed if no
+conduct \emph{some} composite GOF tests. A composite test is performed if no
 parameters are passed in the ellpisis argument (...). You should conduct a
 composite test if your research question is "my data is Normal."
 
@@ -67,7 +65,7 @@ pass all the distribution parameters or none of them. (In the special case
 of the Normal distribution, you can use the energy package to test the GOF
 hypothesis with any combination of known and known parameters.)
 
-You should set R to be a very large number in practice. I recommend at least
+You should set nsim to be a very large number in practice. I recommend at least
 10,000. The default value is not a robust choice.
 }
 \examples{
@@ -76,33 +74,33 @@ x <- rnorm(10)
 ## Composite energy goodness-of-fit test (test for Normality with unknown
 ## parameters)
 
-energyfit.test(x, "normal", R = 10)
+energyfit.test(x, "normal", nsim = 10)
 
 ## Simple energy goodness-of-fit test (test for Normality with known
 ## parameters). ef is an alias for energyfit.test.
 
-ef.test(x, "normal", R = 10, mean = 0, sd = 1)
+ef.test(x, "normal", nsim = 10, mean = 0, sd = 1)
 
 ## Alternatively, use the energyfit generic directly so that you do not need
 ## to pass parameter names into `...`
 
-energyfit(x, normal_dist(0, 1), R = 10)
+energyfit(x, normal_dist(0, 1), nsim = 10)
 
 ## Simple energy goodness-of-fit test for Weibull distribution
 
 y <- rweibull(10, 1, 1)
-energyfit.test(y, "weibull", shape = 1, scale = 3, R = 10)
+energyfit.test(y, "weibull", shape = 1, scale = 3, nsim = 10)
 
 ## Alternatively, use the energyfit generic directly, which is slightly less
 ## verbose. ef is an alias for energyfit.
 
-ef(y, weibull_dist(1, 3), R = 10
+ef(y, weibull_dist(1, 3), nsim = 10
 
 ## energyfit does not support "partially composite" GOF tests, so this will
 ## result in an error.
 
 \dontrun{
-energyfit.test(x, "normal", mean = 0, R = 10) # sd is missing
+energyfit.test(x, "normal", mean = 0, nsim = 10) # sd is missing
 }
 
 }
@@ -133,12 +131,12 @@ ASTIN Bulletin: The Journal of the IAA, 39(2), 691-715.
 }
 \seealso{
 \link[stats]{Distributions} for a list of distributions available
-  in most R installations. [energy::normal.test] for the energy
-  goodness-of-fit test with unknown parameters. See
-  [energy::poission.mtest] for a different poisson goodness-of-fit test
-  based on mean distances. The tests for (multivariate) Normal in the
-  [energy] package are implemented with compiled code, and are faster
-  than the one available in the energyfit package.
+in most R installations. \link[energy:normalGOF]{energy::normal.test} for the energy
+goodness-of-fit test with unknown parameters. See
+\link[energy:poisson]{energy::poisson.mtest} for a different poisson goodness-of-fit test
+based on mean distances. The tests for (multivariate) Normal in the
+\link{energy} package are implemented with compiled code, and are faster
+than the one available in the energyfit package.
 }
 \author{
 John T. Haman
