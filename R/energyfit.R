@@ -252,66 +252,6 @@ char_to_dist <- function(name, ...) {
          )
 }
 
-
-
-
-
-#### energyfit_test Generic & Methods
-
-#' @description This is an alternative interface that provides the same test as
-#'   ef.test, but allows the user to pass a distribution object. The advantage
-#'   is that you do not need to pass distribution parameters into a `...`
-#'   argument as in `ef.test`. `ef.test` uses this function under the hood, but
-#'   it's perfectly suitable for the user to use as well.
-#' @param dist A distribution object. The distribution to test `x` against.
-#'   Distribution objects are created with the various `name_dist(...)`
-#'   functions in this package.
-#' @inherit energyfit.test return author title references details seealso
-#' @inheritParams energyfit.test
-#' @aliases ef
-#' @examples
-#'
-#' ef(rnorm(10), normal_dist(0,1), nsim = 10)
-#'
-#' ef(rpois(10,1), poisson_dist(1)) # No p-value
-#'
-#' ef(rnorm(10), normal_dist(), nsim = 10) # Composite test
-#'
-#' [TODO] example with quantile function.
-#'
-#' @export
-#'
-energyfit <- function(x, dist, nsim = 100) {
-  validate_x(x, dist)
-  nsim <- validate_nsim(nsim)
-  UseMethod("energyfit", dist)
-}
-
-ef <- energyfit
-
-#' @export
-energyfit.function <- function (x, dist, nsim = 100) {
-  # TODO, for supplying a quantile function.
-}
-
-#' @export
-energyfit.GOFDist <- function(x, dist, nsim = 100) {
-  ## Setup
-  cp <- dist$composite_p
-  ## Run functions
-  EYY <- EYY(dist)
-  E_stat <- Qhat(x, dist, EYY)
-  sim <- simulate_pval(x, dist, nsim, E_stat, EYY)
-  ## Qhat could have modified dist, so we need to check for a change before
-  ## making the htest.
-  names(E_stat) <- paste0("E-statistic",
-                          if (cp)
-                            " (transformed data)"
-                          else
-                            "")
-  output_htest(x, dist, nsim, E_stat, sim)
-}
-
 #### Compute EYY
 
 #' @export
@@ -324,6 +264,7 @@ EYY.CauchyDist <- function (dist) {
   dist$EYY(dist$sampler_par)
 }
 
+#' @export
 EYY.ParetoDist <- function (dist) {
   if (initshape > 1 && initpow != 1) {
     initpar <- dist$par
@@ -359,6 +300,7 @@ Qhat.CauchyDist <- function(x, dist, EYY) {
 }
 
 pareto_xform_par <- function(dist) {
+  ## X ~ P(s, a) -> X^r ~ P(s^r, a/r)
   initpar <- dist$par
   initshape <- initpar$shape
   initscale <- initpar$scale
@@ -475,6 +417,62 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
     sim_reps = sim$sim_reps,
     estimate = if (cp) mle else NULL
   ), class = "htest")
+}
+
+#### energyfit_test Generic & Methods
+
+#' @description This is an alternative interface that provides the same test as
+#'   ef.test, but allows the user to pass a distribution object. The advantage
+#'   is that you do not need to pass distribution parameters into a `...`
+#'   argument as in `ef.test`. `ef.test` uses this function under the hood, but
+#'   it's perfectly suitable for the user to use as well.
+#' @param dist A distribution object. The distribution to test `x` against.
+#'   Distribution objects are created with the various `name_dist(...)`
+#'   functions in this package.
+#' @inherit energyfit.test return author title references details seealso
+#' @inheritParams energyfit.test
+#' @aliases ef
+#' @examples
+#'
+#' ef(rnorm(10), normal_dist(0,1), nsim = 10)
+#'
+#' ef(rpois(10,1), poisson_dist(1)) # No p-value
+#'
+#' ef(rnorm(10), normal_dist(), nsim = 10) # Composite test
+#'
+#' [TODO] example with quantile function.
+#'
+#' @export
+#'
+energyfit <- function(x, dist, nsim = 100) {
+  validate_x(x, dist)
+  nsim <- validate_nsim(nsim)
+  UseMethod("energyfit", dist)
+}
+
+ef <- energyfit
+
+#' @export
+energyfit.function <- function (x, dist, nsim = 100) {
+  # TODO, for supplying a quantile function.
+}
+
+#' @export
+energyfit.GOFDist <- function(x, dist, nsim = 100) {
+  ## Setup
+  cp <- dist$composite_p
+  ## Run functions
+  EYY <- EYY(dist)
+  E_stat <- Qhat(x, dist, EYY)
+  sim <- simulate_pval(x, dist, nsim, E_stat, EYY)
+  ## Qhat could have modified dist, so we need to check for a change before
+  ## making the htest.
+  names(E_stat) <- paste0("E-statistic",
+                          if (cp)
+                            " (transformed data)"
+                          else
+                            "")
+  output_htest(x, dist, nsim, E_stat, sim)
 }
 
 #### Distributions
