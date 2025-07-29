@@ -84,6 +84,21 @@ test_that("Pareto: pow > shape", {
   expect_error(pareto_dist(10, .1, 1))
 })
 
+##### Binomial tests
+
+test_that("Binomial", {
+  x <- rbinom(10, 10, .5)
+  d <- binomial_dist(size = 10, prob = .5)
+  o <- ef(x, d, 0)
+  expect_s3_class(o, "htest")
+  expect_gt(o$statistic, 0)
+  x <- rbinom(10, 10, .9)
+  o <- ef(x, d)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.5)
+  x <- rexp(10)
+  expect_error(binomial_dist(x))
+})
 
 ##### Normal Tests
 test_that("egf should return htest, even when R is missing", {

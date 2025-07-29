@@ -294,7 +294,17 @@ energyfit.GOFDist <- function(x, dist, R = 100) {
 }
 
 #### Compute Energy GOF statistic
-Qhat <- function(x, dist, EYY, ...) {
+
+#' @title Calculate Sample Energy Goodness-of-Fit Statistic
+#' @author John T. Haman
+#' @param x Numeric vector.
+#' @param dist Distibution object (created by `"name"_dist(...)`)
+#' @param EYY The value of \eqn{E|Y-Y'|} (which is calculated with `dist$EYY()`, but passed as a separate argument because it's computation may be costly)
+#' @return Energy goodness-of-fit statistic for testing that `x` follows the distribution `dist`. In the generalized form, this is \deqn{Q = nE, where, }
+#'
+#' \deqn{E = \frac{2}{n} E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2} \sum_i \sum_j |x_i - x_j|^s}
+
+Qhat <- function(x, dist, EYY) {
   UseMethod("Qhat", dist)
 }
 
@@ -348,10 +358,17 @@ Qhat.GOFDist <- function(x, dist, EYY) {
 
 
 #### EXXhat
-EXXhat <- function(x, dist, ...) {
+
+#' @title Calculate expected distance from sample
+#' @author John T. Haman
+#' @param x Numeric vector.
+#' @param dist Distibution object (created by `"name"_dist(...)`)
+#' @return \eqn{\frac{1}{n^2} \sum_i \sum_j  |x_i - x_j|^s}, where s=`pow` is `dist$pow`.
+EXXhat <- function(x, dist) {
   UseMethod("EXXhat", dist)
 }
 
+#' @inherit EXXhat
 #' @export
 EXXhat.EuclideanGOFDist <- function(x, dist) {
   n <- length(x)
@@ -360,6 +377,7 @@ EXXhat.EuclideanGOFDist <- function(x, dist) {
   2 * mean(prefix * xs) / n
 }
 
+#' @inherit EXXhat
 #' @export
 EXXhat.GeneralizedGOFDist <- function(x, dist) {
   pow <- dist$pow
