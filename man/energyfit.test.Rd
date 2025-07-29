@@ -101,9 +101,9 @@ ef(y, weibull_dist(1, 3), R = 10
 ## energyfit does not support "partially composite" GOF tests, so this will
 ## result in an error.
 
-## Not run:
+\dontrun{
 energyfit.test(x, "normal", mean = 0, R = 10) # sd is missing
-## End(Not run)
+}
 
 }
 \references{

@@ -104,9 +104,9 @@
 #' ## energyfit does not support "partially composite" GOF tests, so this will
 #' ## result in an error.
 #'
-#' ## Not run:
+#' \dontrun{
 #' energyfit.test(x, "normal", mean = 0, R = 10) # sd is missing
-#' ## End(Not run)
+#' }
 #'
 #' @references
 #'
@@ -137,6 +137,11 @@
 #'
 #'
 #' @export
+#'
+#'
+#'
+#' @importFrom stats dlnorm dnorm integrate median pbeta pchisq pexp pgamma pgeom pnorm ppois pweibull rbeta rbinom rcauchy rchisq rexp rgamma rgeom rlnorm rnorm rpois runif rweibull sd
+
 
 ### Code
 
@@ -271,11 +276,21 @@ energyfit.function <- function (x, dist, R = 100) {
 #' @export
 energyfit.GOFDist <- function(x, dist, R = 100) {
   ## Setup
+  initdist <- dist
   EYYpar <- if (dist$composite_p) dist$ref_par else dist$par
   ## Run functions
   EYY <- dist$EYY(EYYpar)
   E_stat <- Qhat(x, dist, EYY)
   sim <- simulate_pval(x, dist, R, E_stat)
+  ## Qhat could have modified dist, so we need to check for a change before
+  ## making the htest.
+  dist <- attr(E_stat, "dist")
+  names(E_stat) <- paste0("E-statistic",
+                          if (dist$composite_p ||
+                                (!identical(initdist, dist)))
+                            " (transformed data)"
+                          else
+                            "")
   output_htest(x, dist, R, E_stat, sim)
 }
 
@@ -307,7 +322,7 @@ Qhat.ParetoDist <- function(x, dist, EYY) {
     # New ingredients
     x <- dist$xform(x, initpar)
     dist <- do.call("pareto_dist", xpar)
-    validate_par(dist) # My fault if this is broken
+    validate_par(dist)
     EYY <- dist$EYY(xpar)
   }
   NextMethod(object = dist)
@@ -326,8 +341,9 @@ Qhat.GOFDist <- function(x, dist, EYY) {
   EXY <- dist$EXYhat(x, EXYpar)
   EXX <- EXXhat(x, dist)
   E_stat <- n * (2 * EXY - EYY - EXX)
-  names(E_stat) <- paste0("E-statistic",
-                          if (dist$composite_p) " (standardized data)" else "")
+  ## In case Qhat makes a new dist, we need to track that, but Qhat cannot output
+  ## a list because boot wants a vector.
+  attr(E_stat, "dist") <- dist
   E_stat
 }
 
@@ -379,7 +395,8 @@ output_htest <- function(x, dist, R, E_stat, sim) {
                     " energy goodness-of-fit test"),
     data.name = deparse(substitute(x)),
     distribution = dist,
-    parameter = c("distribution" = dist$name, (if (cp) NULL else dist$par)),
+    parameter = c("Distribution" = dist$name,
+                  if (cp) NULL else dist$par),
     R = R,
     pow = if (inherits(dist, "GeneralizedGOFTest")) dist$pow else NULL,
     composite_p = cp,
@@ -404,24 +421,32 @@ is_composite <- function(...) {
   }
 }
 
+set_composite_class <- function(dist) {
+  if (dist$composite_p)
+    class(dist) <- append(class(dist), "CompositeGOFDist", 2L)
+  dist
+}
+
 #' @export
 print.GOFDist <- function(dist, ...) {
   cat(" Energy goodness-of-fit test for:\n")
-  cat("  ", dist$name, "Distribution\n")
-  cat("   Parmeters: ", paste(names(dist$par),
-                              unlist(dist$par),
-                              sep = "=", collapse = ", "), "\n")
-  cat("   Test type:",
+  cat("   *", dist$name, "Distribution\n")
+  if (!dist$composite_p)
+    cat("   * Parmeters: ", paste(names(dist$par),
+                                  unlist(dist$par),
+                                  sep = "=", collapse = ", "), "\n")
+  cat("   * Test type:",
       if (dist$composite_p)
         "Composite (parameters unknown)"
       else
         "Simple (parameters known)", "\n")
+  cat("   * S3 Classes:", class(dist), "\n")
 }
 
 ##### Normal
 
 normal_dist <- function(mean = NULL, sd = NULL) {
-  structure(
+  dist <- structure(
     list(
       name = "Normal",
       composite_p = is_composite(mean, sd),
@@ -444,6 +469,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
                        sd = function(x) sd(x))
     ), class = c("NormalDist", "EuclideanGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 
@@ -473,7 +499,7 @@ uniform_dist<- function(min = 0, max = 1) {
 }
 ##### Exponential
 exponential_dist <- function(rate = NULL) {
-  structure(
+  dist <- structure(
     list(
       name = "Exponential",
       composite_p = is.null(rate),
@@ -492,11 +518,12 @@ exponential_dist <- function(rate = NULL) {
       statistic = list(rate = function(x) mean(x))
     ), class = c("ExponentialDist", "EuclideanGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 ##### Poisson
 poisson_dist <- function(lambda = NULL) {
-  structure(
+  dist <- structure(
     list(
       name = "Poisson",
       composite_p = is.null(lambda),
@@ -522,6 +549,7 @@ poisson_dist <- function(lambda = NULL) {
       statistic = list(lambda = function(x) mean(x))
     ), class = c("PoissonDist", "EuclideanGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 
@@ -633,7 +661,7 @@ geometric_dist  <- function(prob = 0.5) {
 ##### Half-Normal
 ## TODO, this seems to be bugged
 halfnormal_dist <- function(scale = NULL) {
-  structure(
+  dist <- structure(
     list(
       name = "Half-Normal",
       composite_p = is.null(scale),
@@ -657,11 +685,12 @@ halfnormal_dist <- function(scale = NULL) {
       statistic = list(scale = function(x) sd(x))
     ), class = c("HalfNormalDist", "EuclideanGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 ##### Laplace
 laplace_dist <- function(location = NULL, scale = NULL) {
-  structure(
+  dist <- structure(
     list(
       name = "Laplace",
       composite_p = is_composite(location, scale),
@@ -688,11 +717,12 @@ laplace_dist <- function(location = NULL, scale = NULL) {
       }
     ), class = c("LaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 ##### Log-Normal
 lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
-  structure(
+  dist <- structure(
     list(
       name = "Log-Normal",
       composite_p = is_composite(meanlog, sdlog),
@@ -731,6 +761,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       statistic = list(meanlog = x, sdlog = x)
     ), class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 
@@ -738,7 +769,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 ##### Asymmetric Laplace
 asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
                                     skew = NULL) {
-  structure(
+  dist <- structure(
     list(
       name = "Asymmetric Laplace",
       composite_p = is_composite(location, scale, skew),
@@ -782,16 +813,17 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
         pk / beta + qk / lam + pk^2 / lam + qk^2 / beta
       },
       notes = if (composite_p)
-        message("Composite Test conditional on estimation of skewness parameter.")
+        message(" Composite Test conditional on estimation of skewness parameter.\n")
     ), class = c("AsymmetricLaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 ##### F??
 
 ##### Weibull
 weibull_dist <- function(shape = NULL, scale = NULL) {
-  structure(
+  dist <- structure(
     list(
       name = "Weibull",
       composite_p = is_composite(shape, scale),
@@ -823,11 +855,12 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
       }
     ), class = c("WeibullDist", "EuclideanGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 ##### Gamma
 gamma_dist <- function(shape = NULL, rate = NULL) {
-  structure(
+  dist <- structure(
     list(
       name = "Gamma",
       composite_p = is_composite(shape, rate),
@@ -857,6 +890,7 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
       }
     ), class = c("GammaDist", "EuclideanGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 
@@ -892,7 +926,7 @@ chisq_dist <- function(df = 2) {
 
 ##### Inverse Gaussian
 inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
-  structure(
+  dist <- structure(
     list(
       name = "Inverse Gaussion",
       composite_p = is_composite(mu, lambda),
@@ -936,6 +970,7 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
       }
     ), class = c("InverseGaussianDist", "EuclideanGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 
@@ -952,7 +987,7 @@ pareto_dist <- function(scale = NULL, shape = NULL,
   # Use equations 8.15
   # r is only needed if shape > 1 and pow != 1.
   ## X^r ~ P(scale^r, shape / r)
-  structure(
+  dist <- structure(
     list(
       name = "Pareto (Type I)",
       composite_p = is_composite(scale, shape),
@@ -1014,17 +1049,21 @@ pareto_dist <- function(scale = NULL, shape = NULL,
                          n <- length(x)
                          n / (sum(log(x / min(x))))}),
       xform = function(x, par) {x^par$r},
-      notes = if(!is.null(shape) && shape > 1 && pow != 1)
-        message("Shape > 1 and pow != 1. Transforming data by data^r to conduct energy GOF test.\n")
+      notes = {
+        if (!is.null(shape) && shape > 1 && pow != 1)
+          message("\n Note: Shape > 1 and pow != 1. Transforming data by data^r to conduct energy GOF test.\n")
+        if (shape > 1 && scale * shape > 1000)
+          warning(" Computation may be unstable when shape*scale > 1000 if there are extreme outliers.\n")}
     ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 
 ##### Cauchy
 cauchy_dist <- function(location = NULL, scale = NULL,
                         pow = 0.5) {
-  structure(
+  dist <- structure(
     list(
       name = "Cauchy",
       composite_p = is_composite(location, scale),
@@ -1053,13 +1092,14 @@ cauchy_dist <- function(location = NULL, scale = NULL,
       }
     ), class = c("CauchyDist", "GeneralizedGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 ##### Stable
 stable_dist <- function(location = NULL, scale = NULL,
                         skew = NULL, stability = NULL,
                         pow = stability / 4) {
-  structure(
+  dist <- structure(
     list(
       name = "Stable",
       composite_p = FALSE,
@@ -1190,6 +1230,7 @@ stable_dist <- function(location = NULL, scale = NULL,
       }
     ), class = c("StableDist", "GeneralizedGOFDist", "GOFDist")
   )
+  set_composite_class(dist)
 }
 
 #### Extras
