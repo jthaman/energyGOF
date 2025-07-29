@@ -306,29 +306,24 @@ energyfit.GOFDist <- function(x, dist, nsim = 100) {
   ## Qhat could have modified dist, so we need to check for a change before
   ## making the htest.
   names(E_stat) <- paste0("E-statistic",
-                          if (cp || dist$xformed)
+                          if (cp)
                             " (transformed data)"
                           else
                             "")
   output_htest(x, dist, nsim, E_stat, sim)
 }
 
+#### Compute EYY
+
+
 #### Compute Energy GOF statistic
 
-#' @title Calculate Sample Energy Goodness-of-Fit Statistic
-#' @author John T. Haman
-#' @param x Numeric vector.
-#' @param dist Distibution object (created by `"name"_dist(...)`)
-#' @param EYY The value of \eqn{E|Y-Y'|} (which is calculated with `dist$EYY()`, but passed as a separate argument because its computation may be costly)
-#' @return Energy goodness-of-fit statistic for testing that `x` follows the distribution `dist`. In the generalized form, this is \deqn{Q = nE} where,
-#'
-#' \deqn{E = \frac{2}{n} E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2} \sum_i \sum_j |x_i - x_j|^s}
 
+#' @export
 Qhat <- function(x, dist, EYY) {
   UseMethod("Qhat", dist)
 }
 
-#' @inherit Qhat
 #' @export
 Qhat.CauchyDist <- function(x, dist, EYY) {
   # Must transform in Simple case.
@@ -337,39 +332,41 @@ Qhat.CauchyDist <- function(x, dist, EYY) {
   NextMethod(object = dist)
 }
 
-#' @inherit Qhat
-#' @export
-Qhat.ParetoDist <- function(x, dist, EYY) {
+pareto_xform_par <- function(dist) {
   initpar <- dist$par
   initshape <- initpar$shape
   initscale <- initpar$scale
   initpow <- initpar$pow
   r <- initpar$r
+  xshape <- initshape / r
+  xpow <- if (initpow >= xshape) initpow / r else initpow
+  xpar <- list(scale = initscale^r,
+               shape = xshape,
+               pow = xpow,
+               r = 1)
+  xpar
+}
+
+#' @export
+Qhat.ParetoDist <- function(x, dist, EYY) {
   if (initshape > 1 && initpow != 1) {
-    xshape <- initshape / r
-    xpow <- if (initpow >= xshape) initpow / r else initpow
-    xpar <- list(scale = initscale^r,
-                 shape = xshape,
-                 pow = xpow,
-                 r = 1)
+    initpar <- dist$par
+    xpar <- pareto_xform_par(dist)
     # New ingredients
     x <- dist$xform(x, initpar)
     dist <- do.call("pareto_dist", xpar)
-    dist$xformed <- TRUE
     validate_par(dist)
-    EYY <- dist$EYY(xpar) # TODO: EYY should never be recomputed for simple tests
+    EYY <- dist$EYY(xpar) #Todo, move out...
   }
   NextMethod(object = dist)
 }
 
-#' @inherit Qhat
 #' @export
 Qhat.EuclideanGOFDist <- function(x, dist, EYY) {
   dist$sampler_par <- dist$par
   NextMethod(object = dist)
 }
 
-#' @inherit Qhat
 #' @export
 Qhat.GeneralizedGOFDist <- function(x, dist, EYY) {
   mle <- lapply(dist$statistic, function(f) f(x))
@@ -378,7 +375,6 @@ Qhat.GeneralizedGOFDist <- function(x, dist, EYY) {
   NextMethod(object = dist)
 }
 
-#' @inherit Qhat
 #' @export
 Qhat.GOFDist <- function(x, dist, EYY) {
   n <- length(x)
@@ -492,7 +488,7 @@ print.GOFDist <- function(dist, ...) {
   cat("   *", dist$name, "Distribution\n")
   if (!dist$composite_p)
     cat("   * Parameters: ", paste(names(dist$par),
-                                  unlist(dist$par),
+                                   unlist(dist$par),
                                   sep = "=", collapse = ", "), "\n")
   cat("   * Test type:",
       if (dist$composite_p)

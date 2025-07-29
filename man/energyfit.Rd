@@ -10,9 +10,9 @@ energyfit(x, dist, nsim = 100)
 \arguments{
 \item{x}{A numeric vector.}
 
-\item{dist}{A distribution object. The distribution to test \code{x}
-against. Distribution objects are created with the various
-\code{name_dist(...)} functions in this package.}
+\item{dist}{A distribution object. The distribution to test \code{x} against.
+Distribution objects are created with the various \code{name_dist(...)}
+functions in this package.}
 
 \item{nsim}{A positive integer. The number of parametric bootstrap replicates
 taken to calculate the p-value.}
@@ -35,7 +35,11 @@ goodness-of-fit hypothesis test. The htest object has the list elements:
 }
 }
 \description{
-Goodness-of-fit tests via the energy of data
+This is an alternative interface that provides the same test as
+ef.test, but allows the user to pass a distribution object. The advantage
+is that you do not need to pass distribution parameters into a \code{...}
+argument as in \code{ef.test}. \code{ef.test} uses this function under the hood, but
+it's perfectly suitable for the user to use as well.
 }
 \details{
 \link{TODO description of Energy GOF test here.}
@@ -60,7 +64,14 @@ You should set nsim to be a very large number in practice. I recommend at least
 10,000. The default value is not a robust choice.
 }
 \examples{
-TODO
+
+ef(rnorm(10), normal_dist(0,1), nsim = 10)
+
+ef(rpois(10,1), poisson_dist(1)) # No p-value
+
+ef(rnorm(10), normal_dist(), nsim = 10) # Composite test
+
+[TODO] example with quantile function.
 
 }
 \references{
