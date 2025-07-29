@@ -57,6 +57,20 @@ test_that("Pareto: mixed", {
 })
 
 
+test_that("Pareto: pow", {
+  d <- pareto_dist(10, .1, pow = 5)
+  x <- d$sampler(100, d$par)
+  expect_error(ef(x, d))
+})
+
+
+test_that("Pareto: pow ", {
+  d <- pareto_dist(10, .1, 1)
+  x <- d$sampler(100, d$par)
+  expect_error(ef(x, d))
+})
+
+
 ##### Normal
 test_that("egf should return htest, even when R is missing", {
   x <- rnorm(10)
