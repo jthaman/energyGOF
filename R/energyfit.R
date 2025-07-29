@@ -298,9 +298,8 @@ energyfit.function <- function (x, dist, nsim = 100) {
 energyfit.GOFDist <- function(x, dist, nsim = 100) {
   ## Setup
   cp <- dist$composite_p
-  EYYpar <- if (cp) dist$sampler_par else dist$par
   ## Run functions
-  EYY <- dist$EYY(EYYpar)
+  EYY <- EYY(dist)
   E_stat <- Qhat(x, dist, EYY)
   sim <- simulate_pval(x, dist, nsim, E_stat, EYY)
   ## Qhat could have modified dist, so we need to check for a change before
@@ -315,10 +314,37 @@ energyfit.GOFDist <- function(x, dist, nsim = 100) {
 
 #### Compute EYY
 
+#' @export
+EYY <- function(dist) {
+  UseMethod("EYY")
+}
+
+#' @export
+EYY.CauchyDist <- function (dist) {
+  dist$EYY(dist$sampler_par)
+}
+
+EYY.ParetoDist <- function (dist) {
+  if (initshape > 1 && initpow != 1) {
+    initpar <- dist$par
+    xpar <- pareto_xform_par(dist)
+    EYY <- dist$EYY(xpar)
+  } else {
+    EYY <- distEYY(dist$par)
+  }
+}
+
+#' @export
+EYY.CompositeGOFDist <- function(dist) {
+  dist$EYY(dist$sampler_par)
+}
+
+#' @export
+EYY.GOFDist <- function(dist) {
+  dist$EYY(dist$par)
+}
 
 #### Compute Energy GOF statistic
-
-
 #' @export
 Qhat <- function(x, dist, EYY) {
   UseMethod("Qhat", dist)
@@ -356,7 +382,6 @@ Qhat.ParetoDist <- function(x, dist, EYY) {
     x <- dist$xform(x, initpar)
     dist <- do.call("pareto_dist", xpar)
     validate_par(dist)
-    EYY <- dist$EYY(xpar) #Todo, move out...
   }
   NextMethod(object = dist)
 }
