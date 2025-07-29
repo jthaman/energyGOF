@@ -599,20 +599,41 @@ bernoulli_dist <- function(prob = 0.5) {
 }
 
 ##### Binomial
-####### Seems to have a bug.
-## EXYhat.binomial <- function(x, n, size, prob, ...) {
-##   stopifnot(all(x >= 0), all(x == floor(x)))
-##   k <- 0:size
-##   pmf <- dbinom(k, n, prob)
-##   mean(sapply(x, function(t) sum(abs(t - k) * pmf)))
-## }
-##
-## EYY.binomial <- function(size, prob, ...) {
-##   k <- 0:size
-##   pmf <- dbinom(k, size, prob)
-##   outer_diff <- outer(k, k, function(i, j) abs(i - j))
-##   sum(outer_diff * outer(pmf, pmf))
-## }
+binomial_dist <- function(size = 1, prob = 0.5) {
+  dist <- structure(
+    list(
+      name = "Binomial",
+      composite_p = composite_not_allowed(prob),
+      par = list(size = size, prob = prob),
+      ref_par = list(size = 1, prob = 0.5),
+      par_domain = function (par) {
+        all(
+          par$prob > 0 && par$prob < 1,
+          par$size >= 1,
+          par$size == floor(par$size)
+        )
+      },
+      support = function(x, par) all(x %in% 0:par$size),
+      sampler = function(n, par) {
+        rbinom(n, size = par$size, prob = par$prob)},
+      EYY = function(par) {
+        i <- 0:par$size
+        probs <- dbinom(i, size = par$size, prob = par$prob)
+        diffmat <- abs(outer(i, i, "-"))
+        sum(diffmat * outer(probs, probs))
+      },
+      EXYhat = function(x, par) {
+        i <- 0:par$size
+        probs <- dbinom(i, size = par$size, prob = par$prob)
+        mean(sapply(x, function(xi) sum(abs(xi - i) * probs)))
+      },
+      statistic = list(prob = function(x) mean(x))
+    ), class = c("BinomialDist", "EuclideanGOFDist", "GOFDist")
+  )
+  validate_par(dist)
+  dist
+}
+
 
 ##### Beta
 beta_dist <- function(shape1 = 1, shape2 = 1) {
