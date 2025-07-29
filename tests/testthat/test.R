@@ -9,6 +9,15 @@ test_that("formals same as switch", {
   expect_setequal(b, f)
 })
 
+
+##### Check that distributions are correctly formed
+
+test_that("Uniform", {
+  expect_s3_class(uniform_dist(0, 1), "EuclideanGOFDist")
+  expect_s3_class(uniform_dist(-100, 100), "EuclideanGOFDist")
+  expect_error(uniform_dist(100, -100))
+})
+
 ##### Pareto Test
 test_that("Pareto: shape, scale >1", {
   # erratic
@@ -21,9 +30,7 @@ test_that("Pareto: shape, scale >1", {
 
 test_that("Pareto: shape = scale = pow > 1", {
   # erratic
-  d <- pareto_dist(4, 4, 4)
-  x <- d$sampler(100, d$par)
-  expect_error(ef(x, d))
+  expect_error(d <- pareto_dist(4, 4, 4))
 })
 
 test_that("Pareto: shape, scale >1", {
@@ -68,17 +75,13 @@ test_that("Pareto: mixed", {
 })
 
 
-test_that("Pareto: pow", {
-  d <- pareto_dist(10, .1, pow = 5)
-  x <- d$sampler(100, d$par)
-  expect_error(ef(x, d))
+test_that("Pareto: pow > shape", {
+  expect_error(pareto_dist(10, .1, pow = 5))
 })
 
 
-test_that("Pareto: pow ", {
-  d <- pareto_dist(10, .1, 1)
-  x <- d$sampler(100, d$par)
-  expect_error(ef(x, d))
+test_that("Pareto: pow > shape", {
+  expect_error(pareto_dist(10, .1, 1))
 })
 
 

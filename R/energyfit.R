@@ -260,7 +260,6 @@ char_to_dist <- function(name, ...) {
 
 #### energyfit_test Generic & Methods
 energyfit <- function(x, dist, R = 100, ...) {
-  validate_par(dist)
   validate_x(x, dist)
   R <- validate_R(R)
   UseMethod("energyfit", dist)
@@ -411,7 +410,6 @@ output_htest <- function(x, dist, R, E_stat, sim) {
 is_composite <- function(...) {
   nulls <- sapply(list(...), is.null)
   n_null <- sum(nulls)
-
   if (n_null == 0) {
     FALSE  # simple test: all pars supplied
   } else if (n_null == length(nulls)) {
@@ -420,6 +418,17 @@ is_composite <- function(...) {
     stop("Partially composite tests not implemented.")
   }
 }
+
+composite_not_allowed <- function(...) {
+  nulls <- sapply(list(...), is.null)
+  n_null <- sum(nulls)
+  if (n_null == 0) {
+    FALSE  # simple test: all pars supplied
+  } else {
+    stop("Composite test not implemented.")
+  }
+}
+
 
 set_composite_class <- function(dist) {
   if (dist$composite_p)
@@ -469,6 +478,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
                        sd = function(x) sd(x))
     ), class = c("NormalDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -476,10 +486,10 @@ normal_dist <- function(mean = NULL, sd = NULL) {
 ##### Uniform
 
 uniform_dist<- function(min = 0, max = 1) {
-  structure(
+  dist <- structure(
     list(
       name = "Uniform",
-      composite_p = FALSE,
+      composite_p = composite_not_allowed(min, max),
       par = list(min = min, max = max),
       ref_par = list(min = 0, max = 1),
       par_domain = function (par) {
@@ -496,6 +506,8 @@ uniform_dist<- function(min = 0, max = 1) {
                        max = function(x) max(x))
     ), class = c("UniformDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
+  dist
 }
 ##### Exponential
 exponential_dist <- function(rate = NULL) {
@@ -518,6 +530,7 @@ exponential_dist <- function(rate = NULL) {
       statistic = list(rate = function(x) mean(x))
     ), class = c("ExponentialDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -549,6 +562,7 @@ poisson_dist <- function(lambda = NULL) {
       statistic = list(lambda = function(x) mean(x))
     ), class = c("PoissonDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -558,10 +572,10 @@ poisson_dist <- function(lambda = NULL) {
 ##### Bernoulli
 
 bernoulli_dist <- function(prob = 0.5) {
-  structure(
+  dist <- structure(
     list(
       name = "Bernoulli",
-      composite_p = FALSE,
+      composite_p = composite_not_allowed(prob),
       par = list(prob = prob),
       ref_par = list(prob = NULL),
       par_domain = function (par) {
@@ -580,6 +594,8 @@ bernoulli_dist <- function(prob = 0.5) {
       statistic = list(prob = function(x) mean(x))
     ), class = c("BernoulliDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
+  dist
 }
 
 ##### Binomial
@@ -600,10 +616,10 @@ bernoulli_dist <- function(prob = 0.5) {
 
 ##### Beta
 beta_dist <- function(shape1 = 1, shape2 = 1) {
-  structure(
+  dist <- structure(
     list(
       name = "Beta",
-      composite_p = FALSE,
+      composite_p = composite_not_allowed(shape1, shape2),
       par = list(shape1 = shape1, shape2 = shape2),
       par_domain = function (par) {
         par$shape1 > 0 && par$shape2 > 0
@@ -628,16 +644,18 @@ beta_dist <- function(shape1 = 1, shape2 = 1) {
       }
     ), class = c("BetaDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
+  dist
 }
 
 ##### Dirchlet?
 
 ##### Geometric
 geometric_dist  <- function(prob = 0.5) {
-  structure(
+  dist <- structure(
     list(
       name = "Geometric",
-      composite_p = FALSE,
+      composite_p = composite_not_allowed(prob),
       par = list(prob = prob),
       par_domain = function (par) {
         par$prob > 0 && par$prob < 1
@@ -653,6 +671,8 @@ geometric_dist  <- function(prob = 0.5) {
       }
     ), class = c("GeometricDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
+  dist
 }
 
 
@@ -685,6 +705,7 @@ halfnormal_dist <- function(scale = NULL) {
       statistic = list(scale = function(x) sd(x))
     ), class = c("HalfNormalDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -717,6 +738,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
       }
     ), class = c("LaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -761,6 +783,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       statistic = list(meanlog = x, sdlog = x)
     ), class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -816,6 +839,7 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
         message(" Composite Test conditional on estimation of skewness parameter.\n")
     ), class = c("AsymmetricLaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -855,6 +879,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
       }
     ), class = c("WeibullDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -890,16 +915,17 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
       }
     ), class = c("GammaDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
 
 ##### Chi-Square
 chisq_dist <- function(df = 2) {
-  structure(
+  dist <- structure(
     list(
       name = "Chi-Squared",
-      composite_p = FALSE,
+      composite_p = composite_not_allowed(df),
       par = list(df = df),
       ref_par = list(df = NULL),
       support = function(x, par) {
@@ -921,6 +947,8 @@ chisq_dist <- function(df = 2) {
       }
     ), class = c("ChiSquaredDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
+  dist
 }
 
 
@@ -970,6 +998,7 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
       }
     ), class = c("InverseGaussianDist", "EuclideanGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -1056,6 +1085,7 @@ pareto_dist <- function(scale = NULL, shape = NULL,
           warning(" Computation may be unstable when shape*scale > 1000 if there are extreme outliers.\n")}
     ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -1092,6 +1122,7 @@ cauchy_dist <- function(location = NULL, scale = NULL,
       }
     ), class = c("CauchyDist", "GeneralizedGOFDist", "GOFDist")
   )
+  validate_par(dist)
   set_composite_class(dist)
 }
 
@@ -1102,7 +1133,7 @@ stable_dist <- function(location = NULL, scale = NULL,
   dist <- structure(
     list(
       name = "Stable",
-      composite_p = FALSE,
+      composite_p = composite_not_allowed(location, scale, skew, stability),
       par = list(location = location, scale = scale, skew = skew,
                  stability = stability, pow = pow),
       ref_par = list(location = 0, scale = 1, skew = skew,
@@ -1230,7 +1261,8 @@ stable_dist <- function(location = NULL, scale = NULL,
       }
     ), class = c("StableDist", "GeneralizedGOFDist", "GOFDist")
   )
-  set_composite_class(dist)
+  validate_par(dist)
+  dist
 }
 
 #### Extras
