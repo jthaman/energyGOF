@@ -423,8 +423,6 @@ Qhat.CompositeGOFDist <- function(x, dist, EYY) {
 Qhat.GOFDist <- function(x, dist, EYY) {
   n <- length(x)
   EXY <- dist$EXYhat(x, dist$sampler_par)
-  ##:ess-bp-start::browser@nil:##
-  browser(expr=is.null(.ESSBP.[["@3@"]]));##:ess-bp-end:##
   EXX <- EXXhat(x, dist)
   E_stat <- n * (2 * EXY - EYY - EXX)
   E_stat
@@ -511,7 +509,9 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #' @aliases ef
 #' @examples
 #'
-#' ef(rnorm(10), normal_dist(0,1), nsim = 10)
+#' x <- rnorm(10)
+#' d <- normal_dist(0,1)
+#' ef(x, d, nsim = 10)
 #'
 #' ef(rpois(10,1), poisson_dist(1)) # No p-value
 #'
@@ -617,8 +617,8 @@ print.GOFDist <- function(dist, ...) {
 #' * sampler: Function used for rng by [boot::boot()]
 #' * EYY: Function to compute \eqn{E|Y-Y'|} (or \eqn{E|Y-Y'|^{pow}}, for the generalized test.)
 #' * EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or  \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according to dist and x is the data under test (which is passed in ef.test or ef).
-#' * xform: Function that may be used to transform x.
-#' * statistic: Function that returns a list of maximum likelihood estimates.
+#' * xform: Function that may be used to transform x. Only available in certain distribution objects.
+#' * statistic: Function that returns a list of maximum likelihood estimates. Only available in certain distribution objects.
 #'
 #'
 #' @export
@@ -1126,7 +1126,10 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
 ##### F??
 
 ##### Weibull
-
+#' @title Create a Weibull distribution object for energy testing
+#' @inherit normal_dist description return author
+#' @param shape Same as in [rweibull()]
+#' @param scale Same as in [rweibull()]
 #' @export
 weibull_dist <- function(shape = NULL, scale = NULL) {
   dist <- structure(
@@ -1167,6 +1170,10 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
 
 ##### Gamma
 
+#' @title Create a gamma distribution object for energy testing
+#' @inherit normal_dist description return author
+#' @param shape Same as in [rgamma()]
+#' @param rate Same as in [rgamma()]
 #' @export
 gamma_dist <- function(shape = NULL, rate = NULL) {
   dist <- structure(
@@ -1206,6 +1213,9 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
 
 ##### Chi-Square
 
+#' @title Create a Chi-squared distribution object for energy testing
+#' @inherit normal_dist description return author
+#' @param df Same as in [rchisq()]
 #' @export
 chisq_dist <- function(df = 2) {
   dist <- structure(
@@ -1241,6 +1251,19 @@ chisq_dist <- function(df = 2) {
 
 ##### Inverse Gaussian
 
+#' @title Create a inverse Gaussian distribution object for energy testing
+#' @inherit normal_dist description return author
+#' @param mu Positive mean parameter
+#' @param lambda Positive shape parameter
+#' @description This is exactly the distribution corresponding to the pdf
+#'
+#' \deqn{
+#'   f(x | \mu, \lambda) =
+#'   \left( \frac{\lambda}{2 \pi x^3} \right)^{1/2}
+#'   \exp \left( -\frac{\lambda (x - \mu)^2}{2 \mu^2 x} \right),
+#'   \qquad x > 0.
+#' }
+#'
 #' @export
 inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
   dist <- structure(
@@ -1300,6 +1323,14 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
 
 ##### Pareto
 
+#' @title Create a Pareto (type I) distribution object for energy testing
+#' @inherit normal_dist description return author
+#' @param scale Positive scale parameter
+#' @param shape Positive shape parameter. If shape > 1, r is used to transform x
+#' @param pow exponent of the energy test. Pow must be less than shape.
+#' @param r Used to transform x in case shape > 1 and pow non-zero
+#' @param skew Skewness parameter
+#' @description If shape > 1, the energy test is more difficult, so X is transformed to X^r ~ Pareto(scale*shape, shape/r), so that shape/r <= 1, and pow < shape/r.
 #' @export
 pareto_dist <- function(scale = NULL, shape = NULL,
                         pow = shape / 2,
@@ -1385,6 +1416,12 @@ pareto_dist <- function(scale = NULL, shape = NULL,
 
 ##### Cauchy
 
+
+#' @title Create a Cauchy distribution object for energy testing
+#' @inherit normal_dist description return author
+#' @param location Same as in [rcauchy()]
+#' @param scale  Same as in [rcauchy()]
+#' @param pow Exponent of the energy test. 0 < pow < 1 is required.
 #' @export
 cauchy_dist <- function(location = NULL, scale = NULL,
                         pow = 0.5) {
@@ -1422,6 +1459,15 @@ cauchy_dist <- function(location = NULL, scale = NULL,
 
 ##### Stable
 
+#' @title Create a stable distribution object for energy testing
+#' @inherit normal_dist description return author
+#' @param location Same as in [rcauchy()]
+#' @param scale Same as in [rcauchy()]
+#' @param skew -1 < skew < 1 is required
+#' @param stability The tail index or stability index. Controls the fatness of the tails. 0 < stability <= 2 is required.
+#' @param pow Exponent of the energy test. 0 < pow < 1 is required.
+#' @description This is a very slow test due to an onerous amount of numerical integration required.
+#'
 #' @export
 stable_dist <- function(location = NULL, scale = NULL,
                         skew = NULL, stability = NULL,
@@ -1561,49 +1607,49 @@ stable_dist <- function(location = NULL, scale = NULL,
 }
 
 #### Extras
-tabular <- function(df, ...) {
-  stopifnot(is.data.frame(df))
-
-  align <- function(x) if (is.numeric(x)) "r" else "l"
-  col_align <- vapply(df, align, character(1))
-
-  cols <- lapply(df, format, ...)
-  contents <- do.call("paste",
-                      c(cols, list(sep = " \\tab ", collapse = "\\cr\n#'   ")))
-
-  paste("#' \\tabular{", paste(col_align, collapse = ""), "}{\n#'   ",
-        paste0("\\strong{", names(df), "}", sep = "", collapse = " \\tab "), " \\cr\n#'   ",
-        contents, "\n#' }\n", sep = "")
-}
-
-
-deats <- data.frame(
-  Distribution = character(1),
-  Function = character(1),
-  Paramater = character(1),
-  CompositeAllowed = character(1)
-)
-
-
-deats <- rbind(deats, list("Normal", "normal_dist", "mean, sd", "Yes"))
-deats <- rbind(deats, list("Uniform", "uniform_dist", "min, max", "No"))
-deats <- rbind(deats, list("Exponential", "exponential_dist", "rate", "Yes"))
-deats <- rbind(deats, list("Poisson", "poisson_dist", "lambda", "Yes"))
-deats <- rbind(deats, list("Bernoulli", "bernoulli_dist", "prob", "No"))
-deats <- rbind(deats, list("Binomial", "binomial_dist", "prob", "Yes"))
-deats <- rbind(deats, list("Beta", "beta_dist", "shape1, shape2", "No"))
-deats <- rbind(deats, list("Half-Normal", "halfnormal_dist", "theta", "No"))
-deats <- rbind(deats, list("Laplace", "laplace_dist", "location, scale", "No"))
-deats <- rbind(deats, list("Log-normal", "lognormal_dist", "meanlog, sdlog", "No"))
-deats <- rbind(deats, list("Asymmetric Laplace", "asymmetriclaplace_dist", "location, scale, skew", "No"))
-deats <- rbind(deats, list("Weibull", "weibull_dist", "shape, scale", "No"))
-deats <- rbind(deats, list("Gamma", "gamma_dist", "shape, rate", "No"))
-deats <- rbind(deats, list("Chi Squared", "chisq_dist", "df", "No"))
-deats <- rbind(deats, list("Inverse Gaussion", "inversegaussian_dist", "mu, lambda", "No"))
-deats <- rbind(deats, list("Pareto", "pareto_dist", "scale, shape, pow, r", "No"))
-deats <- rbind(deats, list("Cauchy", "cauchy_dist", "location, scale, pow", "No"))
-deats <- rbind(deats, list("Stable", "stable_dist", "location, scale, skew, stability, pow", "No"))
-
-o <- tabular(deats)
+## tabular <- function(df, ...) {
+##   stopifnot(is.data.frame(df))
+##
+##   align <- function(x) if (is.numeric(x)) "r" else "l"
+##   col_align <- vapply(df, align, character(1))
+##
+##   cols <- lapply(df, format, ...)
+##   contents <- do.call("paste",
+##                       c(cols, list(sep = " \\tab ", collapse = "\\cr\n#'   ")))
+##
+##   paste("#' \\tabular{", paste(col_align, collapse = ""), "}{\n#'   ",
+##         paste0("\\strong{", names(df), "}", sep = "", collapse = " \\tab "), " \\cr\n#'   ",
+##         contents, "\n#' }\n", sep = "")
+## }
+##
+##
+## deats <- data.frame(
+##   Distribution = character(1),
+##   Function = character(1),
+##   Paramater = character(1),
+##   CompositeAllowed = character(1)
+## )
+##
+##
+## deats <- rbind(deats, list("Normal", "normal_dist", "mean, sd", "Yes"))
+## deats <- rbind(deats, list("Uniform", "uniform_dist", "min, max", "No"))
+## deats <- rbind(deats, list("Exponential", "exponential_dist", "rate", "Yes"))
+## deats <- rbind(deats, list("Poisson", "poisson_dist", "lambda", "Yes"))
+## deats <- rbind(deats, list("Bernoulli", "bernoulli_dist", "prob", "No"))
+## deats <- rbind(deats, list("Binomial", "binomial_dist", "prob", "Yes"))
+## deats <- rbind(deats, list("Beta", "beta_dist", "shape1, shape2", "No"))
+## deats <- rbind(deats, list("Half-Normal", "halfnormal_dist", "theta", "No"))
+## deats <- rbind(deats, list("Laplace", "laplace_dist", "location, scale", "No"))
+## deats <- rbind(deats, list("Log-normal", "lognormal_dist", "meanlog, sdlog", "No"))
+## deats <- rbind(deats, list("Asymmetric Laplace", "asymmetriclaplace_dist", "location, scale, skew", "No"))
+## deats <- rbind(deats, list("Weibull", "weibull_dist", "shape, scale", "No"))
+## deats <- rbind(deats, list("Gamma", "gamma_dist", "shape, rate", "No"))
+## deats <- rbind(deats, list("Chi Squared", "chisq_dist", "df", "No"))
+## deats <- rbind(deats, list("Inverse Gaussion", "inversegaussian_dist", "mu, lambda", "No"))
+## deats <- rbind(deats, list("Pareto", "pareto_dist", "scale, shape, pow, r", "No"))
+## deats <- rbind(deats, list("Cauchy", "cauchy_dist", "location, scale, pow", "No"))
+## deats <- rbind(deats, list("Stable", "stable_dist", "location, scale, skew, stability, pow", "No"))
+##
+## o <- tabular(deats)
 
 writeLines(o)

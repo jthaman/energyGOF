@@ -69,7 +69,7 @@ the p-values should be reasonably honest in small-ish samples.You should set
 nsim to be a very large number in practice. I recommend at least 10,000. The
 default value (100) is not a robust choice.
 }
-\section{About-Energy}{
+\section{About Energy}{
 
 
 Székely, G. J., & Rizzo, M. L. (2023) provide the motivate:
@@ -103,7 +103,7 @@ in some situations where E|Y| is not finite. And that's what energyfit.test
 does.
 }
 
-\section{Distributions-in-energyfit}{
+\section{Distributions available to test}{
 
 
 The table summarizes the available distributions, their parameters, and
@@ -135,7 +135,9 @@ Stable             \tab stable_dist            \tab location, scale, skew, stabi
 
 \examples{
 
-ef(rnorm(10), normal_dist(0,1), nsim = 10)
+x <- rnorm(10)
+d <- normal_dist(0,1)
+ef(x, d, nsim = 10)
 
 ef(rpois(10,1), poisson_dist(1)) # No p-value
 

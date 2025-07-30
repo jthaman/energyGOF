@@ -78,7 +78,7 @@ the p-values should be reasonably honest in small-ish samples.You should set
 nsim to be a very large number in practice. I recommend at least 10,000. The
 default value (100) is not a robust choice.
 }
-\section{Distributions-in-energyfit}{
+\section{Distributions available to test}{
 
 
 The table summarizes the available distributions, their parameters, and
@@ -108,7 +108,7 @@ Stable             \tab stable_dist            \tab location, scale, skew, stabi
 }
 }
 
-\section{About-Energy}{
+\section{About Energy}{
 
 
 Székely, G. J., & Rizzo, M. L. (2023) provide the motivate:
