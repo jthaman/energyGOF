@@ -18,20 +18,20 @@
 #'
 #' @param x A numeric vector.
 #' @param dist A string. The distribution to test `x` against.
-#' @param nsim A positive integer. The number of parametric bootstrap replicates
-#'   taken to calculate the p-value.
-#' @param ... Parameters of the distribution `dist`. For distributions in
-#'    the R `stats' library, parameter argument names are identical. To test the
-#'   _composite_ goodness-of-fit hypothesis that `x` is distributed
-#'   according to the _family of distributions_ `dist`, don't pass
-#'   parameters in `...`
+#' @param nsim A positive integer. The number of parametric bootstrap
+#'   replicates taken to calculate the p-value.
+#' @param ... Parameters of the distribution `dist`. For distributions in the R
+#'   `stats' library, parameter argument names are identical. To test the
+#'   _composite_ goodness-of-fit hypothesis that `x` is distributed according
+#'   to the _family of distributions_ `dist`, don't pass parameters in `...`.
+#'   For generalized energy tests, you can also optionally pass `pow` here.
 #' @seealso \link[stats]{Distributions} for a list of distributions available
 #'   in most R installations. [energy::normal.test] for the energy
-#'   goodness-of-fit test with unknown parameters. See
-#'   [energy::poisson.mtest] for a different poisson goodness-of-fit test
-#'   based on mean distances. The tests for (multivariate) Normal in the
-#'   [energy] package are implemented with compiled code, and are faster
-#'   than the one available in the energyfit package.
+#'   goodness-of-fit test with unknown parameters. See [energy::poisson.mtest]
+#'   for a different poisson goodness-of-fit test based on mean distances. The
+#'   tests for (multivariate) Normal in the [energy] package are implemented
+#'   with compiled code, and are faster than the one available in the energyfit
+#'   package.
 #'
 #' @return An object of class `htest' representing the result of the energy
 #'   goodness-of-fit hypothesis test. The htest object has the list elements:
@@ -50,16 +50,18 @@
 #'
 #' @details
 #'
-#' [TODO description of Energy GOF test here.]
-#'
-#' There are two types of goodness-of-fit tests covered by the energyfit function,
-#' simple and composite. Simple GOF tests test the data `x` against a specific
-#' distribution with _known parameters_ that you must pass to energyfit in the
-#' ellipsis agrument (...). You should use a simple GOF test if you wish to
-#' test questions like "my data is Normal with mean 1 and sd 2". energyfit can also
-#' conduct _some_ composite GOF tests. A composite test is performed if no
-#' parameters are passed in the ellpisis argument (...). You should conduct a
-#' composite test if your research question is "my data is Normal."
+#' There are two types of goodness-of-fit tests covered by the energyfit
+#' function, *simple* and *composite*. It's important to know the difference to
+#' use this package, because yield different results. Simple GOF tests test the
+#' data `x` against a specific distribution with _known parameters_ that you
+#' must pass to energyfit.test in the ellipsis agrument (...). You should use a
+#' simple GOF test if you wish to test questions like
+#' "my data is Normal with mean 1 and sd 2". energyfit.test can also conduct
+#' _some_ composite GOF tests. A composite test is performed if no parameters
+#' are passed in the ellpisis argument (...). You should conduct a composite
+#' test if your research question is
+#' "my data is Normal, but I don't know what the parameters are." Obviously,
+#' this composite question is much more common in practice.
 #'
 #' All the composite tests in energyfit assume that none of the parameters are
 #' known. So while there is a statistical test of Normality with known mean and
@@ -68,8 +70,46 @@
 #' of the Normal distribution, you can use the energy package to test the GOF
 #' hypothesis with any combination of known and known parameters.)
 #'
-#' You should set nsim to be a very large number in practice. I recommend at least
-#' 10,000. The default value is not a robust choice.
+#' [Table of available distributions.]
+#'
+#' For each test, energyfit.test calculates the test statistic and a p-value.
+#' In all cases the p-value is calculated via parametric bootstrap. For large `nsim`,
+#' the p-values should be reasonably honest in small-ish samples.You should set
+#' nsim to be a very large number in practice. I recommend at least 10,000. The
+#' default value (100) is not a robust choice.
+#'
+#' @section About Energy
+#'
+#' Székely, G. J., & Rizzo, M. L. (2023) provide the motivate:
+#'
+#' > Data energy is a real number (typically a nonnegative number) that depends
+#' > on the distances between data. This concept is based on the notion of
+#' > Newton’s gravitational potential energy, which is also a function of the
+#' > distance between bodies. The idea of data energy or energy statistics is to
+#' > consider statistical observations (data) as heavenly bodies governed by the
+#' > potential energy of data, which is zero if and only if an underlying
+#' > statistical hypothesis is true.
+#'
+#' The concept of data energy between two random variables can be adapted to
+#' the one sample goodness of fit problem. The one-sample s-energy is
+#'
+#' \deqn{\script{E} = \frac{2}{n} \sum_i E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2}
+#' \sum_i \sum_j |x_i - x_j|^s},
+#'
+#' when 0 < s < 2 and E|X|^s, E|Y|^s < Inf.
+#'
+#' In most tests in the energyfit package s = 1. In some cases (Pareto, Cauchy,
+#' Stable), E|Y| is not finite, so we need to use an s < 1. This is done by
+#' passing `paw` into `...`. (See examples)
+#'
+#' In the one-sample goodness-of-fit regime, we wonder if x_i ~ X (which is
+#' hidden) follows the same distribution as Y, which is specified. If X and Y
+#' have the same distribution, then Q = n*\script{E} is a quadratic form of
+#' centered Gaussian random variables with expected value E|Y-Y'|. If X and Y
+#' differ, then Q goes to Inf. So, Q can be used to test goodness-of-fit, even
+#' in some situations where E|Y| is not finite. And that's what energyfit.test
+#' does.
+#'
 #'
 #' @examples
 #' x <- rnorm(10)
@@ -101,6 +141,15 @@
 #'
 #' ## energyfit does not support "partially composite" GOF tests, so this will
 #' ## result in an error.
+#'
+#' ## Conduct a generalized GOF test. Pow is the exponent s in the generalized
+#' #energy statistic. Pow is only necessary when testing Stable, Cauchy, and
+#' #Pareto distributions. If you don't set a pow, there is a default for each
+#' #of the distributions, but the default isn't necessarily better than any
+#' #other number.
+#'
+#' x <- rcauchy(10)
+#' ef(x, cauchy_dist(location = 0, scale = 1, pow = 0.5))
 #'
 #' \dontrun{
 #' energyfit.test(x, "normal", mean = 0, nsim = 10) # sd is missing
