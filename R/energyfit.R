@@ -81,34 +81,36 @@
 #' nsim to be a very large number in practice. I recommend at least 10,000. The
 #' default value (100) is not a robust choice.
 #'
-#' @section Distributions-in-energyfit:
+#' @section Distributions available to test:
 #'
 #' The table summarizes the available distributions, their parameters, and
 #' whether a composite GOF test may be performed.
 #'
-#' \tabular{lll}{
-#'   \strong{Distribution} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
-#'   Normal             \tab mean, sd                              \tab Yes\cr
-#'   Uniform            \tab min, max                              \tab No \cr
-#'   Exponential        \tab rate                                  \tab Yes\cr
-#'   Poisson            \tab lambda                                \tab Yes\cr
-#'   Bernoulli          \tab prob                                  \tab No \cr
-#'   Binomial           \tab prob                                  \tab Yes\cr
-#'   Beta               \tab shape1, shape2                        \tab No \cr
-#'   Half-Normal        \tab theta                                 \tab No \cr
-#'   Laplace            \tab location, scale                       \tab No \cr
-#'   Log-normal         \tab meanlog, sdlog                        \tab No \cr
-#'   Asymmetric Laplace \tab location, scale, skew                 \tab No \cr
-#'   Weibull            \tab shape, scale                          \tab No \cr
-#'   Gamma              \tab shape, rate                           \tab No \cr
-#'   Chi Squared        \tab df                                    \tab No \cr
-#'   Inverse Gaussion   \tab mu, lambda                            \tab No \cr
-#'   Pareto             \tab scale, shape, pow, r                  \tab No \cr
-#'   Cauchy             \tab location, scale, pow                  \tab No \cr
-#'   Stable             \tab location, scale, skew, stability, pow \tab No
+#'
+#' \tabular{llll}{
+#'   \strong{Distribution} \tab \strong{Function} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
+#'                      \tab                        \tab                                       \tab    \cr
+#'   Normal             \tab normal_dist            \tab mean, sd                              \tab Yes\cr
+#'   Uniform            \tab uniform_dist           \tab min, max                              \tab No \cr
+#'   Exponential        \tab exponential_dist       \tab rate                                  \tab Yes\cr
+#'   Poisson            \tab poisson_dist           \tab lambda                                \tab Yes\cr
+#'   Bernoulli          \tab bernoulli_dist         \tab prob                                  \tab No \cr
+#'   Binomial           \tab binomial_dist          \tab prob                                  \tab Yes\cr
+#'   Beta               \tab beta_dist              \tab shape1, shape2                        \tab No \cr
+#'   Half-Normal        \tab halfnormal_dist        \tab theta                                 \tab No \cr
+#'   Laplace            \tab laplace_dist           \tab location, scale                       \tab No \cr
+#'   Log-normal         \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
+#'   Asymmetric Laplace \tab asymmetriclaplace_dist \tab location, scale, skew                 \tab No \cr
+#'   Weibull            \tab weibull_dist           \tab shape, scale                          \tab No \cr
+#'   Gamma              \tab gamma_dist             \tab shape, rate                           \tab No \cr
+#'   Chi Squared        \tab chisq_dist             \tab df                                    \tab No \cr
+#'   Inverse Gaussion   \tab inversegaussian_dist   \tab mu, lambda                            \tab No \cr
+#'   Pareto             \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
+#'   Cauchy             \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
+#'   Stable             \tab stable_dist            \tab location, scale, skew, stability, pow \tab No
 #' }
 #'
-#' @section About-Energy:
+#' @section About Energy:
 #'
 #' Székely, G. J., & Rizzo, M. L. (2023) provide the motivate:
 #'
@@ -256,6 +258,10 @@ ef.test <- energyfit.test
 ##### Validate Parameters
 validate_par <- function(dist) {
   if (!dist$par_domain(dist$par)) {
+    stop(sprintf(
+      "Parameters passed in ... failed domain check:  %s", paste0(deparse(body(dist$par_domain)), collapse = "")))
+  }
+  if (!dist$par_domain(dist$sampler_par)) {
     stop(sprintf(
       "Parameters passed in ... failed domain check:  %s", paste0(deparse(body(dist$par_domain)), collapse = "")))
   }
@@ -417,6 +423,8 @@ Qhat.CompositeGOFDist <- function(x, dist, EYY) {
 Qhat.GOFDist <- function(x, dist, EYY) {
   n <- length(x)
   EXY <- dist$EXYhat(x, dist$sampler_par)
+  ##:ess-bp-start::browser@nil:##
+  browser(expr=is.null(.ESSBP.[["@3@"]]));##:ess-bp-end:##
   EXX <- EXXhat(x, dist)
   E_stat <- n * (2 * EXY - EYY - EXX)
   E_stat
@@ -487,17 +495,19 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #### energyfit_test Generic & Methods
 
 #' @description This is an alternative interface that provides the same test as
-#'   ef.test, but allows the user to pass a distribution object. The advantage
-#'   is that you do not need to pass distribution parameters into a `...`
-#'   argument as in `ef.test`. `ef.test` uses this function under the hood, but
-#'   it's perfectly suitable for the user to use as well.
-#' @param dist A distribution object. The distribution to test `x` against.
-#'   Distribution objects are created with the various `name_dist(...)`
-#'   functions in this package.
+#'   [ef.test()], but allows the user to pass a distribution object like
+#'   [normal_dist()]. The advantage is that you do not need to pass
+#'   distribution parameters into a `...` argument as in `ef.test`. `ef.test`
+#'   uses this function under the hood, but it's perfectly suitable for the
+#'   user to use as well.
+#' @param dist A object of class GOFDist. The distribution to test `x` against.
+#'   GOFDist objects are created with the various `name_dist(...)`
+#'   functions in this package. See, for example, [normal_dist()] for details
+#'   on this class.
 #' @inherit energyfit.test return author title references details seealso
 #' @inheritParams energyfit.test
-#' @inheritSection energyfit.test About-Energy
-#' @inheritSection energyfit.test Distributions-in-energyfit
+#' @inheritSection energyfit.test About Energy
+#' @inheritSection energyfit.test Distributions available to test
 #' @aliases ef
 #' @examples
 #'
@@ -533,8 +543,6 @@ energyfit.GOFDist <- function(x, dist, nsim = 100) {
   EYY <- dist$EYY(dist$sampler_par)
   E_stat <- Qhat(x, dist, EYY)
   sim <- simulate_pval(x, dist, nsim, E_stat, EYY)
-  ## Qhat could have modified dist, so we need to check for a change before
-  ## making the htest.
   names(E_stat) <- paste0("E-statistic",
                           if (cp)
                             " (transformed data)"
@@ -599,7 +607,19 @@ print.GOFDist <- function(dist, ...) {
 #' @description Create an S3 object that sets all the required data needed by energyfit to execute the eneregy goodness-of-fit test against this distribution.
 #' @param mean Same as [rnorm()], but must be length 1.
 #' @param sd Same as [rnorm()], but must be length 1
-#' @return S3 data object containing the fields:
+#' @return S3 data object containing the fields. This all used internally by [energyfit()] and [energyfit.test()].
+#' * name: String
+#' * composite_p: TRUE if test is composite
+#' * par: Distribution parameters, list of the formals.
+#' * sampler_par: Distribution parameters used for the calculation of energy statistic. These may be different than `par`.
+#' * par_domain: Function used to ensure `par` and `sampler_par` are valid for this distribution
+#' * support: Function to check that data `x` can be tested against `dist`
+#' * sampler: Function used for rng by [boot::boot()]
+#' * EYY: Function to compute \eqn{E|Y-Y'|} (or \eqn{E|Y-Y'|^{pow}}, for the generalized test.)
+#' * EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or  \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according to dist and x is the data under test (which is passed in ef.test or ef).
+#' * xform: Function that may be used to transform x.
+#' * statistic: Function that returns a list of maximum likelihood estimates.
+#'
 #'
 #' @export
 normal_dist <- function(mean = NULL, sd = NULL) {
@@ -1293,7 +1313,8 @@ pareto_dist <- function(scale = NULL, shape = NULL,
       composite_p = is_composite(scale, shape),
       par = list(scale = scale, shape = shape,
                  pow = pow, r = r),
-      sampler_par = NULL,
+      sampler_par = list(scale = 1, shape = 1,
+                         pow = 0.5, r = 1),
       support = function(x, par) {
         all(x > par$scale)
       },
@@ -1540,48 +1561,49 @@ stable_dist <- function(location = NULL, scale = NULL,
 }
 
 #### Extras
-## tabular <- function(df, ...) {
-##   stopifnot(is.data.frame(df))
-##
-##   align <- function(x) if (is.numeric(x)) "r" else "l"
-##   col_align <- vapply(df, align, character(1))
-##
-##   cols <- lapply(df, format, ...)
-##   contents <- do.call("paste",
-##                       c(cols, list(sep = " \\tab ", collapse = "\\cr\n#'   ")))
-##
-##   paste("#' \\tabular{", paste(col_align, collapse = ""), "}{\n#'   ",
-##         paste0("\\strong{", names(df), "}", sep = "", collapse = " \\tab "), " \\cr\n#'   ",
-##         contents, "\n#' }\n", sep = "")
-## }
-##
+tabular <- function(df, ...) {
+  stopifnot(is.data.frame(df))
 
-## deats <- data.frame(
-##   Distribution = character(1),
-##   Paramater = character(1),
-##   CompositeAllowed = character(1)
-## )
+  align <- function(x) if (is.numeric(x)) "r" else "l"
+  col_align <- vapply(df, align, character(1))
 
-##
-## deats <- rbind(deats, list("Normal", "mean, sd", "Yes"))
-## deats <- rbind(deats, list("Uniform", "min, max", "No"))
-## deats <- rbind(deats, list("Exponential", "rate", "Yes"))
-## deats <- rbind(deats, list("Poisson", "lambda", "Yes"))
-## deats <- rbind(deats, list("Bernoulli", "prob", "No"))
-## deats <- rbind(deats, list("Binomial", "prob", "Yes"))
-## deats <- rbind(deats, list("Beta", "shape1, shape2", "No"))
-## deats <- rbind(deats, list("Half-Normal", "theta", "No"))
-## deats <- rbind(deats, list("Laplace", "location, scale", "No"))
-## deats <- rbind(deats, list("Log-normal", "meanlog, sdlog", "No"))
-## deats <- rbind(deats, list("Asymmetric Laplace", "location, scale, skew", "No"))
-## deats <- rbind(deats, list("Weibull", "shape, scale", "No"))
-## deats <- rbind(deats, list("Gamma", "shape, rate", "No"))
-## deats <- rbind(deats, list("Chi Squared", "df", "No"))
-## deats <- rbind(deats, list("Inverse Gaussion", "mu, lambda", "No"))
-## deats <- rbind(deats, list("Pareto", "scale, shape, pow, r", "No"))
-## deats <- rbind(deats, list("Cauchy", "location, scale, pow", "No"))
-## deats <- rbind(deats, list("Stable", "location, scale, skew, stability, pow", "No"))
-##
-## o <- tabular(deats)
-##
-## writeLines(o)
+  cols <- lapply(df, format, ...)
+  contents <- do.call("paste",
+                      c(cols, list(sep = " \\tab ", collapse = "\\cr\n#'   ")))
+
+  paste("#' \\tabular{", paste(col_align, collapse = ""), "}{\n#'   ",
+        paste0("\\strong{", names(df), "}", sep = "", collapse = " \\tab "), " \\cr\n#'   ",
+        contents, "\n#' }\n", sep = "")
+}
+
+
+deats <- data.frame(
+  Distribution = character(1),
+  Function = character(1),
+  Paramater = character(1),
+  CompositeAllowed = character(1)
+)
+
+
+deats <- rbind(deats, list("Normal", "normal_dist", "mean, sd", "Yes"))
+deats <- rbind(deats, list("Uniform", "uniform_dist", "min, max", "No"))
+deats <- rbind(deats, list("Exponential", "exponential_dist", "rate", "Yes"))
+deats <- rbind(deats, list("Poisson", "poisson_dist", "lambda", "Yes"))
+deats <- rbind(deats, list("Bernoulli", "bernoulli_dist", "prob", "No"))
+deats <- rbind(deats, list("Binomial", "binomial_dist", "prob", "Yes"))
+deats <- rbind(deats, list("Beta", "beta_dist", "shape1, shape2", "No"))
+deats <- rbind(deats, list("Half-Normal", "halfnormal_dist", "theta", "No"))
+deats <- rbind(deats, list("Laplace", "laplace_dist", "location, scale", "No"))
+deats <- rbind(deats, list("Log-normal", "lognormal_dist", "meanlog, sdlog", "No"))
+deats <- rbind(deats, list("Asymmetric Laplace", "asymmetriclaplace_dist", "location, scale, skew", "No"))
+deats <- rbind(deats, list("Weibull", "weibull_dist", "shape, scale", "No"))
+deats <- rbind(deats, list("Gamma", "gamma_dist", "shape, rate", "No"))
+deats <- rbind(deats, list("Chi Squared", "chisq_dist", "df", "No"))
+deats <- rbind(deats, list("Inverse Gaussion", "inversegaussian_dist", "mu, lambda", "No"))
+deats <- rbind(deats, list("Pareto", "pareto_dist", "scale, shape, pow, r", "No"))
+deats <- rbind(deats, list("Cauchy", "cauchy_dist", "location, scale, pow", "No"))
+deats <- rbind(deats, list("Stable", "stable_dist", "location, scale, skew, stability, pow", "No"))
+
+o <- tabular(deats)
+
+writeLines(o)

@@ -36,7 +36,7 @@ goodness-of-fit hypothesis test. The htest object has the list elements:
 \item parameter: List of parameters if the test is simple
 \item nsim: Number of bootstrap replicates
 \item composite_p: TRUE/FALSE composite predicate
-\item statistic: The value of the energy statistic (see \link{Qhat})
+\item statistic: The value of the energy statistic (\eqn{Q=nE^*})
 \item p.value
 \item sim_reps: bootstrap simulation data
 \item estimate: Any parameter estimates, if the test is composite
@@ -84,26 +84,27 @@ default value (100) is not a robust choice.
 The table summarizes the available distributions, their parameters, and
 whether a composite GOF test may be performed.
 
-\tabular{lll}{
-\strong{Distribution} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
-Normal             \tab mean, sd                              \tab Yes\cr
-Uniform            \tab min, max                              \tab No \cr
-Exponential        \tab rate                                  \tab Yes\cr
-Poisson            \tab lambda                                \tab Yes\cr
-Bernoulli          \tab prob                                  \tab No \cr
-Binomial           \tab prob                                  \tab Yes\cr
-Beta               \tab shape1, shape2                        \tab No \cr
-Half-Normal        \tab theta                                 \tab No \cr
-Laplace            \tab location, scale                       \tab No \cr
-Log-normal         \tab meanlog, sdlog                        \tab No \cr
-Asymmetric Laplace \tab location, scale, skew                 \tab No \cr
-Weibull            \tab shape, scale                          \tab No \cr
-Gamma              \tab shape, rate                           \tab No \cr
-Chi Squared        \tab df                                    \tab No \cr
-Inverse Gaussion   \tab mu, lambda                            \tab No \cr
-Pareto             \tab scale, shape, pow, r                  \tab No \cr
-Cauchy             \tab location, scale, pow                  \tab No \cr
-Stable             \tab location, scale, skew, stability, pow \tab No
+\tabular{llll}{
+\strong{Distribution} \tab \strong{Function} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
+\tab                        \tab                                       \tab    \cr
+Normal             \tab normal_dist            \tab mean, sd                              \tab Yes\cr
+Uniform            \tab uniform_dist           \tab min, max                              \tab No \cr
+Exponential        \tab exponential_dist       \tab rate                                  \tab Yes\cr
+Poisson            \tab poisson_dist           \tab lambda                                \tab Yes\cr
+Bernoulli          \tab bernoulli_dist         \tab prob                                  \tab No \cr
+Binomial           \tab binomial_dist          \tab prob                                  \tab Yes\cr
+Beta               \tab beta_dist              \tab shape1, shape2                        \tab No \cr
+Half-Normal        \tab halfnormal_dist        \tab theta                                 \tab No \cr
+Laplace            \tab laplace_dist           \tab location, scale                       \tab No \cr
+Log-normal         \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
+Asymmetric Laplace \tab asymmetriclaplace_dist \tab location, scale, skew                 \tab No \cr
+Weibull            \tab weibull_dist           \tab shape, scale                          \tab No \cr
+Gamma              \tab gamma_dist             \tab shape, rate                           \tab No \cr
+Chi Squared        \tab chisq_dist             \tab df                                    \tab No \cr
+Inverse Gaussion   \tab inversegaussian_dist   \tab mu, lambda                            \tab No \cr
+Pareto             \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
+Cauchy             \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
+Stable             \tab stable_dist            \tab location, scale, skew, stability, pow \tab No
 }
 }
 

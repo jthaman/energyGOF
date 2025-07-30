@@ -10,9 +10,10 @@ energyfit(x, dist, nsim = 100)
 \arguments{
 \item{x}{A numeric vector.}
 
-\item{dist}{A distribution object. The distribution to test \code{x} against.
-Distribution objects are created with the various \code{name_dist(...)}
-functions in this package.}
+\item{dist}{A object of class GOFDist. The distribution to test \code{x} against.
+GOFDist objects are created with the various \code{name_dist(...)}
+functions in this package. See, for example, \code{\link[=normal_dist]{normal_dist()}} for details
+on this class.}
 
 \item{nsim}{A positive integer. The number of parametric bootstrap
 replicates taken to calculate the p-value.}
@@ -27,7 +28,7 @@ goodness-of-fit hypothesis test. The htest object has the list elements:
 \item parameter: List of parameters if the test is simple
 \item nsim: Number of bootstrap replicates
 \item composite_p: TRUE/FALSE composite predicate
-\item statistic: The value of the energy statistic (see \link{Qhat})
+\item statistic: The value of the energy statistic (\eqn{Q=nE^*})
 \item p.value
 \item sim_reps: bootstrap simulation data
 \item estimate: Any parameter estimates, if the test is composite
@@ -35,10 +36,11 @@ goodness-of-fit hypothesis test. The htest object has the list elements:
 }
 \description{
 This is an alternative interface that provides the same test as
-ef.test, but allows the user to pass a distribution object. The advantage
-is that you do not need to pass distribution parameters into a \code{...}
-argument as in \code{ef.test}. \code{ef.test} uses this function under the hood, but
-it's perfectly suitable for the user to use as well.
+\code{\link[=ef.test]{ef.test()}}, but allows the user to pass a distribution object like
+\code{\link[=normal_dist]{normal_dist()}}. The advantage is that you do not need to pass
+distribution parameters into a \code{...} argument as in \code{ef.test}. \code{ef.test}
+uses this function under the hood, but it's perfectly suitable for the
+user to use as well.
 }
 \details{
 There are two types of goodness-of-fit tests covered by the energyfit
@@ -107,26 +109,27 @@ does.
 The table summarizes the available distributions, their parameters, and
 whether a composite GOF test may be performed.
 
-\tabular{lll}{
-\strong{Distribution} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
-Normal             \tab mean, sd                              \tab Yes\cr
-Uniform            \tab min, max                              \tab No \cr
-Exponential        \tab rate                                  \tab Yes\cr
-Poisson            \tab lambda                                \tab Yes\cr
-Bernoulli          \tab prob                                  \tab No \cr
-Binomial           \tab prob                                  \tab Yes\cr
-Beta               \tab shape1, shape2                        \tab No \cr
-Half-Normal        \tab theta                                 \tab No \cr
-Laplace            \tab location, scale                       \tab No \cr
-Log-normal         \tab meanlog, sdlog                        \tab No \cr
-Asymmetric Laplace \tab location, scale, skew                 \tab No \cr
-Weibull            \tab shape, scale                          \tab No \cr
-Gamma              \tab shape, rate                           \tab No \cr
-Chi Squared        \tab df                                    \tab No \cr
-Inverse Gaussion   \tab mu, lambda                            \tab No \cr
-Pareto             \tab scale, shape, pow, r                  \tab No \cr
-Cauchy             \tab location, scale, pow                  \tab No \cr
-Stable             \tab location, scale, skew, stability, pow \tab No
+\tabular{llll}{
+\strong{Distribution} \tab \strong{Function} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
+\tab                        \tab                                       \tab    \cr
+Normal             \tab normal_dist            \tab mean, sd                              \tab Yes\cr
+Uniform            \tab uniform_dist           \tab min, max                              \tab No \cr
+Exponential        \tab exponential_dist       \tab rate                                  \tab Yes\cr
+Poisson            \tab poisson_dist           \tab lambda                                \tab Yes\cr
+Bernoulli          \tab bernoulli_dist         \tab prob                                  \tab No \cr
+Binomial           \tab binomial_dist          \tab prob                                  \tab Yes\cr
+Beta               \tab beta_dist              \tab shape1, shape2                        \tab No \cr
+Half-Normal        \tab halfnormal_dist        \tab theta                                 \tab No \cr
+Laplace            \tab laplace_dist           \tab location, scale                       \tab No \cr
+Log-normal         \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
+Asymmetric Laplace \tab asymmetriclaplace_dist \tab location, scale, skew                 \tab No \cr
+Weibull            \tab weibull_dist           \tab shape, scale                          \tab No \cr
+Gamma              \tab gamma_dist             \tab shape, rate                           \tab No \cr
+Chi Squared        \tab chisq_dist             \tab df                                    \tab No \cr
+Inverse Gaussion   \tab inversegaussian_dist   \tab mu, lambda                            \tab No \cr
+Pareto             \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
+Cauchy             \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
+Stable             \tab stable_dist            \tab location, scale, skew, stability, pow \tab No
 }
 }
 
