@@ -35,7 +35,6 @@ goodness-of-fit hypothesis test. The htest object has the list elements:
 \item distribution: The distribution object created to test
 \item parameter: List of parameters if the test is simple
 \item nsim: Number of bootstrap replicates
-\item pow: If generalized energy test, the exponent of the test
 \item composite_p: TRUE/FALSE composite predicate
 \item statistic: The value of the energy statistic (see \link{Qhat})
 \item p.value
@@ -44,7 +43,13 @@ goodness-of-fit hypothesis test. The htest object has the list elements:
 }
 }
 \description{
-Goodness-of-fit tests via the energy of data
+Perform a goodness-of-fit test of univariate data \code{x} against a
+distribution \code{dist}. Both simple (known parameter) and composite (unknown
+parameter) cases are supported, but not all distributions allow for a
+composite test. P-values are determined via parametric bootstrap. For
+distributions where E|Y| is not finite (Cauchy, Pareto, Stable), a
+generalized energy goodness-of-fit test is performed, and an additional
+tuning parameter \code{pow} is required.
 }
 \details{
 There are two types of goodness-of-fit tests covered by the energyfit
@@ -66,16 +71,14 @@ unknown sd, this is not implemented in the energygof package. So, either
 pass all the distribution parameters or none of them. (In the special case
 of the Normal distribution, you can use the energy package to test the GOF
 hypothesis with any combination of known and known parameters.)
-
-\link{Table of available distributions.}
-
+#'
 For each test, energyfit.test calculates the test statistic and a p-value.
 In all cases the p-value is calculated via parametric bootstrap. For large \code{nsim},
 the p-values should be reasonably honest in small-ish samples.You should set
 nsim to be a very large number in practice. I recommend at least 10,000. The
 default value (100) is not a robust choice.
 }
-\section{Distributions in energyfit}{
+\section{Distributions-in-energyfit}{
 
 
 The table summarizes the available distributions, their parameters, and
@@ -104,7 +107,7 @@ Stable             \tab location, scale, skew, stability, pow \tab No
 }
 }
 
-\section{About Energy}{
+\section{About-Energy}{
 
 
 Székely, G. J., & Rizzo, M. L. (2023) provide the motivate:
@@ -120,19 +123,19 @@ statistical hypothesis is true.
 The concept of data energy between two random variables can be adapted to
 the one sample goodness of fit problem. The one-sample s-energy is
 
-\deqn{\script{E} = \frac{2}{n} \sum_i E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2}
-\sum_i \sum_j |x_i - x_j|^s},
+\deqn{E^* = \frac{2}{n} \sum_i E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2}
+\sum_i \sum_j |x_i - x_j|^s,}
 
-when 0 < s < 2 and E|X|^s, E|Y|^s < Inf.
+when \eqn{0 < s < 2} and \eqn{E|X|^s, E|Y|^s < \infty.}
 
 In most tests in the energyfit package s = 1. In some cases (Pareto, Cauchy,
 Stable), E|Y| is not finite, so we need to use an s < 1. This is done by
 passing \code{paw} into \code{...}. (See examples)
 
-In the one-sample goodness-of-fit regime, we wonder if x_i ~ X (which is
+In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (which is
 hidden) follows the same distribution as Y, which is specified. If X and Y
-have the same distribution, then Q = n*\script{E} is a quadratic form of
-centered Gaussian random variables with expected value E|Y-Y'|. If X and Y
+have the same distribution, then \eqn{Q = nE^*} is a quadratic form of
+centered Gaussian random variables with expected value \eqn{E|Y-Y'|}. If X and Y
 differ, then Q goes to Inf. So, Q can be used to test goodness-of-fit, even
 in some situations where E|Y| is not finite. And that's what energyfit.test
 does.

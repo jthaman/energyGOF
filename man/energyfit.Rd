@@ -26,7 +26,6 @@ goodness-of-fit hypothesis test. The htest object has the list elements:
 \item distribution: The distribution object created to test
 \item parameter: List of parameters if the test is simple
 \item nsim: Number of bootstrap replicates
-\item pow: If generalized energy test, the exponent of the test
 \item composite_p: TRUE/FALSE composite predicate
 \item statistic: The value of the energy statistic (see \link{Qhat})
 \item p.value
@@ -61,15 +60,76 @@ unknown sd, this is not implemented in the energygof package. So, either
 pass all the distribution parameters or none of them. (In the special case
 of the Normal distribution, you can use the energy package to test the GOF
 hypothesis with any combination of known and known parameters.)
-
-\link{Table of available distributions.}
-
+#'
 For each test, energyfit.test calculates the test statistic and a p-value.
 In all cases the p-value is calculated via parametric bootstrap. For large \code{nsim},
 the p-values should be reasonably honest in small-ish samples.You should set
 nsim to be a very large number in practice. I recommend at least 10,000. The
 default value (100) is not a robust choice.
 }
+\section{About-Energy}{
+
+
+Székely, G. J., & Rizzo, M. L. (2023) provide the motivate:
+
+Data energy is a real number (typically a nonnegative number) that depends
+on the distances between data. This concept is based on the notion of
+Newton’s gravitational potential energy, which is also a function of the
+distance between bodies. The idea of data energy or energy statistics is to
+consider statistical observations (data) as heavenly bodies governed by the
+potential energy of data, which is zero if and only if an underlying
+statistical hypothesis is true.
+
+The concept of data energy between two random variables can be adapted to
+the one sample goodness of fit problem. The one-sample s-energy is
+
+\deqn{E^* = \frac{2}{n} \sum_i E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2}
+\sum_i \sum_j |x_i - x_j|^s,}
+
+when \eqn{0 < s < 2} and \eqn{E|X|^s, E|Y|^s < \infty.}
+
+In most tests in the energyfit package s = 1. In some cases (Pareto, Cauchy,
+Stable), E|Y| is not finite, so we need to use an s < 1. This is done by
+passing \code{paw} into \code{...}. (See examples)
+
+In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (which is
+hidden) follows the same distribution as Y, which is specified. If X and Y
+have the same distribution, then \eqn{Q = nE^*} is a quadratic form of
+centered Gaussian random variables with expected value \eqn{E|Y-Y'|}. If X and Y
+differ, then Q goes to Inf. So, Q can be used to test goodness-of-fit, even
+in some situations where E|Y| is not finite. And that's what energyfit.test
+does.
+}
+
+\section{Distributions-in-energyfit}{
+
+
+The table summarizes the available distributions, their parameters, and
+whether a composite GOF test may be performed.
+
+\tabular{lll}{
+\strong{Distribution} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
+Normal             \tab mean, sd                              \tab Yes\cr
+Uniform            \tab min, max                              \tab No \cr
+Exponential        \tab rate                                  \tab Yes\cr
+Poisson            \tab lambda                                \tab Yes\cr
+Bernoulli          \tab prob                                  \tab No \cr
+Binomial           \tab prob                                  \tab Yes\cr
+Beta               \tab shape1, shape2                        \tab No \cr
+Half-Normal        \tab theta                                 \tab No \cr
+Laplace            \tab location, scale                       \tab No \cr
+Log-normal         \tab meanlog, sdlog                        \tab No \cr
+Asymmetric Laplace \tab location, scale, skew                 \tab No \cr
+Weibull            \tab shape, scale                          \tab No \cr
+Gamma              \tab shape, rate                           \tab No \cr
+Chi Squared        \tab df                                    \tab No \cr
+Inverse Gaussion   \tab mu, lambda                            \tab No \cr
+Pareto             \tab scale, shape, pow, r                  \tab No \cr
+Cauchy             \tab location, scale, pow                  \tab No \cr
+Stable             \tab location, scale, skew, stability, pow \tab No
+}
+}
+
 \examples{
 
 ef(rnorm(10), normal_dist(0,1), nsim = 10)

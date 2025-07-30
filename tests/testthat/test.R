@@ -21,7 +21,7 @@ test_that("Uniform", {
 ##### Pareto Test
 test_that("Pareto: shape, scale >1", {
   # erratic
-  d <- pareto_dist(4, 4, 3)
+  d <- pareto_dist(3, 3, 2)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 0)
   expect_s3_class(o, "htest")
@@ -105,13 +105,14 @@ test_that("Normal should not be transformed", {
   x <- rnorm(10)
   o <- ef(x, normal_dist(0, 1))
   expect_identical(names(o$statistic), "E-statistic")
-}
+})
 
 test_that("egf should return htest, even when nsim is missing", {
   x <- rnorm(10)
   o <- ef(x, normal_dist(0, 1))
   expect_s3_class(o, "htest")
-}))
+  expect_gt(o$statistic, 0)
+})
 
 test_that("Normal p-vals should be uniform under Null hypothesis", {
   n <- 15
@@ -130,7 +131,8 @@ test_that("Power to detect mean shift.", {
   save <- numeric(n)
   for (i in 1:n) {
     x <- rnorm(n, 1, 1)
-    save[i] <- unlist(ef(x, normal_dist(0, 1))$p.value)
+    o <- ef(x, normal_dist(0, 1))
+    save[i] <- unlist(o$p.value)
   }
   expect_lt(mean(save[i]), 0.05)
   expect_gt(o$statistic, 0)
@@ -140,8 +142,9 @@ test_that("Power to detect sd shift.", {
   n <- 10
   save <- numeric(n)
   for (i in 1:n) {
-    x <- rnorm(n, 0, 2)
-    save[i] <- unlist(ef(x, normal_dist(0, 1))$p.value)
+    x <- rnorm(n, 0, 3)
+    o <- ef(x, normal_dist(0, 1))
+    save[i] <- unlist(o$p.value)
   }
   expect_lt(mean(save[i]), 0.05)
   expect_gt(o$statistic, 0)
