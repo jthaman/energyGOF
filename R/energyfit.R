@@ -15,7 +15,13 @@
 
 #' @title Goodness-of-fit tests via the energy of data
 #' @author John T. Haman
-#'
+#' @description Perform a goodness-of-fit test of univariate data `x` against a
+#'   distribution `dist`. Both simple (known parameter) and composite (unknown
+#'   parameter) cases are supported, but not all distributions allow for a
+#'   composite test. P-values are determined via parametric bootstrap. For
+#'   distributions where E|Y| is not finite (Cauchy, Pareto, Stable), a
+#'   generalized energy goodness-of-fit test is performed, and an additional
+#' tuning parameter `pow` is required.
 #' @param x A numeric vector.
 #' @param dist A string. The distribution to test `x` against.
 #' @param nsim A positive integer. The number of parametric bootstrap
@@ -69,26 +75,51 @@
 #' pass all the distribution parameters or none of them. (In the special case
 #' of the Normal distribution, you can use the energy package to test the GOF
 #' hypothesis with any combination of known and known parameters.)
-#'
-#' [Table of available distributions.]
-#'
+#'#'
 #' For each test, energyfit.test calculates the test statistic and a p-value.
 #' In all cases the p-value is calculated via parametric bootstrap. For large `nsim`,
 #' the p-values should be reasonably honest in small-ish samples.You should set
 #' nsim to be a very large number in practice. I recommend at least 10,000. The
 #' default value (100) is not a robust choice.
 #'
+#' @section Distributions in energyfit
+#'
+#' The table summarizes the available distributions, their parameters, and
+#' whether a composite GOF test may be performed.
+#'
+#' \tabular{lll}{
+#'   \strong{Distribution} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
+#'   Normal             \tab mean, sd                              \tab Yes\cr
+#'   Uniform            \tab min, max                              \tab No \cr
+#'   Exponential        \tab rate                                  \tab Yes\cr
+#'   Poisson            \tab lambda                                \tab Yes\cr
+#'   Bernoulli          \tab prob                                  \tab No \cr
+#'   Binomial           \tab prob                                  \tab Yes\cr
+#'   Beta               \tab shape1, shape2                        \tab No \cr
+#'   Half-Normal        \tab theta                                 \tab No \cr
+#'   Laplace            \tab location, scale                       \tab No \cr
+#'   Log-normal         \tab meanlog, sdlog                        \tab No \cr
+#'   Asymmetric Laplace \tab location, scale, skew                 \tab No \cr
+#'   Weibull            \tab shape, scale                          \tab No \cr
+#'   Gamma              \tab shape, rate                           \tab No \cr
+#'   Chi Squared        \tab df                                    \tab No \cr
+#'   Inverse Gaussion   \tab mu, lambda                            \tab No \cr
+#'   Pareto             \tab scale, shape, pow, r                  \tab No \cr
+#'   Cauchy             \tab location, scale, pow                  \tab No \cr
+#'   Stable             \tab location, scale, skew, stability, pow \tab No
+#' }
+#'
 #' @section About Energy
 #'
 #' Székely, G. J., & Rizzo, M. L. (2023) provide the motivate:
 #'
-#' > Data energy is a real number (typically a nonnegative number) that depends
-#' > on the distances between data. This concept is based on the notion of
-#' > Newton’s gravitational potential energy, which is also a function of the
-#' > distance between bodies. The idea of data energy or energy statistics is to
-#' > consider statistical observations (data) as heavenly bodies governed by the
-#' > potential energy of data, which is zero if and only if an underlying
-#' > statistical hypothesis is true.
+#' Data energy is a real number (typically a nonnegative number) that depends
+#' on the distances between data. This concept is based on the notion of
+#' Newton’s gravitational potential energy, which is also a function of the
+#' distance between bodies. The idea of data energy or energy statistics is to
+#' consider statistical observations (data) as heavenly bodies governed by the
+#' potential energy of data, which is zero if and only if an underlying
+#' statistical hypothesis is true.
 #'
 #' The concept of data energy between two random variables can be adapted to
 #' the one sample goodness of fit problem. The one-sample s-energy is
@@ -478,6 +509,8 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #'   functions in this package.
 #' @inherit energyfit.test return author title references details seealso
 #' @inheritParams energyfit.test
+#' @inheritSection About energy
+#' @inheritSection Distributions in energyfit
 #' @aliases ef
 #' @examples
 #'
@@ -1477,3 +1510,7 @@ deats <- rbind(deats, list("Inverse Gaussion", "mu, lambda", "No"))
 deats <- rbind(deats, list("Pareto", "scale, shape, pow, r", "No"))
 deats <- rbind(deats, list("Cauchy", "location, scale, pow", "No"))
 deats <- rbind(deats, list("Stable", "location, scale, skew, stability, pow", "No"))
+
+o <- tabular(deats)
+
+writeLines(o)

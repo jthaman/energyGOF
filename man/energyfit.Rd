@@ -14,8 +14,8 @@ energyfit(x, dist, nsim = 100)
 Distribution objects are created with the various \code{name_dist(...)}
 functions in this package.}
 
-\item{nsim}{A positive integer. The number of parametric bootstrap replicates
-taken to calculate the p-value.}
+\item{nsim}{A positive integer. The number of parametric bootstrap
+replicates taken to calculate the p-value.}
 }
 \value{
 An object of class `htest' representing the result of the energy
@@ -42,16 +42,18 @@ argument as in \code{ef.test}. \code{ef.test} uses this function under the hood,
 it's perfectly suitable for the user to use as well.
 }
 \details{
-\link{TODO description of Energy GOF test here.}
-
-There are two types of goodness-of-fit tests covered by the energyfit function,
-simple and composite. Simple GOF tests test the data \code{x} against a specific
-distribution with \emph{known parameters} that you must pass to energyfit in the
-ellipsis agrument (...). You should use a simple GOF test if you wish to
-test questions like "my data is Normal with mean 1 and sd 2". energyfit can also
-conduct \emph{some} composite GOF tests. A composite test is performed if no
-parameters are passed in the ellpisis argument (...). You should conduct a
-composite test if your research question is "my data is Normal."
+There are two types of goodness-of-fit tests covered by the energyfit
+function, \emph{simple} and \emph{composite}. It's important to know the difference to
+use this package, because yield different results. Simple GOF tests test the
+data \code{x} against a specific distribution with \emph{known parameters} that you
+must pass to energyfit.test in the ellipsis agrument (...). You should use a
+simple GOF test if you wish to test questions like
+"my data is Normal with mean 1 and sd 2". energyfit.test can also conduct
+\emph{some} composite GOF tests. A composite test is performed if no parameters
+are passed in the ellpisis argument (...). You should conduct a composite
+test if your research question is
+"my data is Normal, but I don't know what the parameters are." Obviously,
+this composite question is much more common in practice.
 
 All the composite tests in energyfit assume that none of the parameters are
 known. So while there is a statistical test of Normality with known mean and
@@ -60,8 +62,13 @@ pass all the distribution parameters or none of them. (In the special case
 of the Normal distribution, you can use the energy package to test the GOF
 hypothesis with any combination of known and known parameters.)
 
-You should set nsim to be a very large number in practice. I recommend at least
-10,000. The default value is not a robust choice.
+\link{Table of available distributions.}
+
+For each test, energyfit.test calculates the test statistic and a p-value.
+In all cases the p-value is calculated via parametric bootstrap. For large \code{nsim},
+the p-values should be reasonably honest in small-ish samples.You should set
+nsim to be a very large number in practice. I recommend at least 10,000. The
+default value (100) is not a robust choice.
 }
 \examples{
 
@@ -102,11 +109,11 @@ ASTIN Bulletin: The Journal of the IAA, 39(2), 691-715.
 \seealso{
 \link[stats]{Distributions} for a list of distributions available
 in most R installations. \link[energy:normalGOF]{energy::normal.test} for the energy
-goodness-of-fit test with unknown parameters. See
-\link[energy:poisson]{energy::poisson.mtest} for a different poisson goodness-of-fit test
-based on mean distances. The tests for (multivariate) Normal in the
-\link{energy} package are implemented with compiled code, and are faster
-than the one available in the energyfit package.
+goodness-of-fit test with unknown parameters. See \link[energy:poisson]{energy::poisson.mtest}
+for a different poisson goodness-of-fit test based on mean distances. The
+tests for (multivariate) Normal in the \link{energy} package are implemented
+with compiled code, and are faster than the one available in the energyfit
+package.
 }
 \author{
 John T. Haman
