@@ -241,8 +241,6 @@ validate_dist <- function(dist) {
   stopifnot(setequal(names(dist$ref_par), formals(dist)))
 }
 
-##### Validate Dots
-
 
 ##### Validate x
 validate_x <- function(x, dist) {
@@ -572,6 +570,7 @@ print.GOFDist <- function(dist, ...) {
 
 ##### Normal
 
+#' @export
 normal_dist <- function(mean = NULL, sd = NULL) {
   dist <- structure(
     list(
@@ -603,6 +602,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
 
 ##### Uniform
 
+#' @export
 uniform_dist<- function(min = 0, max = 1) {
   dist <- structure(
     list(
@@ -628,6 +628,8 @@ uniform_dist<- function(min = 0, max = 1) {
   dist
 }
 ##### Exponential
+
+#' @export
 exponential_dist <- function(rate = NULL) {
   dist <- structure(
     list(
@@ -653,6 +655,8 @@ exponential_dist <- function(rate = NULL) {
 }
 
 ##### Poisson
+
+#' @export
 poisson_dist <- function(lambda = NULL) {
   dist <- structure(
     list(
@@ -689,6 +693,7 @@ poisson_dist <- function(lambda = NULL) {
 
 ##### Bernoulli
 
+#' @export
 bernoulli_dist <- function(prob = 0.5) {
   dist <- structure(
     list(
@@ -717,6 +722,8 @@ bernoulli_dist <- function(prob = 0.5) {
 }
 
 ##### Binomial
+
+#' @export
 binomial_dist <- function(size = 1, prob = 0.5) {
   dist <- structure(
     list(
@@ -754,6 +761,8 @@ binomial_dist <- function(size = 1, prob = 0.5) {
 
 
 ##### Beta
+
+#' @export
 beta_dist <- function(shape1 = 1, shape2 = 1) {
   dist <- structure(
     list(
@@ -790,6 +799,8 @@ beta_dist <- function(shape1 = 1, shape2 = 1) {
 ##### Dirchlet?
 
 ##### Geometric
+
+#' @export
 geometric_dist  <- function(prob = 0.5) {
   dist <- structure(
     list(
@@ -819,6 +830,8 @@ geometric_dist  <- function(prob = 0.5) {
 
 ##### Half-Normal
 ## TODO, this seems to be bugged
+
+#' @export
 halfnormal_dist <- function(scale = NULL) {
   dist <- structure(
     list(
@@ -849,6 +862,8 @@ halfnormal_dist <- function(scale = NULL) {
 }
 
 ##### Laplace
+
+#' @export
 laplace_dist <- function(location = NULL, scale = NULL) {
   dist <- structure(
     list(
@@ -882,6 +897,8 @@ laplace_dist <- function(location = NULL, scale = NULL) {
 }
 
 ##### Log-Normal
+
+#' @export
 lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
   dist <- structure(
     list(
@@ -929,6 +946,8 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 
 
 ##### Asymmetric Laplace
+
+#' @export
 asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
                                     skew = NULL) {
   dist <- structure(
@@ -985,6 +1004,8 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
 ##### F??
 
 ##### Weibull
+
+#' @export
 weibull_dist <- function(shape = NULL, scale = NULL) {
   dist <- structure(
     list(
@@ -1023,6 +1044,8 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
 }
 
 ##### Gamma
+
+#' @export
 gamma_dist <- function(shape = NULL, rate = NULL) {
   dist <- structure(
     list(
@@ -1060,6 +1083,8 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
 
 
 ##### Chi-Square
+
+#' @export
 chisq_dist <- function(df = 2) {
   dist <- structure(
     list(
@@ -1092,6 +1117,8 @@ chisq_dist <- function(df = 2) {
 
 
 ##### Inverse Gaussian
+
+#' @export
 inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
   dist <- structure(
     list(
@@ -1149,6 +1176,8 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
 #### Generalized Goodness-of-fit Tests
 
 ##### Pareto
+
+#' @export
 pareto_dist <- function(scale = NULL, shape = NULL,
                         pow = shape / 2,
                         r = shape){
@@ -1230,6 +1259,8 @@ pareto_dist <- function(scale = NULL, shape = NULL,
 
 
 ##### Cauchy
+
+#' @export
 cauchy_dist <- function(location = NULL, scale = NULL,
                         pow = 0.5) {
   dist <- structure(
@@ -1266,6 +1297,8 @@ cauchy_dist <- function(location = NULL, scale = NULL,
 }
 
 ##### Stable
+
+#' @export
 stable_dist <- function(location = NULL, scale = NULL,
                         skew = NULL, stability = NULL,
                         pow = stability / 4) {
@@ -1434,3 +1467,13 @@ deats <- rbind(deats, list("Bernoulli", "prob", "No"))
 deats <- rbind(deats, list("Binomial", "prob", "Yes"))
 deats <- rbind(deats, list("Beta", "shape1, shape2", "No"))
 deats <- rbind(deats, list("Half-Normal", "theta", "No"))
+deats <- rbind(deats, list("Laplace", "location, scale", "No"))
+deats <- rbind(deats, list("Log-normal", "meanlog, sdlog", "No"))
+deats <- rbind(deats, list("Asymmetric Laplace", "location, scale, skew", "No"))
+deats <- rbind(deats, list("Weibull", "shape, scale", "No"))
+deats <- rbind(deats, list("Gamma", "shape, rate", "No"))
+deats <- rbind(deats, list("Chi Squared", "df", "No"))
+deats <- rbind(deats, list("Inverse Gaussion", "mu, lambda", "No"))
+deats <- rbind(deats, list("Pareto", "scale, shape, pow, r", "No"))
+deats <- rbind(deats, list("Cauchy", "location, scale, pow", "No"))
+deats <- rbind(deats, list("Stable", "location, scale, skew, stability, pow", "No"))
