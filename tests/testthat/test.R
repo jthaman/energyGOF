@@ -21,9 +21,10 @@ test_that("Uniform", {
 ##### Pareto Test
 test_that("Pareto: shape, scale >1", {
   # erratic
-  d <- pareto_dist(3, 3, 2)
+  d <- pareto_dist(3, 3)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 0)
+  o <- ef(x, d, nsim = 25)
+  o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -34,9 +35,10 @@ test_that("Pareto: shape = scale = pow > 1", {
 })
 
 test_that("Pareto: shape, scale >1", {
-  d <- pareto_dist(5, 5, 1)
+  d <- pareto_dist(5, 5, .5, 5)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 0)
+  o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -46,6 +48,7 @@ test_that("Pareto: shape, scale <1", {
   d <- pareto_dist(.1, .1)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 0)
+  o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -59,9 +62,10 @@ test_that("Pareto: shape, scale = 1", {
 })
 
 test_that("Pareto: mixed", {
-  d <- pareto_dist(.1, 10)
+  d <- pareto_dist(.1, 10, r = 30)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 0)
+  o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -70,6 +74,7 @@ test_that("Pareto: mixed", {
   d <- pareto_dist(10, .1)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 0)
+  o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })

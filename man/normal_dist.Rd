@@ -7,9 +7,9 @@
 normal_dist(mean = NULL, sd = NULL)
 }
 \arguments{
-\item{mean}{Same as \code{\link[=rnorm]{rnorm()}}, but must be length 1.}
+\item{mean}{NULL, or if specified, same as \code{\link[=rnorm]{rnorm()}}, but must be length 1.}
 
-\item{sd}{Same as \code{\link[=rnorm]{rnorm()}}, but must be length 1}
+\item{sd}{NULL, or if specified, Same as \code{\link[=rnorm]{rnorm()}}, but must be length 1}
 }
 \value{
 S3 data object containing the fields. This all used internally by \code{\link[=energyfit]{energyfit()}} and \code{\link[=energyfit.test]{energyfit.test()}}.
@@ -28,7 +28,7 @@ S3 data object containing the fields. This all used internally by \code{\link[=e
 }
 }
 \description{
-Create an S3 object that sets all the required data needed by energyfit to execute the eneregy goodness-of-fit test against this distribution.
+Create an S3 object that sets all the required data needed by energyfit to execute the eneregy goodness-of-fit test against this distribution. If \code{mean} and \code{sd} are both NULL, perform a composite test. TODO, do this for other dists.
 }
 \author{
 John T. Haman

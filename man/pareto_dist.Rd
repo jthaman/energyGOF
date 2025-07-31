@@ -13,7 +13,7 @@ pareto_dist(scale = NULL, shape = NULL, pow = shape/2, r = shape)
 
 \item{pow}{exponent of the energy test. Pow must be less than shape.}
 
-\item{r}{Used to transform x in case shape > 1 and pow non-zero}
+\item{r}{Used to transform x in case shape > 1 and pow non-zero. r >= shape is required if shape > 1.}
 
 \item{skew}{Skewness parameter}
 }

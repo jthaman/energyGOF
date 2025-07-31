@@ -91,6 +91,7 @@
 #'   \strong{Distribution} \tab \strong{Function} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
 #'                      \tab                        \tab                                       \tab    \cr
 #'   Normal             \tab normal_dist            \tab mean, sd                              \tab Yes\cr
+#'   Normal             \tab normal_dist            \tab mean, sd                              \tab Yes\cr
 #'   Uniform            \tab uniform_dist           \tab min, max                              \tab No \cr
 #'   Exponential        \tab exponential_dist       \tab rate                                  \tab Yes\cr
 #'   Poisson            \tab poisson_dist           \tab lambda                                \tab Yes\cr
@@ -335,76 +336,61 @@ char_to_dist <- function(name, ...) {
          )
 }
 
-#### Prep Dist: can make mods to dist (dist$sampler_par)
-## Todo: run when dist is created.
-
+#### Transform x for some tests
+## Separate function for outside bootstrap loop
 #' @export
-prep_dist <- function(dist) {
-  UseMethod("prep_dist")
-}
-
-pareto_xform_par <- function(dist) {
-  ## X ~ P(s, a) -> X^r ~ P(s^r, a/r)
-  initpar <- dist$par
-  initshape <- initpar$shape
-  initscale <- initpar$scale
-  initpow <- initpar$pow
-  r <- initpar$r
-  xshape <- initshape / r
-  xpow <- if (initpow >= xshape) initpow / r else initpow
-  xpar <- list(scale = initscale^r,
-               shape = xshape,
-               pow = xpow,
-               r = 1)
-  xpar
+xform_x <- function(x, dist) {
+  UseMethod("xform_x", dist)
 }
 
 #' @export
-prep_dist.ParetoDist <- function(dist) {
+xform_x.CauchyDist <- function(x, dist) {
+  # Must transform in Simple case.
+  if (!dist$composite)
+    x <- dist$xform(x, dist$par)
+  x
+}
+
+#' @export
+xform_x.ParetoDist <- function(x, dist) {
   if (dist$par$shape > 1 && dist$par$pow != 1) {
-    xpar <- pareto_xform_par(dist)
-    dist$sampler_par <- xpar
-  } else {
-    dist$sampler_par <- dist$par
+    # New ingredients
+    x <- dist$xform(x, dist$par)
   }
-  validate_par(dist)
-  dist
+  x
 }
 
 #' @export
-prep_dist.CompositeGOFDist <- function(dist) {
-  # No change? Need to double check.
-  dist$sampler_par <- dist$sampler_par
-  dist
+xform_x.GOFDist <- function(x, dist) {
+  x
+}
+
+#### EXXhat
+
+#' @export
+EXXhat <- function(x, dist) {
+  UseMethod("EXXhat", dist)
 }
 
 #' @export
-prep_dist.SimpleGOFDist <- function(dist) {
-  dist$sampler_par <- dist$par
-  dist
+EXXhat.EuclideanGOFDist <- function(x, dist) {
+  n <- length(x)
+  xs <- sort(x)
+  prefix <- 2 * seq_len(n) - 1 - n
+  2 * mean(prefix * xs) / n
 }
+
+#' @export
+EXXhat.GeneralizedGOFDist <- function(x, dist) {
+  pow <- dist$sampler_par$pow
+  mean(as.matrix(dist(x, "minkowski", p = pow))^pow)
+}
+
 
 #### Compute Energy GOF statistic: can make modifications to x
 #' @export
 Qhat <- function(x, dist, EYY) {
   UseMethod("Qhat", dist)
-}
-
-#' @export
-Qhat.CauchyDist <- function(x, dist, EYY) {
-  # Must transform in Simple case.
-  if (!dist$composite)
-    x <- dist$xform(x, dist$par)
-  NextMethod(object = dist)
-}
-
-#' @export
-Qhat.ParetoDist <- function(x, dist, EYY) {
-  if (dist$par$shape > 1 && dist$par$pow != 1) {
-    # New ingredients
-    x <- dist$xform(x, dist$par)
-  }
-  NextMethod(object = dist)
 }
 
 #' @export
@@ -429,26 +415,6 @@ Qhat.GOFDist <- function(x, dist, EYY) {
 }
 
 
-#### EXXhat
-
-#' @export
-EXXhat <- function(x, dist) {
-  UseMethod("EXXhat", dist)
-}
-
-#' @export
-EXXhat.EuclideanGOFDist <- function(x, dist) {
-  n <- length(x)
-  xs <- sort(x)
-  prefix <- 2 * seq_len(n) - 1 - n
-  2 * mean(prefix * xs) / n
-}
-
-#' @export
-EXXhat.GeneralizedGOFDist <- function(x, dist) {
-  pow <- dist$sampler_par$pow
-  mean(as.matrix(dist(x, "minkowski", p = pow))^pow)
-}
 
 #### Simulate P-values
 simulate_pval <- function(x, dist, nsim, E_stat, EYY) {
@@ -539,7 +505,7 @@ energyfit.GOFDist <- function(x, dist, nsim = 100) {
   ## Setup
   cp <- dist$composite_p
   ## Run functions
-  dist <- prep_dist(dist)
+  x <- xform_x(x, dist)
   EYY <- dist$EYY(dist$sampler_par)
   E_stat <- Qhat(x, dist, EYY)
   sim <- simulate_pval(x, dist, nsim, E_stat, EYY)
@@ -604,9 +570,9 @@ print.GOFDist <- function(dist, ...) {
 
 #' @title Create a Normal distribution object for energy testing
 #' @author John T. Haman
-#' @description Create an S3 object that sets all the required data needed by energyfit to execute the eneregy goodness-of-fit test against this distribution.
-#' @param mean Same as [rnorm()], but must be length 1.
-#' @param sd Same as [rnorm()], but must be length 1
+#' @description Create an S3 object that sets all the required data needed by energyfit to execute the eneregy goodness-of-fit test against this distribution. If `mean` and `sd` are both NULL, perform a composite test. TODO, do this for other dists.
+#' @param mean NULL, or if specified, same as [rnorm()], but must be length 1.
+#' @param sd NULL, or if specified, Same as [rnorm()], but must be length 1
 #' @return S3 data object containing the fields. This all used internally by [energyfit()] and [energyfit.test()].
 #' * name: String
 #' * composite_p: TRUE if test is composite
@@ -657,7 +623,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
 ##### Uniform
 
 #' @title Create a Uniform distribution object for energy testing
-#' @inherit normal_dist description return author
+#' @inherit normal_dist return author
 #' @param min Some as in [runif()], but must be length 1
 #' @param max Same as in [runif()], but must be length 1
 #'
@@ -1328,16 +1294,13 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
 #' @param scale Positive scale parameter
 #' @param shape Positive shape parameter. If shape > 1, r is used to transform x
 #' @param pow exponent of the energy test. Pow must be less than shape.
-#' @param r Used to transform x in case shape > 1 and pow non-zero
+#' @param r Used to transform x in case shape > 1 and pow non-zero. r >= shape is required if shape > 1.
 #' @param skew Skewness parameter
 #' @description If shape > 1, the energy test is more difficult, so X is transformed to X^r ~ Pareto(scale*shape, shape/r), so that shape/r <= 1, and pow < shape/r.
 #' @export
 pareto_dist <- function(scale = NULL, shape = NULL,
                         pow = shape / 2,
                         r = shape){
-  # Use equations 8.15
-  # r is only needed if shape > 1 and pow != 1.
-  ## X^r ~ P(scale^r, shape / r)
   dist <- structure(
     list(
       name = "Pareto (Type I)",
@@ -1391,7 +1354,9 @@ pareto_dist <- function(scale = NULL, shape = NULL,
         } else if (shape > 1) {
           2 * shape * scale / (shape - 1) / (2 * shape - 1)
         } else {
-          2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape - pow)
+          #2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape - pow)
+          L <- log(2) + 2 * log(shape) + pow * log(scale) + lbeta(shape - pow, pow + 1) - log(2 * shape - pow)
+          exp(L)
         }
       },
       statistic = function(x) {
@@ -1410,7 +1375,31 @@ pareto_dist <- function(scale = NULL, shape = NULL,
     ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
   )
   validate_par(dist)
+  dist <- pareto_xform_par(dist)
   set_composite_class(dist)
+}
+
+pareto_xform_par <- function(dist) {
+  ## X ~ P(scale, shape) -> X^r ~ P(s^r, a/r)
+  initpar <- dist$par
+  initshape <- initpar$shape
+  initscale <- initpar$scale
+  initpow <- initpar$pow
+  r <- initpar$r
+  xshape <- initshape / r
+  xscale <- initscale^r
+  xpow <- if (initpow >= xshape) initpow / r else initpow
+  xpar <- list(scale = xscale,
+               shape = xshape,
+               pow = xpow,
+               r = 1)
+  if (dist$par$shape > 1 && dist$par$pow != 1) {
+    dist$sampler_par <- xpar
+  } else {
+    dist$sampler_par <- dist$par
+  }
+  validate_par(dist)
+  dist
 }
 
 
@@ -1652,4 +1641,4 @@ stable_dist <- function(location = NULL, scale = NULL,
 ##
 ## o <- tabular(deats)
 
-writeLines(o)
+## writeLines(o)

@@ -30,7 +30,7 @@ S3 data object containing the fields. This all used internally by \code{\link[=e
 }
 }
 \description{
-Create an S3 object that sets all the required data needed by energyfit to execute the eneregy goodness-of-fit test against this distribution.
+Create an S3 object that sets all the required data needed by energyfit to execute the eneregy goodness-of-fit test against this distribution. If \code{mean} and \code{sd} are both NULL, perform a composite test. TODO, do this for other dists.
 }
 \author{
 John T. Haman

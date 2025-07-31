@@ -28,7 +28,7 @@ S3 data object containing the fields. This all used internally by \code{\link[=e
 }
 }
 \description{
-Create an S3 object that sets all the required data needed by energyfit to execute the eneregy goodness-of-fit test against this distribution.
+Create a Uniform distribution object for energy testing
 }
 \author{
 John T. Haman
