@@ -113,15 +113,28 @@
 #'
 #' @section About Energy:
 #'
-#' Székely, G. J., & Rizzo, M. L. (2023) provide the motivate:
+#' Székely, G. J., & Rizzo, M. L. (2023) provide the motivation:
 #'
-#' Data energy is a real number (typically a nonnegative number) that depends
+#'" Data energy is a real number (typically a nonnegative number) that depends
 #' on the distances between data. This concept is based on the notion of
 #' Newton’s gravitational potential energy, which is also a function of the
 #' distance between bodies. The idea of data energy or energy statistics is to
 #' consider statistical observations (data) as heavenly bodies governed by the
 #' potential energy of data, which is zero if and only if an underlying
-#' statistical hypothesis is true.
+#' statistical hypothesis is true."
+#'
+#' The notation X' indicates that X' is an independent and identically
+#' distributed copy of X.
+#'
+#' If X and Y are independent and E(|X|^s + |Y|^s) is finite, then for 0 < s <
+#' 2, then
+#'
+#' \deqn{2E|X-Y|^s - E|X-X'|^s - E|Y-Y'|^s \ge 0.}
+#'
+#' Equality is attained if and only if X and Y are identically distributed. The
+#' left side of the equation is the energy between X and Y. Energy can be
+#' generalized to multivariate data and even more exotic data types, but in
+#' this R package, we only treat univariate data.
 #'
 #' The concept of data energy between two random variables can be adapted to
 #' the one sample goodness of fit problem. The one-sample s-energy is
@@ -135,13 +148,13 @@
 #' Stable), E|Y| is not finite, so we need to use an s < 1. This is done by
 #' passing `paw` into `...`. (See examples)
 #'
-#' In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (which is
-#' hidden) follows the same distribution as Y, which is specified. If X and Y
-#' have the same distribution, then \eqn{Q = nE^*} is a quadratic form of
-#' centered Gaussian random variables with expected value \eqn{E|Y-Y'|}. If X and Y
-#' differ, then Q goes to Inf. So, Q can be used to test goodness-of-fit, even
-#' in some situations where E|Y| is not finite. And that's what energyfit.test
-#' does.
+#' In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (which
+#' is hidden) follows the same distribution as Y, which is specified. If X and
+#' Y have the same distribution, then \eqn{Q = nE^*} is a quadratic form of
+#' centered Gaussian random variables with expected value \eqn{E|Y-Y'|}. If X
+#' and Y differ, then Q goes to Inf. So, Q can be used to test goodness-of-fit,
+#' even in some situations where E|Y| is not finite. And that's what
+#' energyfit.test does.
 #'
 #'
 #' @examples
@@ -582,9 +595,11 @@ print.GOFDist <- function(dist, ...) {
 #' * support: Function to check that data `x` can be tested against `dist`
 #' * sampler: Function used for rng by [boot::boot()]
 #' * EYY: Function to compute \eqn{E|Y-Y'|} (or \eqn{E|Y-Y'|^{pow}}, for the generalized test.)
-#' * EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or  \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according to dist and x is the data under test (which is passed in ef.test or ef).
+#' * EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or  \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according to `dist` and x is the data under test (which is passed in ef.test or ef).
 #' * xform: Function that may be used to transform x. Only available in certain distribution objects.
-#' * statistic: Function that returns a list of maximum likelihood estimates. Only available in certain distribution objects.
+#' * statistic: Function that returns a list of maximum likelihood estimates.
+#' Only available in certain distribution objects.
+#' * notes: Distribution specific messages.
 #'
 #'
 #' @export
@@ -1291,24 +1306,27 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
 
 #' @title Create a Pareto (type I) distribution object for energy testing
 #' @inherit normal_dist description return author
-#' @param scale Positive scale parameter
-#' @param shape Positive shape parameter. If shape > 1, r is used to transform x
-#' @param pow exponent of the energy test. Pow must be less than shape.
-#' @param r Used to transform x in case shape > 1 and pow non-zero. r >= shape is required if shape > 1.
+#' @param scale NULL or a positive scale parameter
+#' @param shape NULL or a positive shape parameter. If shape > 1, shape is used to
+#'   transform x
+#' @param pow Optional exponent of the energy test. Pow must be less than shape/2. If
+#' shape > 1 and pow != 1, pow will be scaled to pow/(4*shape) to assure
+#' pow < 1/2
 #' @param skew Skewness parameter
-#' @description If shape > 1, the energy test is more difficult, so X is transformed to X^r ~ Pareto(scale*shape, shape/r), so that shape/r <= 1, and pow < shape/r.
+#' @description If shape > 1, the energy test is more difficult, so X is
+#'   transformed to X^shape ~ Pareto(scale^shape, 1).
+#'
 #' @export
 pareto_dist <- function(scale = NULL, shape = NULL,
-                        pow = shape / 2,
-                        r = shape){
+                        pow = shape / 4){
   dist <- structure(
     list(
       name = "Pareto (Type I)",
       composite_p = is_composite(scale, shape),
       par = list(scale = scale, shape = shape,
-                 pow = pow, r = r),
+                 pow = pow),
       sampler_par = list(scale = 1, shape = 1,
-                         pow = 0.5, r = 1),
+                         pow = 0.25),
       support = function(x, par) {
         all(x > par$scale)
       },
@@ -1316,8 +1334,8 @@ pareto_dist <- function(scale = NULL, shape = NULL,
         all(
           par$scale > 0 || is.null(par$scale),
           par$shape > 0 || is.null(par$shape),
-          par$pow < par$shape,
-          par$shape < 1 || (par$pow == 1 || par$r >= par$shape)
+          par$pow < par$shape / 2,
+          par$shape < 1 || (par$pow == 1 || par$pow < par$shape / 2)
         )
       },
       sampler = function(n, par) {
@@ -1326,7 +1344,7 @@ pareto_dist <- function(scale = NULL, shape = NULL,
       },
       EXYhat = function(x, par) {
         shape <- par$shape
-        scale < par$scale
+        scale <- par$scale
         pow <- par$pow
         x0 <- (x - scale) / x
         if (shape == 1) {
@@ -1335,11 +1353,13 @@ pareto_dist <- function(scale = NULL, shape = NULL,
           C <- x0^pow / pow + x0^(pow + 1) / (pow + 1) *
             gsl::hyperg_2F1(1, pow + 1, pow + 2, x0)
           D <- scale * x^(pow - 1) * beta(pow + 1, 1 - pow)
+
           mean(A - B * C + D)
-        } else if (shape > 1){
+        } else if (shape > 1 && pow == 1){
           mean(x + (2 * scale^shape * x^(1 - shape) - shape * scale) /
                  (shape - 1))
         } else {
+          ## Shape < 1 and pow < 1/2
           mean((x - scale)^pow - scale^shape *
                  (pow * beta(pow, 1 - shape) * pbeta(x0, pow, 1 - shape) -
                     shape * beta(shape - pow, pow + 1)) / x^(shape - pow))
@@ -1351,11 +1371,16 @@ pareto_dist <- function(scale = NULL, shape = NULL,
         pow <- par$pow
         if (shape == 1) {
           2 * scale^pow / (2 - pow) * beta(1 - pow, pow + 1)
-        } else if (shape > 1) {
+        } else if (shape > 1 && pow == 1) {
           2 * shape * scale / (shape - 1) / (2 * shape - 1)
         } else {
-          #2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape - pow)
-          L <- log(2) + 2 * log(shape) + pow * log(scale) + lbeta(shape - pow, pow + 1) - log(2 * shape - pow)
+          ## Shape < 1 and pow < 1/2
+          #2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape -
+          #pow)
+          ## I thought this was unstable, so i wrote on log scale, but I no
+          ## longer believe it to be unstable.
+          L <- log(2) + 2 * log(shape) + pow * log(scale) +
+            lbeta(shape - pow, pow + 1) - log(2 * shape - pow)
           exp(L)
         }
       },
@@ -1366,34 +1391,32 @@ pareto_dist <- function(scale = NULL, shape = NULL,
                n / (sum(log(x / min(x))))
              })
       },
-      xform = function(x, par) {x^par$r},
+      xform = function(x, par) {x^par$shape},
       notes = {
         if (!is.null(shape) && shape > 1 && pow != 1)
-          message("\n Note: Shape > 1 and pow != 1. Transforming data by data^r to conduct energy GOF test.\n")
-        if (shape > 1 && scale * shape > 1000)
-          warning(" Computation may be unstable when shape*scale > 1000 if there are extreme outliers.\n")}
+          message("\n Note: Shape > 1 and pow != 1. Transforming data by data^r to conduct energy GOF test.\n")}
     ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
   )
   validate_par(dist)
+  ## Specific to Pareto: transform the params if necessary.
   dist <- pareto_xform_par(dist)
   set_composite_class(dist)
 }
 
 pareto_xform_par <- function(dist) {
-  ## X ~ P(scale, shape) -> X^r ~ P(s^r, a/r)
+  ## X ~ P(scale, shape) -> X^shape ~ P(newscale = scale^shape, newshape = 1)
   initpar <- dist$par
   initshape <- initpar$shape
   initscale <- initpar$scale
   initpow <- initpar$pow
-  r <- initpar$r
-  xshape <- initshape / r
-  xscale <- initscale^r
-  xpow <- if (initpow >= xshape) initpow / r else initpow
+  ## New par
+  xshape <- 1
+  xscale <- initscale^initshape
+  xpow <-  initpow / (4 * initshape)
   xpar <- list(scale = xscale,
                shape = xshape,
-               pow = xpow,
-               r = 1)
-  if (dist$par$shape > 1 && dist$par$pow != 1) {
+               pow = xpow)
+  if (dist$par$shape > 1 && (dist$par$pow != 1 || dist$paw$paw >= 0.5)) {
     dist$sampler_par <- xpar
   } else {
     dist$sampler_par <- dist$par
