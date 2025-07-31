@@ -7,26 +7,41 @@
 halfnormal_dist(scale = NULL)
 }
 \arguments{
-\item{scale}{Same as sd in \code{\link[=rnorm]{rnorm()}}, but must be length 1.}
+\item{scale}{NULL, or a positive scale parameter, like sd in \code{\link[=rnorm]{rnorm()}}. Must
+be length 1.}
 }
 \value{
-S3 data object containing the fields. This all used internally by \code{\link[=energyfit]{energyfit()}} and \code{\link[=energyfit.test]{energyfit.test()}}.
+S3 data object containing the fields. This all used internally by
+\code{\link[=energyfit]{energyfit()}} and \code{\link[=energyfit.test]{energyfit.test()}}.
 \itemize{
 \item name: String
 \item composite_p: TRUE if test is composite
 \item par: Distribution parameters, list of the formals.
-\item sampler_par: Distribution parameters used for the calculation of energy statistic. These may be different than \code{par}.
-\item par_domain: Function used to ensure \code{par} and \code{sampler_par} are valid for this distribution
+\item sampler_par: Distribution parameters used for the calculation of energy
+statistic. These may be different than \code{par}.
+\item par_domain: Function used to ensure \code{par} and \code{sampler_par} are valid for
+this distribution
 \item support: Function to check that data \code{x} can be tested against \code{dist}
 \item sampler: Function used for rng by \code{\link[boot:boot]{boot::boot()}}
-\item EYY: Function to compute \eqn{E|Y-Y'|} (or \eqn{E|Y-Y'|^{pow}}, for the generalized test.)
-\item EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or  \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according to dist and x is the data under test (which is passed in ef.test or ef).
-\item xform: Function that may be used to transform x. Only available in certain distribution objects.
-\item statistic: Function that returns a list of maximum likelihood estimates. Only available in certain distribution objects.
+\item EYY: Function to compute \eqn{E|Y-Y'|} (or \eqn{E|Y-Y'|^{pow}}, for the
+generalized test.)
+\item EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or
+\eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according
+to \code{dist} and x is the data under test (which is passed in ef.test or ef).
+\item xform: Function that may be used to transform x. Only available in certain
+distribution objects.
+\item statistic: Function that returns a list of maximum likelihood estimates.
+Only available in certain distribution objects.
+\item notes: Distribution specific messages.
 }
 }
 \description{
-This is exactly the distribution of \eqn{|X|}, where \eqn{X ~ N(0,\theta = scale)}
+Create an S3 object that sets all the required data needed by
+energyfit to execute the eneregy goodness-of-fit test against a
+half-normal distribution. If scale is NULL, a composite test is performed.
+
+This is exactly the distribution of \eqn{|X|}, where \eqn{X ~
+  N(0,\theta = scale)}
 }
 \author{
 John T. Haman

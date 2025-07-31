@@ -88,6 +88,7 @@ whether a composite GOF test may be performed.
 \strong{Distribution} \tab \strong{Function} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
 \tab                        \tab                                       \tab    \cr
 Normal             \tab normal_dist            \tab mean, sd                              \tab Yes\cr
+Normal             \tab normal_dist            \tab mean, sd                              \tab Yes\cr
 Uniform            \tab uniform_dist           \tab min, max                              \tab No \cr
 Exponential        \tab exponential_dist       \tab rate                                  \tab Yes\cr
 Poisson            \tab poisson_dist           \tab lambda                                \tab Yes\cr
@@ -111,15 +112,28 @@ Stable             \tab stable_dist            \tab location, scale, skew, stabi
 \section{About Energy}{
 
 
-Székely, G. J., & Rizzo, M. L. (2023) provide the motivate:
+Székely, G. J., & Rizzo, M. L. (2023) provide the motivation:
 
-Data energy is a real number (typically a nonnegative number) that depends
+" Data energy is a real number (typically a nonnegative number) that depends
 on the distances between data. This concept is based on the notion of
 Newton’s gravitational potential energy, which is also a function of the
 distance between bodies. The idea of data energy or energy statistics is to
 consider statistical observations (data) as heavenly bodies governed by the
 potential energy of data, which is zero if and only if an underlying
-statistical hypothesis is true.
+statistical hypothesis is true."
+
+The notation X' indicates that X' is an independent and identically
+distributed copy of X.
+
+If X and Y are independent and E(|X|^s + |Y|^s) is finite, then for 0 < s <
+2, then
+
+\deqn{2E|X-Y|^s - E|X-X'|^s - E|Y-Y'|^s \ge 0.}
+
+Equality is attained if and only if X and Y are identically distributed. The
+left side of the equation is the energy between X and Y. Energy can be
+generalized to multivariate data and even more exotic data types, but in
+this R package, we only treat univariate data.
 
 The concept of data energy between two random variables can be adapted to
 the one sample goodness of fit problem. The one-sample s-energy is
@@ -131,15 +145,17 @@ when \eqn{0 < s < 2} and \eqn{E|X|^s, E|Y|^s < \infty.}
 
 In most tests in the energyfit package s = 1. In some cases (Pareto, Cauchy,
 Stable), E|Y| is not finite, so we need to use an s < 1. This is done by
-passing \code{paw} into \code{...}. (See examples)
+passing \code{pow} into \code{...}.
 
-In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (which is
-hidden) follows the same distribution as Y, which is specified. If X and Y
-have the same distribution, then \eqn{Q = nE^*} is a quadratic form of
-centered Gaussian random variables with expected value \eqn{E|Y-Y'|}. If X and Y
-differ, then Q goes to Inf. So, Q can be used to test goodness-of-fit, even
-in some situations where E|Y| is not finite. And that's what energyfit.test
-does.
+In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (which
+is hidden) follows the same distribution as Y, which is specified. If X and
+Y have the same distribution, then \eqn{Q = nE^*} is a quadratic form of
+centered Gaussian random variables with expected value \eqn{E|Y-Y'|}. If X
+and Y differ, then Q goes to Inf. So, Q can be used to test goodness-of-fit,
+even in some situations where E|Y| is not finite. And that's what
+energyfit.test does. Asymptotic theory of V-statistics can be applied
+to prove that tests based on Q are statistically consistent goodness-of-fit
+tests.
 }
 
 \examples{
