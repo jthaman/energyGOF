@@ -193,10 +193,10 @@ test_that ("validate support checks", {
   ##Geometric
   expect_error(validate_x(normalx, gd))
   expect_error(validate_x(posx, gd))
-  expect_error(validate_x(intx, gd))
+  expect_no_error(validate_x(intx, gd))
   expect_no_error(validate_x(intx[intx > 0], gd))
   expect_error(validate_x(negx, gd))
-  expect_error(validate_x(x01, gd))
+  expect_no_error(validate_x(x01, gd))
   expect_error(validate_x(unifx, gd))
   ## Binomial dist
   expect_error(validate_x(normalx, bind))
@@ -474,9 +474,53 @@ test_that("Detect size shift", {
 })
 
 ##### Geometric tests
+test_that("Test works", {
+  x <- rgeom(100, .5)
+  d <- geometric_dist(.5)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
 
+test_that("Detect p shift", {
+  x <- rgeom(100, .2)
+  d <- geometric_dist(.5)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
 
 ##### Poisson tests
+test_that("Test works", {
+  x <- rpois(100, 10)
+  d <- poisson_dist(10)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Detect lam shift", {
+  x <- rpois(100, 8)
+  d <- poisson_dist(10)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Composite Test works", {
+  x <- rpois(100, 10)
+  d <- poisson_dist()
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+
 ##### Asym Laplace tests
 ##### Inv Gaussian
 ##### Half Norm tests
@@ -485,8 +529,6 @@ test_that("Detect size shift", {
 ##### Weibull  tests
 ##### Cauchy tests
 ##### Stable tests
-
-
 
 ##### Beta Test
 

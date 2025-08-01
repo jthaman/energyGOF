@@ -402,11 +402,34 @@ EXXhat.GeneralizedGOFDist <- function(x, dist) {
   mean(as.matrix(dist(x, "minkowski", p = pow))^pow)
 }
 
+#### EYY
+
+#' @export
+EYY <- function(x, dist) {
+  UseMethod("EYY", dist)
+}
+
+#' @export
+EYY.PoissonDist <- function(x, dist) {
+  EYY <- dist$EYY(dist$statistic(x))
+}
+
+
+#' @export
+EYY.GOFDist <- function(x, dist) {
+  EYY <- dist$EYY(dist$sampler_par)
+}
 
 #### Compute Energy GOF statistic: can make modifications to x
 #' @export
 Qhat <- function(x, dist, EYY) {
-UseMethod("Qhat", dist)
+  UseMethod("Qhat", dist)
+}
+
+Qhat.PoissonDist <- function(x, dist, EYY) {
+  ## Poisson seems to be different compared to Normal.
+  dist$sampler_par <- dist$statistic(x)
+  NextMethod("Qhat", dist)
 }
 
 #' @export
@@ -424,10 +447,8 @@ Qhat.GOFDist <- function(x, dist, EYY) {
   n * (2 * EXY - EYY - EXX)
 }
 
-
-
 #### Simulate P-values
-simulate_pval <- function(x, dist, nsim, E_stat, EYY) {
+simulate_pval <- function(x, dist, nsim, Qhat, EYY) {
   if (nsim == 0) return(list(sim_reps = 0, p_value = NA))
   bootobj <- boot::boot(x,
                         statistic = Qhat,
@@ -519,9 +540,10 @@ energyfit.GOFDist <- function(x, dist, nsim = 100) {
   cp <- dist$composite_p
   ## Run functions
   x <- xform_x(x, dist)
-  EYY <- dist$EYY(dist$sampler_par)
+  #EYY <- dist$EYY(dist$sampler_par)
+  EYY <- EYY(x, dist)
   E_stat <- Qhat(x, dist, EYY)
-  sim <- simulate_pval(x, dist, nsim, E_stat, EYY)
+  sim <- simulate_pval(x, dist, nsim, Qhat, EYY)
   names(E_stat) <- paste0("E-statistic",
                           if (cp)
                             " (transformed data)"
@@ -570,7 +592,7 @@ print.GOFDist <- function(dist, ...) {
   if (!dist$composite_p)
     cat("   * Test Parameters: ", paste(names(dist$par),
                                         unlist(dist$par),
-                                   sep = "=", collapse = ", "), "\n")
+                                        sep = "=", collapse = ", "), "\n")
   cat("   * Sampler Parameters: ", paste(names(dist$sampler_par),
                                          unlist(dist$sampler_par),
                                          sep = "=", collapse = ", "), "\n")
@@ -715,7 +737,7 @@ exponential_dist <- function(rate = NULL) {
       xform = function(x, par) x / par$rate,
       statistic = function(x) list(rate = mean(x))
     ), class = c("ExponentialDist", "EuclideanGOFDist", "GOFDist")
-    )
+  )
   validate_par(dist)
   set_composite_class(dist)
 }
@@ -732,12 +754,16 @@ exponential_dist <- function(rate = NULL) {
 #'
 #' @export
 poisson_dist <- function(lambda = NULL) {
+  cp <- is.null(lambda)
   dist <- structure(
     list(
       name = "Poisson",
-      composite_p = is.null(lambda),
+      composite_p = cp,
       par = list(lambda = lambda),
-      sampler_par = list(lambda = NULL),
+      sampler_par = if (cp) {
+        list(lambda = NULL)
+      } else {
+        list(lambda = lambda)},
       par_domain = function(par) {
         par$lambda > 0 || is.null(par$lambda)
       },
@@ -754,7 +780,7 @@ poisson_dist <- function(lambda = NULL) {
         mean(2 * x * ppois(x, par$lambda) -
                2 * par$lambda * ppois(x - 1, par$lambda) + par$lambda - x)
       },
-      xform = function(x) x,
+      xform = function(x, par) x,
       statistic = function(x) list(lambda = mean(x))
     ), class = c("PoissonDist", "EuclideanGOFDist", "GOFDist")
   )
@@ -927,7 +953,7 @@ geometric_dist  <- function(prob = 0.5) {
       par_domain = function(par) {
         par$prob > 0 && par$prob < 1
       },
-      support = function(x, par) all(x == floor(x)) && all(x > 0),
+      support = function(x, par) all(x == floor(x)) && all(x >= 0),
       sampler = function(n, par) rgeom(n, par$prob),
       EYY = function(par) {
         q <- 1 - par$prob
