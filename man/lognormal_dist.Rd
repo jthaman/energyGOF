@@ -39,7 +39,7 @@ Only available in certain distribution objects.
 \description{
 Create an S3 object that sets all the required data needed by
 energyfit to execute the eneregy goodness-of-fit test against a log-normal
-distribution. If meanlog and sdlog are both NULL, a composite test is
+distribution. If \code{meanlog} and \code{sdlog} are both \code{NULL}, a composite test is
 performed.
 }
 \author{

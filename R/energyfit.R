@@ -426,6 +426,7 @@ Qhat <- function(x, dist, EYY) {
   UseMethod("Qhat", dist)
 }
 
+#' @export
 Qhat.PoissonDist <- function(x, dist, EYY) {
   ## Poisson seems to be different compared to Normal.
   dist$sampler_par <- dist$statistic(x)

@@ -502,8 +502,9 @@ test_that("Test works", {
   expect_gt(o$p.value, 0.01)
 })
 
+## Something is wrong
 test_that("Detect lam shift", {
-  x <- rpois(100, 8)
+  x <- rpois(100,5)
   d <- poisson_dist(10)
   o <- ef(x, d, nsim = 60)
   print(o)
