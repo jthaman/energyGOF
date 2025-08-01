@@ -4,7 +4,7 @@
 \alias{beta_dist}
 \title{Create a beta distribution object for energy testing}
 \usage{
-beta_dist(shape1 = 1, shape2 = 1)
+beta_dist(shape1 = NULL, shape2 = NULL)
 }
 \arguments{
 \item{shape1}{Same as \code{\link[=rbeta]{rbeta()}}, but must be length 1.}
@@ -39,7 +39,8 @@ Only available in certain distribution objects.
 \description{
 Create an S3 object that sets all the required data needed by
 energyfit to execute the eneregy goodness-of-fit test against a beta
-distribution
+distribution. If shape1 and shape2 are NULL, a composite test is
+performed.
 }
 \author{
 John T. Haman

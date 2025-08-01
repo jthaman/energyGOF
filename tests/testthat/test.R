@@ -138,14 +138,29 @@ test_that("Beta Estat should be positive", {
   x <- rbeta(100, 20, 20)
   o <- ef(x, d)
   print(o)
-  expect_gt(o, 0)})
+  expect_gt(o$statistic, 0)})
 
 test_that("Beta Estat should be positive", {
   d <- beta_dist(.5, 1.5)
   x <- rbeta(100, .5, 1.5)
   o <- ef(x, d)
-  o
-  expect_gt(o, 0)})
+  print(o)
+  expect_gt(o$statistic, 0)})
+
+test_that("Beta Estat should be sensitive to parameter change", {
+  d <- beta_dist(.5, 1.5)
+  x <- rbeta(100, 20, 20)
+  o <- ef(x, d)
+  print(o)
+  expect_lt(o$p.value, .01)})
+
+
+test_that("Beta Composite should work", {
+  d <- beta_dist()
+  x <- rbeta(100, 20, 20)
+  o <- ef(x, d)
+  print(o)
+  expect_gt(o$statistic, 0)})
 
 ##### Pareto Test
 test_that("Pareto: shape, scale >1", {
@@ -153,7 +168,7 @@ test_that("Pareto: shape, scale >1", {
   d <- pareto_dist(3, 3)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 25)
-  o
+  print(o)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -167,7 +182,7 @@ test_that("Pareto: shape, scale >1", {
   d <- pareto_dist(5, 5)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 100)
-  o
+  print(o)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -177,7 +192,7 @@ test_that("Pareto: shape, scale <1", {
   d <- pareto_dist(.1, .1)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 0)
-  o
+  print(o)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -186,7 +201,7 @@ test_that("Pareto: shape, scale = 1", {
   d <- pareto_dist(1, 1)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 0)
-  o
+  print(o)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -195,7 +210,7 @@ test_that("Pareto: mixed", {
   d <- pareto_dist(.1, 10)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 0)
-  o
+  print(o)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -204,7 +219,7 @@ test_that("Pareto: mixed", {
   d <- pareto_dist(10, .1)
   x <- d$sampler(100, d$par)
   o <- ef(x, d, nsim = 0)
-  o
+  print(o)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })

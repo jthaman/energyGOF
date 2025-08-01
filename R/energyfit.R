@@ -406,23 +406,12 @@ EXXhat.GeneralizedGOFDist <- function(x, dist) {
 #### Compute Energy GOF statistic: can make modifications to x
 #' @export
 Qhat <- function(x, dist, EYY) {
-  UseMethod("Qhat", dist)
-}
-
-Qhat.CauchyGOF <- function(x) {
-  dist$par <- dist$sampler_par <- list(location = 0,
-                                       scale = 1)
-}
-
-#' @export
-Qhat.SimpleGOFDist <- function(x, dist, EYY) {
-  dist$sampler_par <- dist$par
-  NextMethod(object = dist)
+UseMethod("Qhat", dist)
 }
 
 #' @export
 Qhat.CompositeGOFDist <- function(x, dist, EYY) {
-  dist$sampler_par <- dist$statistic(x)
+  mle <- dist$statistic(x)
   x <- dist$xform(x, mle)
   NextMethod(object = dist)
 }
@@ -463,7 +452,10 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
   if (cp) mle <- unlist(dist$statistic(x))
   structure(list(
     method = paste0((if (cp) "Composite" else "Simple"),
-                    " energy goodness-of-fit test"),
+                    " energy goodness-of-fit test",
+                    (if (cp)
+                      paste0(" (conditional on ", deparse(substitute(x)), ")"))
+                    ),
     data.name = deparse(substitute(x)),
     distribution = dist,
     parameter = c("Distribution" = dist$name,
@@ -576,9 +568,12 @@ print.GOFDist <- function(dist, ...) {
   cat(" Energy goodness-of-fit test for:\n")
   cat("   *", dist$name, "Distribution\n")
   if (!dist$composite_p)
-    cat("   * Parameters: ", paste(names(dist$par),
-                                   unlist(dist$par),
-                                  sep = "=", collapse = ", "), "\n")
+    cat("   * Test Parameters: ", paste(names(dist$par),
+                                        unlist(dist$par),
+                                   sep = "=", collapse = ", "), "\n")
+  cat("   * Sampler Parameters: ", paste(names(dist$sampler_par),
+                                         unlist(dist$sampler_par),
+                                         sep = "=", collapse = ", "), "\n")
   cat("   * Test type:",
       if (dist$composite_p)
         "Composite (parameters unknown)"
@@ -865,12 +860,16 @@ binomial_dist <- function(size = 1, prob = 0.5) {
 #'
 #' @export
 beta_dist <- function(shape1 = NULL, shape2 = NULL) {
+  cp <- is_composite(shape1, shape2)
   dist <- structure(
     list(
       name = "Beta",
-      composite_p = is_composite(shape1, shape2),
+      composite_p = cp,
       par = list(shape1 = shape1, shape2 = shape2),
-      sampler_par = list(shape1 = NULL, shape2 = NULL),
+      sampler_par = if (!cp) {
+        list(shape1 = shape1, shape2 = shape2)
+      } else {
+        list(shape1 = 1, shape2 = 1)},
       par_domain = function(par) {
         all(par$shape1 > 0 || is.null(par$shape1),
             par$shape2 > 0 || is.null(par$shape2))
@@ -890,7 +889,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
       },
       EXYhat = function(x, par) {
         a <- par$shape1
-        shape2 <- par$shape2
+        b <- par$shape2
         mean(2 * x * pbeta(x, a, b) - x + a / (a + b) -
                2 * beta(a + 1, b) / beta(a, b) * pbeta(x, a + 1, b))
       },
@@ -903,10 +902,6 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
   )
   validate_par(dist)
   set_composite_class(dist)
-  ## TODO: needed in other classes?
-  if (inherits(dist, "SimpleGOFTest"))
-    dist$sampler_par <- dist$par
-  dist
 }
 
 ##### Dirchlet?
@@ -1094,7 +1089,8 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
         integrate(integrand, lower = 0, upper = Inf, par = par)$value
       },
       xform = function(x) x, #todo
-      statistic = list(meanlog = x, sdlog = x)
+      statistic = function(x) {
+        as.list(fitdistrplus::fitdist(x, "lnorm")$estimate)}
     ), class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
@@ -1477,11 +1473,11 @@ pareto_dist <- function(scale = NULL, shape = NULL,
   )
   validate_par(dist)
   ## Specific to Pareto: transform the params if necessary.
-  dist <- pareto_xform_par(dist)
+  dist <- pareto_set_sampler_par(dist)
   set_composite_class(dist)
 }
 
-pareto_xform_par <- function(dist) {
+pareto_set_sampler_par <- function(dist) {
   ## X ~ P(scale, shape) -> X^shape ~ P(newscale = scale^shape, newshape = 1)
   initpar <- dist$par
   initshape <- initpar$shape
