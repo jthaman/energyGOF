@@ -132,6 +132,7 @@ test_that("Dists", {
 
 ##### Beta
 
+## Fails
 test_that("Beta Estat should be positive", {
   d <- beta_dist(20, 20)
   x <- rbeta(100, 20, 20)

@@ -425,8 +425,7 @@ Qhat.GOFDist <- function(x, dist, EYY) {
   n <- length(x)
   EXY <- dist$EXYhat(x, dist$sampler_par)
   EXX <- EXXhat(x, dist)
-  E_stat <- n * (2 * EXY - EYY - EXX)
-  E_stat
+  n * (2 * EXY - EYY - EXX)
 }
 
 
