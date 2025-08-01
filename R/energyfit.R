@@ -410,12 +410,14 @@ Qhat <- function(x, dist, EYY) {
 
 #' @export
 Qhat.SimpleGOFDist <- function(x, dist, EYY) {
+  d$sampler_par <- d$par
   NextMethod(object = dist)
 }
 
 #' @export
 Qhat.CompositeGOFDist <- function(x, dist, EYY) {
-  mle <- dist$statistic(x)
+  dist$statistic(x)
+  d$sampler_par <- d$statistic(x)
   x <- dist$xform(x, mle)
   NextMethod(object = dist)
 }
@@ -851,42 +853,48 @@ binomial_dist <- function(size = 1, prob = 0.5) {
 #' @title Create a beta distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
 #'   energyfit to execute the eneregy goodness-of-fit test against a beta
-#'   distribution
+#'   distribution. If shape1 and shape2 are NULL, a composite test is
+#'   performed.
 #' @inherit normal_dist description return author
 #' @param shape1 Same as [rbeta()], but must be length 1.
 #' @param shape2 Same as [rbeta()], but must be length 1.
 #'
 #' @export
-beta_dist <- function(shape1 = 1, shape2 = 1) {
+beta_dist <- function(shape1 = NULL, shape2 = NULL) {
   dist <- structure(
     list(
       name = "Beta",
-      composite_p = composite_not_allowed(shape1, shape2),
+      composite_p = is_composite(shape1, shape2),
       par = list(shape1 = shape1, shape2 = shape2),
-      sampler_par = list(shape1 = shape1, shape2 = shape2),
+      sampler_par = list(shape1 = 1, shape2 = 1),
       par_domain = function(par) {
-        par$shape1 > 0 && par$shape2 > 0
+        all(par$shape1 > 0 || is.null(par$shape1),
+            par$shape2 > 0 || is.null(par$shape2))
       },
       sampler = function(n, par) {
         rbeta(n, shape1 = par$shape1, shape2 = par$shape2)},
       support = function(x, par) all(x < 1) && all(x > 0),
       EYY = function(par)  {
         integrand <- function(x, par) {
-          shape1 <- par$shape1
-          shape2 <- par$shape2
-          2 * x * pbeta(x, shape1, shape2) - x + (shape1 / (shape1 + shape2)) -
-            2 * (beta(shape1 + 1, shape2) / beta(shape1, shape2)) *
-              pbeta(x, shape1 + 1, shape2)
+          a <- par$shape1
+          b <- par$shape2
+          ExY <- 2 * x * pbeta(x, a, b) - x + a / (a + b) -
+            2 * pbeta(x, a + 1, b) * beta(a + 1, b) / beta(a, b)
+          ExY * dbeta(x, a, b)
         }
         integrate(integrand, 0, 1, par)$value
       },
       EXYhat = function(x, par) {
-        shape1 <- par$shape1
+        a <- par$shape1
         shape2 <- par$shape2
-        mean(2 * x * pbeta(x, shape1, shape2) - x + (shape1 / (shape1 + shape2)) -
-               2 * (beta(shape1 + 1, shape2) / beta(shape1, shape2)) *
-                 pbeta(x, shape1 + 1, shape2))
-      }
+        mean(2 * x * pbeta(x, a, b) - x + a / (a + b) -
+               2 * beta(a + 1, b) / beta(a, b) * pbeta(x, a + 1, b))
+      },
+      xform = function(x, par)
+        ## Probability integral transform
+        pbeta(x, par$shape1, par$shape2),
+      statistic = function(x) {
+        as.list(fitdistrplus::fitdist(x, "beta")$estimate)}
     ), class = c("BetaDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
   )
   validate_par(dist)
