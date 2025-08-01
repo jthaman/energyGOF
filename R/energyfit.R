@@ -361,8 +361,9 @@ xform_x <- function(x, dist) {
 #' @export
 xform_x.CauchyDist <- function(x, dist) {
   # Must transform in Simple case.
-  if (!dist$composite)
+  if (!dist$composite) {
     x <- dist$xform(x, dist$par)
+  }
   x
 }
 
@@ -408,16 +409,20 @@ Qhat <- function(x, dist, EYY) {
   UseMethod("Qhat", dist)
 }
 
+Qhat.CauchyGOF <- function(x) {
+  dist$par <- dist$sampler_par <- list(location = 0,
+                                       scale = 1)
+}
+
 #' @export
 Qhat.SimpleGOFDist <- function(x, dist, EYY) {
-  d$sampler_par <- d$par
+  dist$sampler_par <- dist$par
   NextMethod(object = dist)
 }
 
 #' @export
 Qhat.CompositeGOFDist <- function(x, dist, EYY) {
-  dist$statistic(x)
-  d$sampler_par <- d$statistic(x)
+  dist$sampler_par <- dist$statistic(x)
   x <- dist$xform(x, mle)
   NextMethod(object = dist)
 }
@@ -866,7 +871,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
       name = "Beta",
       composite_p = is_composite(shape1, shape2),
       par = list(shape1 = shape1, shape2 = shape2),
-      sampler_par = list(shape1 = 1, shape2 = 1),
+      sampler_par = list(shape1 = NULL, shape2 = NULL),
       par_domain = function(par) {
         all(par$shape1 > 0 || is.null(par$shape1),
             par$shape2 > 0 || is.null(par$shape2))
@@ -895,9 +900,13 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
         pbeta(x, par$shape1, par$shape2),
       statistic = function(x) {
         as.list(fitdistrplus::fitdist(x, "beta")$estimate)}
-    ), class = c("BetaDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
+    ), class = c("BetaDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
+  set_composite_class(dist)
+  ## TODO: needed in other classes?
+  if (inherits(dist, "SimpleGOFTest"))
+    dist$sampler_par <- dist$par
   dist
 }
 
