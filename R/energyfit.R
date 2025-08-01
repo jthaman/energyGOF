@@ -367,6 +367,8 @@ xform_x.CauchyDist <- function(x, dist) {
   x
 }
 
+
+
 #' @export
 xform_x.ParetoDist <- function(x, dist) {
   if (dist$par$shape > 1 && dist$par$pow != 1) {
@@ -381,6 +383,26 @@ xform_x.GOFDist <- function(x, dist) {
   x
 }
 
+#### Transform dist for some tests
+#' @export
+xform_dist <- function(x, dist) {
+  UseMethod("xform_dist", dist)
+}
+
+#' @export
+xform_dist.PoissonDist <- function(x, dist) {
+  # Must transform in Simple case.
+  if (dist$composite) {
+    dist$sampler_par <- dist$statistic(x)
+  }
+  dist
+}
+
+#' @export
+xform_dist.GOFDist <- function(x, dist) {
+  # Must transform in Simple case.
+  dist
+}
 #### EXXhat
 
 #' @export
@@ -402,35 +424,11 @@ EXXhat.GeneralizedGOFDist <- function(x, dist) {
   mean(as.matrix(dist(x, "minkowski", p = pow))^pow)
 }
 
-#### EYY
-
-#' @export
-EYY <- function(x, dist) {
-  UseMethod("EYY", dist)
-}
-
-#' @export
-EYY.PoissonDist <- function(x, dist) {
-  EYY <- dist$EYY(dist$statistic(x))
-}
-
-
-#' @export
-EYY.GOFDist <- function(x, dist) {
-  EYY <- dist$EYY(dist$sampler_par)
-}
 
 #### Compute Energy GOF statistic: can make modifications to x
 #' @export
 Qhat <- function(x, dist, EYY) {
   UseMethod("Qhat", dist)
-}
-
-#' @export
-Qhat.PoissonDist <- function(x, dist, EYY) {
-  ## Poisson seems to be different compared to Normal.
-  dist$sampler_par <- dist$statistic(x)
-  NextMethod("Qhat", dist)
 }
 
 #' @export
@@ -538,18 +536,14 @@ energyfit.function <- function(x, dist, nsim = 100) {
 #' @export
 energyfit.GOFDist <- function(x, dist, nsim = 100) {
   ## Setup
-  cp <- dist$composite_p
+  cp <- inherits(dist, "CompositeGOFDist")
   ## Run functions
   x <- xform_x(x, dist)
-  #EYY <- dist$EYY(dist$sampler_par)
-  EYY <- EYY(x, dist)
+  dist <- xform_dist(x, dist)
+  EYY <- dist$EYY(dist$sampler_par)
   E_stat <- Qhat(x, dist, EYY)
   sim <- simulate_pval(x, dist, nsim, Qhat, EYY)
-  names(E_stat) <- paste0("E-statistic",
-                          if (cp)
-                            " (transformed data)"
-                          else
-                            "")
+  names(E_stat) <- paste0("E-statistic")
   output_htest(x, dist, nsim, E_stat, sim)
 }
 
