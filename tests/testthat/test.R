@@ -130,13 +130,21 @@ test_that("Dists", {
   expect_error(stable_dist(1, 1, 1, 1, 1))
 })
 
-##### Beta
+##### Beta Test
 
 ## Fails
 test_that("Beta Estat should be positive", {
   d <- beta_dist(20, 20)
   x <- rbeta(100, 20, 20)
   o <- ef(x, d)
+  print(o)
+  expect_gt(o, 0)})
+
+test_that("Beta Estat should be positive", {
+  d <- beta_dist(.5, 1.5)
+  x <- rbeta(100, .5, 1.5)
+  o <- ef(x, d)
+  o
   expect_gt(o, 0)})
 
 ##### Pareto Test
