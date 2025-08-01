@@ -666,7 +666,7 @@ uniform_dist<- function(min = 0, max = 1) {
       name = "Uniform",
       composite_p = composite_not_allowed(min, max),
       par = list(min = min, max = max),
-      sampler_par = list(min = 0, max = 1),
+      sampler_par = list(min = min, max = max),
       par_domain = function(par) {
         par$max - par$min > 0
       },
@@ -696,12 +696,13 @@ uniform_dist<- function(min = 0, max = 1) {
 #'
 #' @export
 exponential_dist <- function(rate = NULL) {
+  cp <- is.null(rate)
   dist <- structure(
     list(
       name = "Exponential",
-      composite_p = is.null(rate),
+      composite_p = cp,
       par = list(rate = rate),
-      sampler_par = list(rate = 1),
+      sampler_par = if (cp) list(rate = 1) else (list(rate = rate)),
       par_domain = function(par) {
         par$rate > 0 || is.null(par$rate)
       },
@@ -709,12 +710,12 @@ exponential_dist <- function(rate = NULL) {
       sampler = function(n, par) rexp(n, par$rate),
       EYY = function(par) 1 / par$rate,
       EXYhat = function(x, par) {
-        mean(x + par$rate * (1 - 2 * pexp(x, par$rate)))
+        mean(x + 1 / par$rate * (1 - 2 * pexp(x, par$rate)))
       },
       xform = function(x, par) x / par$rate,
       statistic = function(x) list(rate = mean(x))
     ), class = c("ExponentialDist", "EuclideanGOFDist", "GOFDist")
-  )
+    )
   validate_par(dist)
   set_composite_class(dist)
 }
@@ -1002,12 +1003,16 @@ halfnormal_dist <- function(scale = NULL) {
 #' where `location` = \eqn{mu} and `scale` = \eqn{b}.
 #' @export
 laplace_dist <- function(location = NULL, scale = NULL) {
+  cp <- is_composite(location, scale)
   dist <- structure(
     list(
       name = "Laplace",
-      composite_p = is_composite(location, scale),
+      composite_p = cp,
       par = list(location = location, scale = scale),
-      sampler_par = list(location = 0, scale = 1),
+      sampler_par = if (cp) {
+        list(location = 0, scale = 1)
+      } else {
+        list(location = location, scale = scale)},
       par_domain = function(par) {
         all(
           par$scale > 0 || is.null(par$scale),
@@ -1042,7 +1047,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
 #' @title Create a log-normal distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
 #'   energyfit to execute the eneregy goodness-of-fit test against a log-normal
-#'   distribution. If meanlog and sdlog are both NULL, a composite test is
+#'   distribution. If `meanlog` and `sdlog` are both `NULL`, a composite test is
 #'   performed.
 #' @inherit normal_dist description return author
 #' @param meanlog NULL or as in [rlnorm()], must be length 1.
@@ -1050,12 +1055,16 @@ laplace_dist <- function(location = NULL, scale = NULL) {
 #'
 #' @export
 lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
+  cp <- is_composite(meanlog, sdlog)
   dist <- structure(
     list(
       name = "Log-Normal",
-      composite_p = is_composite(meanlog, sdlog),
+      composite_p = cp,
       par = list(meanlog = meanlog, sdlog = sdlog),
-      sampler_par = list(meanlog = 0, sdlog = 1),
+      sampler_par = if (cp) {
+        list(meanlog = 0, sdlog = 1)
+      } else {
+        list(meanlog = meanlog, sdlog = sdlog)},
       support = function(x, par) {
         all(x > 0) && all(is.finite(x))
       },
@@ -1086,9 +1095,10 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
           ExYhat <- t * (2 * pnorm(z) - 1) + A * (2 * pnorm(w) - 1)
           ExYhat * dlnorm(t, m, s)
         }
-        integrate(integrand, lower = 0, upper = Inf, par = par)$value
+        integrate(integrand, lower = 0, upper = Inf, par = par)$value # TODO
+        # should be Inf
       },
-      xform = function(x) x, #todo
+      xform = function(x, par) exp((log(x) - par$meanlog) / par$sdlog), # ~ logNormal(0, 1)
       statistic = function(x) {
         as.list(fitdistrplus::fitdist(x, "lnorm")$estimate)}
     ), class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
@@ -1410,7 +1420,10 @@ pareto_dist <- function(scale = NULL, shape = NULL,
           par$scale > 0 || is.null(par$scale),
           par$shape > 0 || is.null(par$shape),
           par$pow < par$shape / 2,
-          par$shape < 1 || (par$pow == 1 || par$pow < par$shape / 2)
+          any(
+            is.null(par$shape),
+            par$shape < 1,
+            par$pow == 1 || par$pow < par$shape / 2)
         )
       },
       sampler = function(n, par) {
@@ -1490,11 +1503,12 @@ pareto_set_sampler_par <- function(dist) {
   xpar <- list(scale = xscale,
                shape = xshape,
                pow = xpow)
-  if (dist$par$shape > 1 && (dist$par$pow != 1 || dist$par$pow >= 0.5)) {
-    dist$sampler_par <- xpar
-  } else {
-    dist$sampler_par <- dist$par
-  }
+  if (!is.null(dist$par$shape)) {
+    if (dist$par$shape > 1 && (dist$par$pow != 1 || dist$par$pow >= 0.5)) {
+      dist$sampler_par <- xpar
+    } else {
+      dist$sampler_par <- dist$par
+    }}
   validate_par(dist)
   dist
 }
@@ -1572,10 +1586,10 @@ stable_dist <- function(location = 0, scale = 1,
       sampler_par = list(location = 0, scale = 1, skew = skew,
                          stability = stability, pow = pow),
       support = function(x, par) {
-        if (par$skew < 1 && par$scale == 1) {
-          all(x > par$location) && is.finite(x)
-        } else if (par$skew < 1 && par$scale == -1) {
-          all(x < par$location) && is.finite(x)
+        if (par$stability < 1 && par$skew == 1) {
+          all(x > par$location, is.finite(x))
+        } else if (par$stability < 1 && par$skew == -1) {
+          all(x < par$location, is.finite(x))
         } else
           is.finite(x)
       },
@@ -1584,7 +1598,7 @@ stable_dist <- function(location = 0, scale = 1,
           par$stability > 0 && par$stability <= 2,
           is.finite(par$location),
           par$scale > 0,
-          par$skew > -1 && par$skew < 1,
+          par$skew >= -1 && par$skew <= 1,
           par$pow < par$stability / 2
         )
       },
