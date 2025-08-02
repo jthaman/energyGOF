@@ -522,8 +522,27 @@ test_that("Composite Test works", {
 })
 
 
-##### Asym Laplace tests
+##### Asym Laplace tests TODO
 ##### Inv Gaussian
+
+test_that("Test works", {
+  d <- inverse_gaussian_dist(3, 2)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- inverse_gaussian_dist(1, 1)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
 ##### Half Norm tests
 ##### Chi Sq tests
 ##### Gamma  tests

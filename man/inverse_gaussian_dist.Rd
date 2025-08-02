@@ -2,6 +2,7 @@
 % Please edit documentation in R/energyfit.R
 \name{inverse_gaussian_dist}
 \alias{inverse_gaussian_dist}
+\alias{invgauss_dist}
 \title{Create a inverse Gaussian distribution object for energy testing}
 \usage{
 inverse_gaussian_dist(mu = NULL, lambda = NULL)

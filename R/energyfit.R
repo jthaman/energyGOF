@@ -105,7 +105,7 @@
 #'   Weibull            \tab weibull_dist           \tab shape, scale                          \tab No \cr
 #'   Gamma              \tab gamma_dist             \tab shape, rate                           \tab No \cr
 #'   Chi Squared        \tab chisq_dist             \tab df                                    \tab No \cr
-#'   Inverse Gaussion   \tab inversegaussian_dist   \tab mu, lambda                            \tab No \cr
+#'   Inverse Gaussion   \tab inversegaussian_dist   \tab mean, shape                            \tab No \cr
 #'   Pareto             \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
 #'   Cauchy             \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
 #'   Stable             \tab stable_dist            \tab location, scale, skew, stability, pow \tab No
@@ -235,7 +235,11 @@
 #'
 #'
 #'
-#' @importFrom stats dlnorm dnorm integrate median pbeta pchisq pexp pgamma pgeom pnorm ppois pweibull rbeta rbinom rcauchy rchisq rexp rgamma rgeom rlnorm rnorm rpois runif rweibull sd
+#' @importFrom stats dlnorm dnorm integrate median pbeta pchisq pexp pgamma
+#' pgeom pnorm ppois pweibull rbeta rbinom rcauchy rchisq rexp rgamma rgeom
+#' rlnorm rnorm rpois runif rweibull sd
+#'
+#' @importFrom statmod dinvgauss pinvgauss qinvgauss rinvgauss
 
 
 ### Code
@@ -1339,62 +1343,76 @@ chisq_dist <- function(df = 2) {
 
 #' @title Create a inverse Gaussian distribution object for energy testing
 #' @inherit normal_dist description return author
-#' @param mu NULL or a positive mean parameter
-#' @param lambda NULL or a positive shape parameter
+#' @aliases invgauss_dist
+#' @param mean NULL or a positive mean parameter
+#' @param shape NULL or a positive shape parameter
 #' @description This is exactly the distribution corresponding to the pdf
 #'
 #' \deqn{
-#'   f(x | \mu, \lambda) =
-#'   \left( \frac{\lambda}{2 \pi x^3} \right)^{1/2}
-#'   \exp \left( -\frac{\lambda (x - \mu)^2}{2 \mu^2 x} \right),
+#'   f(x | \mu, \shape) =
+#'   \left( \frac{\shape}{2 \pi x^3} \right)^{1/2}
+#'   \exp \left( -\frac{\shape (x - \mu)^2}{2 \mu^2 x} \right),
 #'   \qquad x > 0.
 #' }
 #'
-#' If mu and lambda are both NULL, a composite test is performed.
+#' If mean and shape are both NULL, a composite test is performed.
 #'
 #' @export
-inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
+inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
+  cp <- is_composite(mean, shape)
   dist <- structure(
     list(
       name = "Inverse Gaussion",
-      composite_p = is_composite(mu, lambda),
-      par = list(mu = mu, lambda = lambda),
+      composite_p = cp,
+      par = list(mean = mean, shape = shape),
       support = function(x, par) {
         all(x > 0) && all(is.finite(x))
       },
       par_domain = function(par) {
-        all(par$mu > 0 || is.null(par$mu),
-            par$lambda > 0 || is.null(par$mu))
+        all(par$mean > 0 || is.null(par$mean),
+            par$shape > 0 || is.null(par$shape))
       },
       sampler = function(n, par) {
-        mu <- par$mu
-        lam <- par$lambda
-        v <- rnorm(n)^2
-        x <- mu + mu^2 * y / 2 / lam - mu / 2 / lam *
-          sqrt(4 * mu * lam * y + mu^2 * y^2)
-        ifelse(runif(n) < mu / (mu + x), x, mu^2 / x)
-      },
-      EXYhat = function(x, par) {
-        mu <- par$mu
-        lam <- par$lambda
-        A <- sqrt(lam / x) * (x / mu - 1)
-        B <- exp(2 * lam / mu)
-        C <- sqrt(lam / x) * (x / mu + 1)
-        pinvg <- function(x, mu, lam, A, B, C) {
-          pnorm(A) + B * pnorm(-C)
+        if (!cp) {
+          mean <- par$mean
+          lam <- par$shape
+          rinvgauss(n, mean = par$mean, shape = par$shape)
+        } else {
+          td <- halfnormal_dist
+          td$sampler(n, par)
         }
-        2 * x * pinvg(x, mu, lam, A, B, C) + mu - x - 2 *
-          (mu * pnorm(A) - mu * B * pnorm(-C))
+      },
+      sampler_par = {
+        if (!cp)
+          list(mean = mean, shape = shape)
+        else
+          list(theta = 1)},
+      EXYhat = function(x, par) {
+        m <- par$mean
+        lam <- par$shape
+        A <- sqrt(lam / x) * (x / m - 1)
+        B <- exp(2 * lam / m)
+        C <- sqrt(lam / x) * (x / m + 1)
+        mean(2 * x * pinvgauss(x, m, lam) + m - x - 2 *
+               (m * pnorm(A) - m * B * pnorm(-C)))
       },
       EYY = function(par) {
-        mu <- par$mu
-        lam <- par$lambda
-        integrand <- function(t, mu, lam) {
-          phi <- sqrt(mu / lam)
+        m <- par$mean
+        lam <- par$shape
+        integrand <- function(t, m, lam) {
+          phi <- m / lam
           erf <- function(w) 2 * pnorm(w * sqrt(2)) - 1
           8 * exp(-t^2) * erf(t) / sqrt(pi) / sqrt(t^2 + 2 * phi^2)
         }
-        mu * integrate(integrand, 0, Inf, mu = mu, lam = lam)$value
+        m * integrate(integrand, 0, Inf, m = m, lam = lam)$value
+      },
+      statistic = function(x) {
+        as.list(fitdistrplus::fitdist(x, "invgauss")$estimate)
+      },
+      xform = function(x, par) {
+        lam <- par$shape
+        m <- par$mean
+        abs(sqrt(lam / x) * (x - m) / m)
       }
     ), class = c("InverseGaussianDist", "EuclideanGOFDist", "GOFDist")
   )
@@ -1402,6 +1420,7 @@ inverse_gaussian_dist <- function(mu = NULL, lambda = NULL) {
   set_composite_class(dist)
 }
 
+invgauss_dist <- inverse_gaussian_dist
 
 ##### Inverse Gamma?
 
@@ -1475,41 +1494,41 @@ pareto_dist <- function(scale = NULL, shape = NULL,
       },
       EYY = function(par) {
         shape <- par$shape
-        scale <- par$scale
-        pow <- par$pow
-        if (shape == 1) {
-          2 * scale^pow / (2 - pow) * beta(1 - pow, pow + 1)
-        } else if (shape > 1 && pow == 1) {
-          2 * shape * scale / (shape - 1) / (2 * shape - 1)
-        } else {
-          ## Shape < 1 and pow < 1/2
-          #2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape -
-          #pow)
-          ## I thought this was unstable, so i wrote on log scale, but I no
-          ## longer believe it to be unstable.
-          L <- log(2) + 2 * log(shape) + pow * log(scale) +
-            lbeta(shape - pow, pow + 1) - log(2 * shape - pow)
-          exp(L)
-        }
-      },
-      statistic = function(x) {
-        list(scale = min(x),
-             shape = {
-               n <- length(x)
-               n / (sum(log(x / min(x))))
-             })
-      },
-      xform = function(x, par) {x^par$shape},
-      notes = {
-        if (!is.null(shape) && shape > 1 && pow != 1)
-          message("\n Note: Shape > 1 and pow != 1. Transforming data by data^r to conduct energy GOF test.\n")}
-    ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
-  )
-  validate_par(dist)
-  ## Specific to Pareto: transform the params if necessary.
-  dist <- pareto_set_sampler_par(dist)
-  set_composite_class(dist)
-}
+scale <- par$scale
+          pow <- par$pow
+          if (shape == 1) {
+            2 * scale^pow / (2 - pow) * beta(1 - pow, pow + 1)
+          } else if (shape > 1 && pow == 1) {
+            2 * shape * scale / (shape - 1) / (2 * shape - 1)
+          } else {
+            ## Shape < 1 and pow < 1/2
+            #2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape -
+            #pow)
+            ## I thought this was unstable, so i wrote on log scale, but I no
+            ## longer believe it to be unstable.
+            L <- log(2) + 2 * log(shape) + pow * log(scale) +
+              lbeta(shape - pow, pow + 1) - log(2 * shape - pow)
+            exp(L)
+          }
+        },
+        statistic = function(x) {
+          list(scale = min(x),
+               shape = {
+                 n <- length(x)
+                 n / (sum(log(x / min(x))))
+               })
+        },
+        xform = function(x, par) {x^par$shape},
+        notes = {
+          if (!is.null(shape) && shape > 1 && pow != 1)
+            message("\n Note: Shape > 1 and pow != 1. Transforming data by data^r to conduct energy GOF test.\n")}
+      ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
+    )
+    validate_par(dist)
+    ## Specific to Pareto: transform the params if necessary.
+    dist <- pareto_set_sampler_par(dist)
+    set_composite_class(dist)
+  }
 
 pareto_set_sampler_par <- function(dist) {
   ## X ~ P(scale, shape) -> X^shape ~ P(newscale = scale^shape, newshape = 1)
@@ -1771,7 +1790,7 @@ stable_dist <- function(location = 0, scale = 1,
 ## deats <- rbind(deats, list("Weibull", "weibull_dist", "shape, scale", "No"))
 ## deats <- rbind(deats, list("Gamma", "gamma_dist", "shape, rate", "No"))
 ## deats <- rbind(deats, list("Chi Squared", "chisq_dist", "df", "No"))
-## deats <- rbind(deats, list("Inverse Gaussion", "inversegaussian_dist", "mu, lambda", "No"))
+## deats <- rbind(deats, list("Inverse Gaussion", "inversegaussian_dist", "mean, shape", "No"))
 ## deats <- rbind(deats, list("Pareto", "pareto_dist", "scale, shape, pow, r", "No"))
 ## deats <- rbind(deats, list("Cauchy", "cauchy_dist", "location, scale, pow", "No"))
 ## deats <- rbind(deats, list("Stable", "stable_dist", "location, scale, skew, stability, pow", "No"))
