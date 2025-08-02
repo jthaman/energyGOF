@@ -1394,7 +1394,7 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
         B <- exp(2 * lam / m)
         C <- sqrt(lam / x) * (x / m + 1)
         mean(2 * x * pinvgauss(x, m, lam) + m - x - 2 *
-               (m * pnorm(A) - m * B * pnorm(-C)))
+               (m * pinvgauss(x, m, lam)))
       },
       EYY = function(par) {
         m <- par$mean
