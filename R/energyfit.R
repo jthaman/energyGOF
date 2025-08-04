@@ -913,6 +913,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
         }
         integrate(integrand, 0, 1, par)$value
       },
+      # incorrect in book
       EXYhat = function(x, par) {
         a <- par$shape1
         b <- par$shape2
@@ -1357,6 +1358,9 @@ chisq_dist <- function(df = 2) {
 #'
 #' If mean and shape are both NULL, a composite test is performed.
 #'
+#' This distribution requires an intense amount of numerical integration, and
+#' the implementation seems to be fine for samples up to 1000.
+#'
 #' @export
 inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
   cp <- is_composite(mean, shape)
@@ -1374,12 +1378,13 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
       },
       sampler = function(n, par) {
         if (!cp) {
-          mean <- par$mean
+          m <- par$mean
           lam <- par$shape
-          rinvgauss(n, mean = par$mean, shape = par$shape)
-        } else {
-          td <- halfnormal_dist
-          td$sampler(n, par)
+          rinvgauss(n, m, lam)
+        }
+        else {
+          td <- halfnormal_dist(scale = 1)
+          td$sampler(n, list(scale = 1))
         }
       },
       sampler_par = {
@@ -1387,32 +1392,55 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
           list(mean = mean, shape = shape)
         else
           list(theta = 1)},
+    # incorrect in book and dissertation
       EXYhat = function(x, par) {
-        m <- par$mean
-        lam <- par$shape
-        A <- sqrt(lam / x) * (x / m - 1)
-        B <- exp(2 * lam / m)
-        C <- sqrt(lam / x) * (x / m + 1)
-        mean(2 * x * pinvgauss(x, m, lam) + m - x - 2 *
-               (m * pinvgauss(x, m, lam)))
-      },
-      EYY = function(par) {
-        m <- par$mean
-        lam <- par$shape
-        integrand <- function(t, m, lam) {
-          phi <- m / lam
-          erf <- function(w) 2 * pnorm(w * sqrt(2)) - 1
-          8 * exp(-t^2) * erf(t) / sqrt(pi) / sqrt(t^2 + 2 * phi^2)
+        if (!cp) {
+          m <- par$mean
+          lam <- par$shape
+          Msave <- rep(NA, length(x))
+          M_closed <- function(x, mu, lambda) {
+            a <- lambda / (2 * mu^2)
+            b <- lambda / 2
+            z <- 2 * sqrt(a * b)
+            # Prefactor from y * f(y)
+            pref <- sqrt(lambda / (2 * pi)) * exp(lambda / mu)
+            integrand <- function(y) y^(-0.5) * exp(-a * y - b / y)
+            val <- integrate(integrand, lower = 0, upper = x,
+                             rel.tol = 1e-10)$value
+            # Final value: prefactor * (full integral - tail)
+            Mx <- pref * val
+            Mx
+          }
+          Msave <- sapply(x, M_closed, mu = m, lambda = lam)
+          mean(2 * x * pinvgauss(x, m, lam) - x + m - 2 * Msave)
+        } else {
+          d <- halfnormal_dist(scale = 1)
+          d$EXYhat(x, list(scale = 1))
         }
-        m * integrate(integrand, 0, Inf, m = m, lam = lam)$value
       },
-      statistic = function(x) {
-        as.list(fitdistrplus::fitdist(x, "invgauss")$estimate)
+      # incorrect in book and dissertation
+      EYY = function(par) {
+        if (!cp) {
+          m <- par$mean
+          lam <- par$shape
+          integrand <- function(t, m, lam) {
+            phi <- sqrt(lam / m)
+            erf <- function(w) 2 * pnorm(w * sqrt(2)) - 1
+            8 * exp(-t^2) * t * erf(t) / sqrt(pi) / sqrt(t^2 + 2 * phi^2)
+        }
+          m * integrate(integrand, 0, Inf, m = m, lam = lam)$value
+        } else {
+          d <- halfnormal_dist(1)
+          d$EYY(list(scale = 1))
+        }
       },
-      xform = function(x, par) {
-        lam <- par$shape
-        m <- par$mean
-        abs(sqrt(lam / x) * (x - m) / m)
+    statistic = function(x) {
+      as.list(fitdistrplus::fitdist(x, "invgauss")$estimate)
+      },
+    xform = function(x, par) {
+      lam <- par$shape
+      m <- par$mean
+      abs(sqrt(lam / x) * (x - m) / m)
       }
     ), class = c("InverseGaussianDist", "EuclideanGOFDist", "GOFDist")
   )
