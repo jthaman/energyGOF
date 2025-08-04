@@ -984,28 +984,39 @@ geometric_dist  <- function(prob = 0.5) {
 #'
 #' @export
 halfnormal_dist <- function(scale = NULL) {
+  cp <- is.null(scale)
   dist <- structure(
     list(
       name = "Half-Normal",
-      composite_p = is.null(scale),
+      composite_p = cp,
       par = list(scale = scale),
+      sampler_par = if (!cp) {
+        list(scale = scale)
+      } else {
+        list(scale = 1)
+      },
       par_domain = function(par) {
         par$scale > 0 || is.null(par$scale)
       },
       support = function(x, par) all(x > 0),
       sampler = function(n, par) {
-        abs(rnorm(n, 0, sd = par$scale))},
+        abs(rnorm(n, 0, sd = par$scale))
+      },
       EXYhat = function(x, par) {
+        scale <- par$scale
         mean(2 * x * (2 * pnorm(x, 0, scale) - 1)
-             - x + par$scale * sqrt(2 / pi) -
-               2 * sqrt(2 / pi) * par$scale *
-                 (1 - exp(-x^2 / (2 * par$scale^2))))
+             - x + scale * sqrt(2 / pi) -
+               2 * sqrt(2 / pi) * scale *
+                 (1 - exp(-x^2 / (2 * scale^2))))
       },
       EYY = function(par) {
         par$scale * 2 * (2 - sqrt(2)) / sqrt(pi)
       },
-      xform = function(x) x / sd(x),
-      statistic = function(x) list(scale = sd(x))
+      xform = function(x, par) x / par$scale,
+      statistic = function(x) {
+        n <- length(x)
+        list(scale = sqrt(sum(x^2) / n))
+      }
     ), class = c("HalfNormalDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)

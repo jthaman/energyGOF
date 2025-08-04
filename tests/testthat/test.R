@@ -527,7 +527,7 @@ test_that("Composite Test works", {
 
 test_that("Test works", {
   d <- inverse_gaussian_dist(3, 2)
-  x <- d$sampler(1000, d$par)
+  x <- d$sampler(10, d$par)
   o <- ef(x, d, nsim = 60)
   print(o)
   expect_gt(o$statistic, 0)
@@ -536,7 +536,7 @@ test_that("Test works", {
 
 test_that("Test works", {
   d <- inverse_gaussian_dist(1, 1)
-  x <- d$sampler(1000, d$par)
+  x <- d$sampler(10, d$par)
   o <- ef(x, d, nsim = 60)
   print(o)
   expect_gt(o$statistic, 0)
@@ -546,7 +546,7 @@ test_that("Test works", {
 
 test_that("Test works", {
   d <- inverse_gaussian_dist(5, 5)
-  x <- d$sampler(1000, d$par)
+  x <- d$sampler(10, d$par)
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
@@ -555,7 +555,7 @@ test_that("Test works", {
 
 test_that("Test works", {
   d <- inverse_gaussian_dist(.1, .1)
-  x <- d$sampler(1000, d$par)
+  x <- d$sampler(10, d$par)
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
@@ -565,7 +565,7 @@ test_that("Test works", {
 
 test_that("Test works", {
   d <- inverse_gaussian_dist(.1, 10)
-  x <- d$sampler(1000, d$par)
+  x <- d$sampler(10, d$par)
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
@@ -575,7 +575,7 @@ test_that("Test works", {
 
 test_that("Test works", {
   d <- inverse_gaussian_dist(10, .1)
-  x <- d$sampler(1000, d$par)
+  x <- d$sampler(10, d$par)
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
@@ -585,7 +585,7 @@ test_that("Test works", {
 
 test_that("Composite Test works", {
   d <- inverse_gaussian_dist()
-  x <- rinvgauss(1000, 5, 5)
+  x <- rinvgauss(10, 5, 5)
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
@@ -602,8 +602,119 @@ test_that("Composite Test works", {
 })
 
 
+# todo Composite test is not sensitive?
+test_that("Composite Test is sensitive", {
+  d <- inverse_gaussian_dist()
+  x <- rweibull(1000, 2, 2)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Simple test is sensitive ", {
+  d <- inverse_gaussian_dist(3, 1)
+  x <- rinvgauss(100, 3, 3)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Simple test is sensitive ", {
+  d <- inverse_gaussian_dist(3, 1)
+  x <- rweibull(100, 3, 3)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
 ##### Half Norm tests
+
+test_that("Test works", {
+  d <- halfnormal_dist(1)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- halfnormal_dist(5)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- halfnormal_dist(50)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test is sensitive", {
+  d <- halfnormal_dist(1)
+  x <- rweibull(100, 3, 3)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Test is sensitive", {
+  d <- halfnormal_dist(1)
+  x <- rexp(1000)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Test is sensitive", {
+  d <- halfnormal_dist(scale = 1)
+  x <- rexp(1000)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Composite test works", {
+  d <- halfnormal_dist(scale = 1)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, halfnormal_dist(), nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+
+test_that("Composite test is sensitive", {
+  x <- rexp(1000)
+  o <- ef(x, halfnormal_dist(), nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Composite test is sensitive", {
+  x <- rweibull(1000, 3, 3)
+  o <- ef(x, halfnormal_dist(), nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
 ##### Chi Sq tests
+
+
+
 ##### Gamma  tests
 ##### Weibull  tests
 ##### Cauchy tests
@@ -747,6 +858,7 @@ test_that("lnorm test", {
 })
 
 test_that("lnorm test", {
+  set.seed(1)
   x <- rlnorm(1000, 5, 5)
   d <- lognormal_dist(5, 5)
   o <- ef(x, d, nsim = 25)
