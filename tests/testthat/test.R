@@ -553,10 +553,48 @@ test_that("Test works", {
   expect_gt(o$p.value, 0.01)
 })
 
+test_that("Test works", {
+  d <- inverse_gaussian_dist(.1, .1)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+
+test_that("Test works", {
+  d <- inverse_gaussian_dist(.1, 10)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+
+test_that("Test works", {
+  d <- inverse_gaussian_dist(10, .1)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
 
 test_that("Composite Test works", {
   d <- inverse_gaussian_dist()
   x <- rinvgauss(1000, 5, 5)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Composite Test works", {
+  d <- inverse_gaussian_dist()
+  x <- rinvgauss(1000, 1, 1)
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)

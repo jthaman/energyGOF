@@ -1358,8 +1358,12 @@ chisq_dist <- function(df = 2) {
 #'
 #' If mean and shape are both NULL, a composite test is performed.
 #'
-#' This distribution requires an intense amount of numerical integration, and
-#' the implementation seems to be fine for samples up to 1000.
+#' This distribution requires an intense amount of numerical integration for
+#' the simple (known parameters) case, and the implementation seems to be fine
+#' for samples up to 1000. For the composite case, the data are transformed to
+#' a half-normal distribution (conditional on the parameter estimates), and the
+#' performance is much better, as there is no numerical integration in this
+#' case.
 #'
 #' @export
 inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
@@ -1435,8 +1439,10 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
         }
       },
     statistic = function(x) {
-      as.list(fitdistrplus::fitdist(x, "invgauss")$estimate)
-      },
+      as.list(fitdistrplus::fitdist(x, "invgauss",
+                                    start = list(mean = 1, shape = 1)
+                                    )$estimate)
+    },
     xform = function(x, par) {
       lam <- par$shape
       m <- par$mean
