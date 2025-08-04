@@ -1274,18 +1274,24 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
 
 #' @title Create a gamma distribution object for energy testing
 #' @inherit normal_dist description return author
-#' @param shape NULL, or the same shape parameter in [rgamma()]
-#' @param rate NULL, or the same rate parameter in [rgamma()]
+#' @param shape Same shape parameter in [rgamma()] (must be length 1)
+#' @param rate Same rate parameter in [rgamma()] (must be length 1)
+#'
 #' @export
-gamma_dist <- function(shape = NULL, rate = NULL) {
+gamma_dist <- function(shape = 1, rate = 1) {
+  cp <- composite_not_allowed(shape, rate)
   dist <- structure(
     list(
       name = "Gamma",
-      composite_p = is_composite(shape, rate),
+      composite_p = cp,
       par = list(shape = shape, rate = rate),
-      sampler_par = list(shape = 1, rate = 1),
+      sampler_par = if (cp) {
+        list(shape = 1, rate = 1)
+      } else {
+        list(shape = shape, rate = rate)
+      },
       support = function(x, par) {
-        all(x > 0) && all(is.finite(x))
+        all(x > 0)
       },
       par_domain = function(par) {
         all(
@@ -1298,20 +1304,28 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
       EXYhat = function(x, par) {
         a <- par$shape
         b <- par$rate
-        mean(2 * x * pgamma(x, a, b) - x + a / b -
-               2 * a / b * pgamma(x, a + 1, b))
+        mean((a / b) - (2 * a / b) * pgamma(x, a + 1, b) +
+               x * (2 * pgamma(x, a, b) - 1))
       },
       EYY = function(par) {
         a <- par$shape
         b <- par$rate
         2 * gamma(a + 1 / 2) / (b * gamma(a) * sqrt(pi))
       }
+      ## ,
+      ## statistic = function(x) {
+      ##   as.list(fitdistrplus::fitdist(x, "gamma")$estimate)
+      ## },
+      ## xform = function(x, par) {
+      ##   x / 2 / par$rate # ~ gamma (a/2, 1/2) ~ chisq (a)
+      ## }
     ), class = c("GammaDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
 }
 
+##### Inverse Gamma?
 
 ##### Chi-Square
 

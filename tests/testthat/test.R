@@ -712,13 +712,96 @@ test_that("Composite test is sensitive", {
 })
 
 ##### Chi Sq tests
+test_that("Test works", {
+  d <- chisq_dist(5)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
 
+test_that("Test works", {
+  d <- chisq_dist(1)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- chisq_dist(40)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+
+test_that("Test is sensitive", {
+  d <- chisq_dist(40)
+  x <- rchisq(1000, 4)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test is sensitive", {
+  d <- chisq_dist(40)
+  x <- rexp(1000, 4)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
 
 
 ##### Gamma  tests
+
+
+test_that("Test works", {
+  d <- gamma_dist(1, 1)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- gamma_dist(3, 3)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- gamma_dist(5, 2)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- gamma_dist(2, 5)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
 ##### Weibull  tests
 ##### Cauchy tests
 ##### Stable tests
+##TODO
 
 ##### Beta Test
 
