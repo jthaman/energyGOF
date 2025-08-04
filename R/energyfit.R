@@ -1234,12 +1234,18 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
 #' @param scale NULL, of if specified, same as the scale parameter in [stats::rweibull()]
 #' @export
 weibull_dist <- function(shape = NULL, scale = NULL) {
+  cp <- is_composite(shape, scale)
   dist <- structure(
     list(
       name = "Weibull",
-      composite_p = is_composite(shape, scale),
+      composite_p = cp,
       par = list(shape = shape, scale = scale),
-      sampler_par = list(shape = 1, scale = 1),
+      sampler_par =
+        if (cp) {
+          list(rate = 1)
+        } else {
+          list(shape = shape, scale = scale)
+        },
       support = function(x, par) {
         all(x > 0)
       },
@@ -1248,21 +1254,36 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
             par$scale > 0 || is.null(par$shape))
       },
       sampler = function(n, par) {
-        rweibull(n, shape = par$shape, scale = par$scale)},
+        if (!cp) {
+          rweibull(n, shape = par$shape, scale = par$scale)
+        } else {
+          rexp(n, rate = 1)
+        }},
       EXYhat = function(x, par) {
-        z = (x / par$scale)^par$shape
-        mean(2 * x * pweibull(x, par$shape, par$scale) - x +
+        if (!cp) {
+          z = (x / par$scale)^par$shape
+          mean(2 * x * pweibull(x, par$shape, par$scale) - x +
                par$scale * gamma(1 + 1 / par$shape) *
                (1 - 2 * pgamma(z, 1 + 1 / par$shape, 1)))
+        } else {
+          mean(x + 1 * (1 - 2 * pexp(x, 1)))
+        }
       },
       EYY = function(par) {
-        # par$shape = k
-        # scale = lambda
-        (2 * par$scale / par$shape) * gamma(1 / par$shape) *
-          (1 - 2^(-1 / par$shape))
+        if (!cp) {
+          # scale = lambda
+          # shape = k
+          (2 * par$scale / par$shape) * gamma(1 / par$shape) *
+            (1 - 2^(-1 / par$shape))
+        } else {
+          1
+        }
+      },
+      statistic = function(x) {
+        as.list(fitdistrplus::fitdist(x, "weibull")$estimate)
       },
       xform = function(x, par) {
-        (x / par$shape)^par$scale
+        (x / par$scale)^par$shape # ~ exp(1)
       }
     ), class = c("WeibullDist", "EuclideanGOFDist", "GOFDist")
   )

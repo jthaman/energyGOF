@@ -798,8 +798,91 @@ test_that("Test works", {
   expect_gt(o$p.value, 0.01)
 })
 
+test_that("Test is sensitive", {
+  d <- gamma_dist(2, 5)
+  x <- rweibu(1000, 3, 3)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
 ##### Weibull  tests
+test_that("Test works", {
+  d <- weibull_dist(1, 1)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- weibull_dist(3, 3)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- weibull_dist(10, 1)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- weibull_dist(1, 10)
+  x <- d$sampler(1000, d$par)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test is sensitive", {
+  d <- weibull_dist(1, 10)
+  x <- rgamma(1000, 3, 3)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Composite test works", {
+  d <- weibull_dist()
+  x <- rweibull(1000, 3, 3)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Composite test works", {
+  d <- weibull_dist()
+  x <- rweibull(1000, 10, 1)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+
+test_that("Composite test is sensitive", {
+  d <- weibull_dist()
+  x <- rgamma(1000, 10, 1)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
 ##### Cauchy tests
+
+
 ##### Stable tests
 ##TODO
 
