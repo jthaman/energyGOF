@@ -403,6 +403,33 @@ xform_dist.PoissonDist <- function(x, dist) {
 }
 
 #' @export
+xform_dist.InverseGaussianDist <- function(x, dist) {
+  # Must transform in Simple case.
+  if (dist$composite) {
+    dist$sampler_par <- dist$statistic(x)
+  }
+  dist
+}
+
+#' @export
+xform_dist.GammaDist <- function(x, dist) {
+  # Must transform in Simple case.
+  if (dist$composite) {
+    dist$sampler_par <- dist$statistic(x)
+  }
+  dist
+}
+
+#' @export
+xform_dist.WeibullDist <- function(x, dist) {
+  # Must transform in Simple case.
+  if (dist$composite) {
+    dist$sampler_par <- dist$statistic(x)
+  }
+  dist
+}
+
+#' @export
 xform_dist.GOFDist <- function(x, dist) {
   # Must transform in Simple case.
   dist
@@ -1242,7 +1269,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
       par = list(shape = shape, scale = scale),
       sampler_par =
         if (cp) {
-          list(rate = 1)
+          list(shape = NULL, scale = NULL)
         } else {
           list(shape = shape, scale = scale)
         },
@@ -1257,7 +1284,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
         if (!cp) {
           rweibull(n, shape = par$shape, scale = par$scale)
         } else {
-          rexp(n, rate = 1)
+          rweibull(n, shape = NULL, scale = NULL)
         }},
       EXYhat = function(x, par) {
         if (!cp) {
@@ -1332,14 +1359,13 @@ gamma_dist <- function(shape = 1, rate = 1) {
         a <- par$shape
         b <- par$rate
         2 * gamma(a + 1 / 2) / (b * gamma(a) * sqrt(pi))
+      },
+      statistic = function(x) {
+        as.list(fitdistrplus::fitdist(x, "gamma")$estimate)
+      },
+      xform = function(x, par) {
+        x / 2 / par$rate # ~ gamma (a/2, 1/2) ~ chisq (a)
       }
-      ## ,
-      ## statistic = function(x) {
-      ##   as.list(fitdistrplus::fitdist(x, "gamma")$estimate)
-      ## },
-      ## xform = function(x, par) {
-      ##   x / 2 / par$rate # ~ gamma (a/2, 1/2) ~ chisq (a)
-      ## }
     ), class = c("GammaDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
@@ -1420,52 +1446,41 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
       composite_p = cp,
       par = list(mean = mean, shape = shape),
       support = function(x, par) {
-        all(x > 0) && all(is.finite(x))
+        all(x > 0)
       },
       par_domain = function(par) {
         all(par$mean > 0 || is.null(par$mean),
             par$shape > 0 || is.null(par$shape))
       },
       sampler = function(n, par) {
-        if (!cp) {
           m <- par$mean
           lam <- par$shape
           rinvgauss(n, m, lam)
-        }
-        else {
-          td <- halfnormal_dist(scale = 1)
-          td$sampler(n, list(scale = 1))
-        }
       },
       sampler_par = {
-        if (!cp)
-          list(mean = mean, shape = shape)
-        else
-          list(theta = 1)},
-    # incorrect in book and dissertation
+          list(mean = mean, shape = shape)},
+      # incorrect in book and dissertation
       EXYhat = function(x, par) {
         if (!cp) {
           m <- par$mean
           lam <- par$shape
-          Msave <- rep(NA, length(x))
+          Msave <- numeric(length(x))
           M_closed <- function(x, mu, lambda) {
             a <- lambda / (2 * mu^2)
             b <- lambda / 2
             z <- 2 * sqrt(a * b)
-            # Prefactor from y * f(y)
             pref <- sqrt(lambda / (2 * pi)) * exp(lambda / mu)
             integrand <- function(y) y^(-0.5) * exp(-a * y - b / y)
             val <- integrate(integrand, lower = 0, upper = x,
                              rel.tol = 1e-10)$value
-            # Final value: prefactor * (full integral - tail)
             Mx <- pref * val
             Mx
           }
           Msave <- sapply(x, M_closed, mu = m, lambda = lam)
           mean(2 * x * pinvgauss(x, m, lam) - x + m - 2 * Msave)
         } else {
-          d <- halfnormal_dist(scale = 1)
-          d$EXYhat(x, list(scale = 1))
+          d <- chisq_dist(1)
+          d$EXYhat(x, list(df = 1))
         }
       },
       # incorrect in book and dissertation
@@ -1480,20 +1495,23 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
         }
           m * integrate(integrand, 0, Inf, m = m, lam = lam)$value
         } else {
-          d <- halfnormal_dist(1)
-          d$EYY(list(scale = 1))
+          d <- chisq_dist(1)
+          d$EYY(list(df = 1))
         }
       },
     statistic = function(x) {
-      as.list(fitdistrplus::fitdist(x, "invgauss",
-                                    start = list(mean = 1, shape = 1)
-                                    )$estimate)
+      as.list(suppressWarnings(
+        fitdistrplus::fitdist(x, "invgauss",
+                              start = list(mean = 1, shape = 1)
+                              ))$estimate)
     },
     xform = function(x, par) {
-      lam <- par$shape
+      ## The half-normal transformation seems to not be sensitive?
       m <- par$mean
-      abs(sqrt(lam / x) * (x - m) / m)
-      }
+      lam <- par$shape
+      ## abs(sqrt(lam / x) * (x - m) / m)
+      lam * (x - m)^2 / m^2 / x # ~ chisq(1)
+    }
     ), class = c("InverseGaussianDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
@@ -1574,14 +1592,14 @@ pareto_dist <- function(scale = NULL, shape = NULL,
       },
       EYY = function(par) {
         shape <- par$shape
-scale <- par$scale
-          pow <- par$pow
-          if (shape == 1) {
-            2 * scale^pow / (2 - pow) * beta(1 - pow, pow + 1)
-          } else if (shape > 1 && pow == 1) {
-            2 * shape * scale / (shape - 1) / (2 * shape - 1)
-          } else {
-            ## Shape < 1 and pow < 1/2
+        scale <- par$scale
+        pow <- par$pow
+        if (shape == 1) {
+          2 * scale^pow / (2 - pow) * beta(1 - pow, pow + 1)
+        } else if (shape > 1 && pow == 1) {
+          2 * shape * scale / (shape - 1) / (2 * shape - 1)
+        } else {
+## Shape < 1 and pow < 1/2
             #2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape -
             #pow)
             ## I thought this was unstable, so i wrote on log scale, but I no

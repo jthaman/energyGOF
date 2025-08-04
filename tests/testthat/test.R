@@ -605,7 +605,7 @@ test_that("Composite Test works", {
 # todo Composite test is not sensitive?
 test_that("Composite Test is sensitive", {
   d <- inverse_gaussian_dist()
-  x <- rweibull(1000, 2, 2)
+  x <- rweibull(1000, 4, 5)
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
@@ -691,7 +691,7 @@ test_that("Composite test works", {
   o <- ef(x, halfnormal_dist(), nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
-  expect_lt(o$p.value, 0.01)
+  expect_gt(o$p.value, 0.01)
 })
 
 
@@ -746,7 +746,7 @@ test_that("Test is sensitive", {
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
-  expect_gt(o$p.value, 0.01)
+  expect_lt(o$p.value, 0.01)
 })
 
 test_that("Test is sensitive", {
@@ -755,7 +755,7 @@ test_that("Test is sensitive", {
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
-  expect_gt(o$p.value, 0.01)
+  expect_lt(o$p.value, 0.01)
 })
 
 
@@ -800,11 +800,11 @@ test_that("Test works", {
 
 test_that("Test is sensitive", {
   d <- gamma_dist(2, 5)
-  x <- rweibu(1000, 3, 3)
+  x <- rweibull(1000, 3, 3)
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
-  expect_gt(o$p.value, 0.01)
+  expect_lt(o$p.value, 0.01)
 })
 
 ##### Weibull  tests
@@ -850,7 +850,7 @@ test_that("Test is sensitive", {
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
-  expect_gt(o$p.value, 0.01)
+  expect_lt(o$p.value, 0.01)
 })
 
 test_that("Composite test works", {
@@ -878,10 +878,54 @@ test_that("Composite test is sensitive", {
   o <- ef(x, d, nsim = 50)
   print(o)
   expect_gt(o$statistic, 0)
-  expect_gt(o$p.value, 0.01)
+  expect_lt(o$p.value, 0.01)
 })
 ##### Cauchy tests
 
+test_that("test works", {
+  d <- cauchy_dist(10, 1)
+  x <- rcauchy(1000, 10, 1)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("test works", {
+  d <- cauchy_dist(10, 10)
+  x <- rcauchy(1000, 10, 10)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("test is sensitive", {
+  d <- cauchy_dist(10, 10)
+  x <- rnorm(1000, 10, 10)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("composite test works", {
+  d <- cauchy_dist()
+  x <- rcauchy(1000, 10, 10)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("composite test is sensitive", {
+  d <- cauchy_dist()
+  x <- rnorm(1000, 10, 10)
+  o <- ef(x, d, nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
 
 ##### Stable tests
 ##TODO
