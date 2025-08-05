@@ -421,6 +421,18 @@ xform_dist.GammaDist <- function(x, dist) {
 }
 
 #' @export
+xform_dist.AsymmetricLaplaceDist <- function(x, dist) {
+  # Must transform in Composite case.
+  if (dist$composite) {
+    mle <- dist$statistic(x)
+    dist$sampler_par <- list(location = 0,
+                             scale = 1,
+                             skew = mle$skew)
+  }
+  dist
+}
+
+#' @export
 xform_dist.WeibullDist <- function(x, dist) {
   # Must transform in Composite case.
   if (dist$composite) {
@@ -1206,7 +1218,7 @@ asymmetric_laplace_dist <- function(location = NULL,
       name = "Asymmetric Laplace",
       composite_p = is_composite(location, scale, skew),
       par = list(location = location, scale = scale, skew = skew),
-      sampler_par = list(location = 0, scale = 1, skew = 1), # yes?
+      sampler_par = list(location = location, scale = scale, skew = skew),
       par_domain = function(par) {
         all(par$scale > 0 || is.null(par$scale),
             par$skew > 0 || is.null(par$skew),
@@ -1217,7 +1229,7 @@ asymmetric_laplace_dist <- function(location = NULL,
         loc <- par$location
         scale <- par$scale
         k <- par$skew
-        ralaplace(n, loc, scale, k)
+        loc + scale * log(runif(n)^k / runif(n)^(1 / k))/sqrt(2)
       },
       EXYhat = function(x, par) {
         loc <- par$location
@@ -1226,11 +1238,15 @@ asymmetric_laplace_dist <- function(location = NULL,
         mu <- (1 / k - k) / sqrt(2)
         lam <- sqrt(2) * k / scale
         beta <- sqrt(2) / (k * scale)
-        pk <- 1 / ( 1 + k^2)
+        pk <- 1 / (1 + k^2)
         qk <- 1 - pk
-        mean(ifelse(x >= loc,
-                    x - loc - mu + (2 * pk / lam) * exp(-lam * abs(x - loc)),
-                    -x + loc + mu + (2 * qk / beta) * exp(-beta * abs(x - loc))))
+        mean(
+          ifelse(
+            x >= loc,
+            x - loc - mu + (2 * pk / lam) *
+              exp(-lam * abs(x - loc)),
+            -x + loc + mu + (2 * qk / beta) *
+              exp(-beta * abs(x - loc))))
       },
       EYY = function(par){
         loc <- par$location
@@ -1244,9 +1260,17 @@ asymmetric_laplace_dist <- function(location = NULL,
         pk / beta + qk / lam + pk^2 / lam + qk^2 / beta
       },
       xform = function(x, par) {
+        (x - par$location) / par$scale # ~ AL(0, 1, kappa)
       },
       statistic = function(x) {
-        as.list(fitdistrplus::fitdist(x, "alaplace")$estimate)
+        out <- suppressWarnings(
+          as.list(fitdistrplus::fitdist(
+            x, "alaplace",
+            start = list(location = 0,
+                         scale = 1,
+                         kappa = 1))$estimate))
+        names(out) <- c("location", "scale", "skew")
+        out
       }
     ), class = c("AsymmetricLaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
@@ -1731,7 +1755,7 @@ stable_dist <- function(location = 0, scale = 1,
         } else if (par$stability < 1 && par$skew == -1) {
           all(x < par$location, is.finite(x))
         } else
-          is.finite(x)
+          all(is.finite(x))
       },
       par_domain = function(par) {
         all(
@@ -1747,24 +1771,7 @@ stable_dist <- function(location = 0, scale = 1,
         s <- par$scale
         b <- par$skew
         a <- par$stability
-        u <- runif(n, -pi / 2, pi / 2)
-        w <- rexp(n)
-        zeta <- -b * tan(pi * a / 2)
-        xi <- if (a == 1) pi / 2 else atan(-zeta) / a
-        X <- if (a == 1) {
-          A <- (pi / 2 + b * u) * tan(u)
-          B <- b * log(pi * w / 2 * cos(u) / (pi / 2 + b * u))
-          (A - B) / zeta
-        } else {
-          A <- (1 + zeta^2)^(1 / 2 / a)
-          B <- sin(a * (u + xi)) / cos(u)^(1 / a)
-          C <- (cos(u - a * (u + xi)) / w)^(1 / a - 1)
-          A * B * C
-        }
-        if (a != 1)
-          s * X + d
-        else
-          s * X + d + 2 * b * s * log(s) / pi
+        stabledist::rstable(n, alpha = a, beta = b, gamma = s, delta = d)
       },
       EXYhat = function(x, par) {
         n <- length(x)
@@ -1784,7 +1791,7 @@ stable_dist <- function(location = 0, scale = 1,
             I <- if (x[i] > 2000) {
               I + abs(x[i])
             } else {
-              I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+              I + integrate(integrand, 0, Inf, x = x[i], par = par, pow = pow)$value
             }
             return (A * B * I / n)
           }
@@ -1802,7 +1809,7 @@ stable_dist <- function(location = 0, scale = 1,
             I <- if (x[i] > 2000) {
               I + abs(x[i])
             } else {
-              I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+              I + integrate(integrand, 0, Inf, x = x[i], par = par, pow = pow)$value
             }
           }
           return(A * B * I / n)
@@ -1817,7 +1824,7 @@ stable_dist <- function(location = 0, scale = 1,
             I <- if (x[i] > 2000) {
               I + abs(x[i])
             } else {
-              I + integrate(integrand, x = x[i], par = par, pow = pow)$value
+              I + integrate(integrand, 0, Inf, x = x[i], par = par, pow = pow)$value
             }
           }
           return(I / n)

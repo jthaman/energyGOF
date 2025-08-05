@@ -521,9 +521,126 @@ test_that("Composite Test works", {
 })
 
 
-##### Asym Laplace tests TODO
+##### Asym Laplace tests
+
+test_that("Test works", {
+  d <- asymmetric_laplace_dist(3, 3, 1)
+  x <- d$sampler(10, d$par)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- asymmetric_laplace_dist(1, 10, 1)
+  x <- d$sampler(10, d$par)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
 
 
+test_that("Test works", {
+  d <- asymmetric_laplace_dist(10, 10, 3)
+  x <- d$sampler(10, d$par)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test works", {
+  d <- asymmetric_laplace_dist(1, 10, 1 / 10)
+  x <- d$sampler(10, d$par)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test is sensitive", {
+  d <- asymmetric_laplace_dist(1, 1, 1 / 10)
+  x <- rnorm(100)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Test is sensitive", {
+  d <- asymmetric_laplace_dist(1, 1, 1)
+  x <- rnorm(100)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+
+test_that("Test is sensitive", {
+  d <- asymmetric_laplace_dist(3, 1, 1)
+  x <- rnorm(100)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Test is sensitive", {
+  d <- asymmetric_laplace_dist(3, 1, 10)
+  x <- rnorm(100)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Test is sensitive", {
+  d <- asymmetric_laplace_dist(3, 1, 1 / 10)
+  x <- rnorm(100)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Composite Test Worts", {
+  d <- asymmetric_laplace_dist()
+  x <- ralaplace(100, 0, 1, 2)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Composite Test Worts", {
+  d <- asymmetric_laplace_dist()
+  x <- ralaplace(100, 0, 3, 1 / 2)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Composite Test is sensitive", {
+  d <- asymmetric_laplace_dist()
+  x <- rcauchy(1000)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
+test_that("Composite Test is sensitive", {
+  d <- asymmetric_laplace_dist()
+  x <- rnorm(4000, 3, 3)
+  o <- ef(x, d, nsim = 60)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
 ##### Inv Gaussian
 
 test_that("Test works", {
@@ -604,7 +721,6 @@ test_that("Composite Test works", {
 })
 
 
-# todo Composite test is not sensitive?
 test_that("Composite Test is sensitive", {
   d <- inverse_gaussian_dist()
   x <- rweibull(1000, 4, 5)
@@ -932,7 +1048,20 @@ test_that("composite test is sensitive", {
 })
 
 ##### Stable tests
-##TODO
+test_that("Test works", {
+  d <- stable_dist(0, 1, 0, 1)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d)
+  print(o)
+  expect_gt(o$statistic, 0)})
+
+test_that("Test works", {
+  d <- stable_dist(0, 1, 1, 1)
+  x <- d$sampler(100, d$par)
+  o <- ef(x, d)
+  print(o)
+  expect_gt(o$statistic, 0)})
+
 
 ##### Beta Test
 
