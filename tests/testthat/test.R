@@ -809,30 +809,7 @@ test_that("Test is sensitive", {
   expect_lt(o$p.value, 0.01)
 })
 
-test_that("Composite Test works", {
-  x <- rgamma(100, 5, 5)
-  o <- ef(x, gamma_dist(), nsim = 50)
-  print(o)
-  expect_gt(o$statistic, 0)
-  expect_gt(o$p.value, 0.01)
-})
 
-test_that("Composite Test works", {
-  x <- rgamma(100, 1, 1)
-  o <- ef(x, gamma_dist(), nsim = 50)
-  print(o)
-  expect_gt(o$statistic, 0)
-  expect_gt(o$p.value, 0.01)
-})
-
-## broken
-test_that("Composite Test is sensitive", {
-  x <-abs(rnorm(100, 5))
-  o <- ef(x, gamma_dist(), nsim = 50)
-  print(o)
-  expect_gt(o$statistic, 0)
-  expect_lt(o$p.value, 0.01)
-})
 
 ##### Weibull  tests
 test_that("Test works", {

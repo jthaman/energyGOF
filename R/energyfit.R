@@ -1198,7 +1198,8 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 #' where \eqn{\theta} = `location`, \eqn{\sigma} = `scale`, and \eqn{\kappa} = `skew`.
 #'
 #' @export
-asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
+asymmetric_laplace_dist <- function(location = NULL,
+                                    scale = NULL,
                                     skew = NULL) {
   dist <- structure(
     list(
@@ -1216,9 +1217,7 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
         loc <- par$location
         scale <- par$scale
         k <- par$skew
-        u1 <- runif(n)
-        u2 <- runif(n)
-        loc + scale / sqrt(2) * log(u1^k / (u2^(1 / k)))
+        ralaplace(n, loc, scale, k)
       },
       EXYhat = function(x, par) {
         loc <- par$location
@@ -1244,8 +1243,11 @@ asymmetric_laplace_dist <- function(location = NULL, scale = NULL,
         qk <- 1 - pk
         pk / beta + qk / lam + pk^2 / lam + qk^2 / beta
       },
-      notes = if (is_composite(location, scale, skew))
-        message(" Composite Test conditional on estimation of skewness parameter.\n")
+      xform = function(x, par) {
+      },
+      statistic = function(x) {
+        as.list(fitdistrplus::fitdist(x, "alaplace")$estimate)
+      }
     ), class = c("AsymmetricLaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
@@ -1314,23 +1316,17 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
 
 #' @title Create a gamma distribution object for energy testing
 #' @inherit normal_dist description return author
-#' @param shape NULL, or same shape parameter in [rgamma()] (must be length 1)
-#' @param rate NULL, or same rate parameter in [rgamma()] (must be length 1)
+#' @param shape Same shape parameter in [rgamma()] (must be length 1)
+#' @param rate Same rate parameter in [rgamma()] (must be length 1)
 #'
-#' @description If both parameters are set to NULL, the composite test is
-#' performed. In the composite case, the data are transformed to a chi-square
-#' distribution, conditional on the maximum likelihood estimates. This is not a
-#' complete pivot in the sense that the parameters are eliminated from the
-#' distribution, but it's sort of close. A power analysis studies the operating
-#' characteristics of this strategy in the vignette.
 #'
 #' @export
-gamma_dist <- function(shape = NULL, rate = NULL) {
-  cp <- is_composite(shape, rate)
+gamma_dist <- function(shape = 1, rate = 1) {
+  cp <- composite_not_allowed(shape, rate)
   dist <- structure(
     list(
       name = "Gamma",
-      composite_p = cp,
+      composite_p = cp, # will figure this out later
       par = list(shape = shape, rate = rate),
       sampler_par = list(shape = shape, rate = rate),
       support = function(x, par) {
@@ -1370,7 +1366,7 @@ gamma_dist <- function(shape = NULL, rate = NULL) {
         as.list(fitdistrplus::fitdist(x, "gamma")$estimate)
       },
       xform = function(x, par) {
-        x / 2 / par$rate # ~ gamma (a/2, 1/2) ~ chisq (a)
+        x / 2 * par$rate # ~ gamma (a/2, 1/2) ~ chisq (a)
       }
     ), class = c("GammaDist", "EuclideanGOFDist", "GOFDist")
   )
