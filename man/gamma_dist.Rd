@@ -7,9 +7,9 @@
 gamma_dist(shape = NULL, rate = NULL)
 }
 \arguments{
-\item{shape}{NULL, or the same shape parameter in \code{\link[=rgamma]{rgamma()}}}
+\item{shape}{NULL, or same shape parameter in \code{\link[=rgamma]{rgamma()}} (must be length 1)}
 
-\item{rate}{NULL, or the same rate parameter in \code{\link[=rgamma]{rgamma()}}}
+\item{rate}{NULL, or same rate parameter in \code{\link[=rgamma]{rgamma()}} (must be length 1)}
 }
 \value{
 S3 data object containing the fields. This all used internally by
@@ -37,9 +37,12 @@ Only available in certain distribution objects.
 }
 }
 \description{
-Create an S3 object that sets all the required data needed by
-energyfit to execute the eneregy goodness-of-fit test against a normal
-distribution. If \code{mean} and \code{sd} are both NULL, perform a composite test.
+If both parameters are set to NULL, the composite test is
+performed. In the composite case, the data are transformed to a chi-square
+distribution, conditional on the maximum likelihood estimates. This is not a
+complete pivot in the sense that the parameters are eliminated from the
+distribution, but it's sort of close. A power analysis studies the operating
+characteristics of this strategy in the vignette.
 }
 \author{
 John T. Haman

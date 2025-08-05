@@ -413,7 +413,7 @@ xform_dist.InverseGaussianDist <- function(x, dist) {
 
 #' @export
 xform_dist.GammaDist <- function(x, dist) {
-  # Must transform in Simple case.
+  # Must transform in Composite case.
   if (dist$composite) {
     dist$sampler_par <- dist$statistic(x)
   }
@@ -422,7 +422,7 @@ xform_dist.GammaDist <- function(x, dist) {
 
 #' @export
 xform_dist.WeibullDist <- function(x, dist) {
-  # Must transform in Simple case.
+  # Must transform in Composite case.
   if (dist$composite) {
     dist$sampler_par <- dist$statistic(x)
   }
@@ -1268,11 +1268,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
       composite_p = cp,
       par = list(shape = shape, scale = scale),
       sampler_par =
-        if (cp) {
-          list(shape = NULL, scale = NULL)
-        } else {
-          list(shape = shape, scale = scale)
-        },
+        list(shape = shape, scale = scale),
       support = function(x, par) {
         all(x > 0)
       },
@@ -1281,11 +1277,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
             par$scale > 0 || is.null(par$shape))
       },
       sampler = function(n, par) {
-        if (!cp) {
-          rweibull(n, shape = par$shape, scale = par$scale)
-        } else {
-          rweibull(n, shape = NULL, scale = NULL)
-        }},
+        rweibull(n, shape = par$shape, scale = par$scale)},
       EXYhat = function(x, par) {
         if (!cp) {
           z = (x / par$scale)^par$shape
@@ -1322,22 +1314,25 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
 
 #' @title Create a gamma distribution object for energy testing
 #' @inherit normal_dist description return author
-#' @param shape Same shape parameter in [rgamma()] (must be length 1)
-#' @param rate Same rate parameter in [rgamma()] (must be length 1)
+#' @param shape NULL, or same shape parameter in [rgamma()] (must be length 1)
+#' @param rate NULL, or same rate parameter in [rgamma()] (must be length 1)
+#'
+#' @description If both parameters are set to NULL, the composite test is
+#' performed. In the composite case, the data are transformed to a chi-square
+#' distribution, conditional on the maximum likelihood estimates. This is not a
+#' complete pivot in the sense that the parameters are eliminated from the
+#' distribution, but it's sort of close. A power analysis studies the operating
+#' characteristics of this strategy in the vignette.
 #'
 #' @export
-gamma_dist <- function(shape = 1, rate = 1) {
-  cp <- composite_not_allowed(shape, rate)
+gamma_dist <- function(shape = NULL, rate = NULL) {
+  cp <- is_composite(shape, rate)
   dist <- structure(
     list(
       name = "Gamma",
       composite_p = cp,
       par = list(shape = shape, rate = rate),
-      sampler_par = if (cp) {
-        list(shape = 1, rate = 1)
-      } else {
-        list(shape = shape, rate = rate)
-      },
+      sampler_par = list(shape = shape, rate = rate),
       support = function(x, par) {
         all(x > 0)
       },
@@ -1350,15 +1345,26 @@ gamma_dist <- function(shape = 1, rate = 1) {
       sampler = function(n, par) {
         rgamma(n, shape = par$shape, rate = par$rate)},
       EXYhat = function(x, par) {
-        a <- par$shape
-        b <- par$rate
-        mean((a / b) - (2 * a / b) * pgamma(x, a + 1, b) +
-               x * (2 * pgamma(x, a, b) - 1))
+        if (!cp) {
+          a <- par$shape
+          b <- par$rate
+          mean((a / b) - (2 * a / b) * pgamma(x, a + 1, b) +
+                 x * (2 * pgamma(x, a, b) - 1))
+        } else {
+          df <- 2 * par$shape # will be the statistic from xform_dist.GammaDist
+          mean(2 * x * pchisq(x, df) - x + df -
+                 2 * df * pchisq(x, df + 2))
+        }
       },
       EYY = function(par) {
-        a <- par$shape
-        b <- par$rate
-        2 * gamma(a + 1 / 2) / (b * gamma(a) * sqrt(pi))
+        if (!cp) {
+          a <- par$shape
+          b <- par$rate
+          2 * gamma(a + 1 / 2) / (b * gamma(a) * sqrt(pi))
+        } else {
+          df <- 2 * par$shape
+          4 * gamma((df + 1) / 2) / gamma(df / 2) / sqrt(pi)
+        }
       },
       statistic = function(x) {
         as.list(fitdistrplus::fitdist(x, "gamma")$estimate)

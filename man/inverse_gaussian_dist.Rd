@@ -5,12 +5,12 @@
 \alias{invgauss_dist}
 \title{Create a inverse Gaussian distribution object for energy testing}
 \usage{
-inverse_gaussian_dist(mu = NULL, lambda = NULL)
+inverse_gaussian_dist(mean = NULL, shape = NULL)
 }
 \arguments{
-\item{mu}{NULL or a positive mean parameter}
+\item{mean}{NULL or a positive mean parameter}
 
-\item{lambda}{NULL or a positive shape parameter}
+\item{shape}{NULL or a positive shape parameter}
 }
 \value{
 S3 data object containing the fields. This all used internally by
@@ -41,13 +41,20 @@ Only available in certain distribution objects.
 This is exactly the distribution corresponding to the pdf
 
 \deqn{
-  f(x | \mu, \lambda) =
-  \left( \frac{\lambda}{2 \pi x^3} \right)^{1/2}
-  \exp \left( -\frac{\lambda (x - \mu)^2}{2 \mu^2 x} \right),
+  f(x | \mu, \shape) =
+  \left( \frac{\shape}{2 \pi x^3} \right)^{1/2}
+  \exp \left( -\frac{\shape (x - \mu)^2}{2 \mu^2 x} \right),
   \qquad x > 0.
 }
 
-If mu and lambda are both NULL, a composite test is performed.
+If mean and shape are both NULL, a composite test is performed.
+
+This distribution requires an intense amount of numerical integration for
+the simple (known parameters) case, and the implementation seems to be fine
+for samples up to 1000. For the composite case, the data are transformed to
+a half-normal distribution (conditional on the parameter estimates), and the
+performance is much better, as there is no numerical integration in this
+case.
 }
 \author{
 John T. Haman

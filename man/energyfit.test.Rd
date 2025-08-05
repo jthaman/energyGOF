@@ -102,7 +102,7 @@ Asymmetric Laplace \tab asymmetriclaplace_dist \tab location, scale, skew       
 Weibull            \tab weibull_dist           \tab shape, scale                          \tab No \cr
 Gamma              \tab gamma_dist             \tab shape, rate                           \tab No \cr
 Chi Squared        \tab chisq_dist             \tab df                                    \tab No \cr
-Inverse Gaussion   \tab inversegaussian_dist   \tab mu, lambda                            \tab No \cr
+Inverse Gaussion   \tab inversegaussian_dist   \tab mean, shape                            \tab No \cr
 Pareto             \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
 Cauchy             \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
 Stable             \tab stable_dist            \tab location, scale, skew, stability, pow \tab No

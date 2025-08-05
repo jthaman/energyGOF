@@ -502,7 +502,6 @@ test_that("Test works", {
   expect_gt(o$p.value, 0.01)
 })
 
-## Something is wrong
 test_that("Detect lam shift", {
   x <- rpois(100,5)
   d <- poisson_dist(10)
@@ -523,6 +522,8 @@ test_that("Composite Test works", {
 
 
 ##### Asym Laplace tests TODO
+
+
 ##### Inv Gaussian
 
 test_that("Test works", {
@@ -584,6 +585,7 @@ test_that("Test works", {
 
 
 test_that("Composite Test works", {
+  set.seed(1)
   d <- inverse_gaussian_dist()
   x <- rinvgauss(10, 5, 5)
   o <- ef(x, d, nsim = 50)
@@ -807,6 +809,31 @@ test_that("Test is sensitive", {
   expect_lt(o$p.value, 0.01)
 })
 
+test_that("Composite Test works", {
+  x <- rgamma(100, 5, 5)
+  o <- ef(x, gamma_dist(), nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Composite Test works", {
+  x <- rgamma(100, 1, 1)
+  o <- ef(x, gamma_dist(), nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+## broken
+test_that("Composite Test is sensitive", {
+  x <-abs(rnorm(100, 5))
+  o <- ef(x, gamma_dist(), nsim = 50)
+  print(o)
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
+
 ##### Weibull  tests
 test_that("Test works", {
   d <- weibull_dist(1, 1)
@@ -932,7 +959,6 @@ test_that("composite test is sensitive", {
 
 ##### Beta Test
 
-## Fails
 test_that("Beta Estat should be positive", {
   d <- beta_dist(20, 20)
   x <- rbeta(100, 20, 20)
