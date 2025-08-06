@@ -7,9 +7,9 @@
 gamma_dist(shape = 1, rate = 1)
 }
 \arguments{
-\item{shape}{Same shape parameter in \code{\link[=rgamma]{rgamma()}} (must be length 1)}
+\item{shape}{Same shape parameter in \code{\link[stats:GammaDist]{stats::rgamma()}} (must be length 1)}
 
-\item{rate}{Same rate parameter in \code{\link[=rgamma]{rgamma()}} (must be length 1)}
+\item{rate}{Same rate parameter in \code{\link[stats:GammaDist]{stats::rgamma()}} (must be length 1)}
 }
 \value{
 S3 data object containing the fields. This all used internally by

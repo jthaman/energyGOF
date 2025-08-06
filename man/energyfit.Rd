@@ -30,7 +30,7 @@ goodness-of-fit hypothesis test. The htest object has the list elements:
 \item composite_p: TRUE/FALSE composite predicate
 \item statistic: The value of the energy statistic (\eqn{Q=nE^*})
 \item p.value
-\item sim_reps: bootstrap simulation data
+\item sim_reps: bootstrap simulation of energy statistic
 \item estimate: Any parameter estimates, if the test is composite
 }
 }
@@ -86,7 +86,7 @@ The notation X' indicates that X' is an independent and identically
 distributed copy of X.
 
 If X and Y are independent and E(|X|^s + |Y|^s) is finite, then for 0 < s <
-2, then
+2,
 
 \deqn{2E|X-Y|^s - E|X-X'|^s - E|Y-Y'|^s \ge 0.}
 
@@ -105,17 +105,17 @@ when \eqn{0 < s < 2} and \eqn{E|X|^s, E|Y|^s < \infty.}
 
 In most tests in the energyfit package s = 1. In some cases (Pareto, Cauchy,
 Stable), E|Y| is not finite, so we need to use an s < 1. This is done by
-passing \code{pow} into \code{...}.
+passing \code{pow} into \code{...} (but in all tests a default \code{pow} is provided)
 
-In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (which
-is hidden) follows the same distribution as Y, which is specified. If X and
-Y have the same distribution, then \eqn{Q = nE^*} is a quadratic form of
-centered Gaussian random variables with expected value \eqn{E|Y-Y'|}. If X
-and Y differ, then Q goes to Inf. So, Q can be used to test goodness-of-fit,
-even in some situations where E|Y| is not finite. And that's what
-energyfit.test does. Asymptotic theory of V-statistics can be applied
-to prove that tests based on Q are statistically consistent goodness-of-fit
-tests.
+In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (where
+the distribution of X is hidden) follows the same distribution as Y, which
+is specified. If X and Y have the same distribution, then \eqn{Q = nE^*} is
+a quadratic form of centered Gaussian random variables with expected value
+\eqn{E|Y-Y'|^s}. If X and Y differ, then Q goes to Inf. So, Q provides a
+consistent goodness-of-fit test, even in some situations where E|Y| is not
+finite. And that's what energyfit.test does. Asymptotic theory of
+V-statistics can be applied to prove that tests based on Q are statistically
+consistent goodness-of-fit tests.
 }
 
 \section{Distributions available to test}{
@@ -150,16 +150,17 @@ Stable             \tab stable_dist            \tab location, scale, skew, stabi
 }
 
 \examples{
+## Simple, normal test
+energyfit(rnorm(10), normal_dist(0, 1), nsim = 10)
 
-x <- rnorm(10)
-d <- normal_dist(0,1)
-ef(x, d, nsim = 10)
+## Simple, Poisson test
+energyfit(rpois(10,1), poisson_dist(1), nsim = 0) # No p-value
 
-ef(rpois(10,1), poisson_dist(1)) # No p-value
+## Composite Normal test
+energyfit(rnorm(10), normal_dist(), nsim = 10)
 
-ef(rnorm(10), normal_dist(), nsim = 10) # Composite test
+## In real application, you should increase nsim to at least 10,000.
 
-[TODO] example with quantile function.
 
 }
 \references{
@@ -189,10 +190,10 @@ ASTIN Bulletin: The Journal of the IAA, 39(2), 691-715.
 }
 \seealso{
 \link[stats]{Distributions} for a list of distributions available
-in most R installations. \link[energy:normalGOF]{energy::normal.test} for the energy
-goodness-of-fit test with unknown parameters. See \link[energy:poisson]{energy::poisson.mtest}
+in most R installations. \code{\link[energy:normalGOF]{energy::normal.test()}} for the energy
+goodness-of-fit test with unknown parameters. See \code{\link[energy:poisson]{energy::poisson.mtest()}}
 for a different poisson goodness-of-fit test based on mean distances. The
-tests for (multivariate) Normal in the \link{energy} package are implemented
+tests for (multivariate) Normal in the energy package are implemented
 with compiled code, and are faster than the one available in the energyfit
 package.
 }

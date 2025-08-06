@@ -13,9 +13,9 @@ stable_dist(
 )
 }
 \arguments{
-\item{location}{Same as in \code{\link[=rcauchy]{rcauchy()}}}
+\item{location}{Same as in \code{\link[stats:Cauchy]{stats::rcauchy()}}}
 
-\item{scale}{Same as in \code{\link[=rcauchy]{rcauchy()}}}
+\item{scale}{Same as in \code{\link[stats:Cauchy]{stats::rcauchy()}}}
 
 \item{skew}{-1 < skew < 1 is required}
 

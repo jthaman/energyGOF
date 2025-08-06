@@ -32,10 +32,10 @@
 #'   to the _family of distributions_ `dist`, don't pass parameters in `...`.
 #'   For generalized energy tests, you can also optionally pass `pow` here.
 #' @seealso \link[stats]{Distributions} for a list of distributions available
-#'   in most R installations. [energy::normal.test] for the energy
-#'   goodness-of-fit test with unknown parameters. See [energy::poisson.mtest]
+#'   in most R installations. [energy::normal.test()] for the energy
+#'   goodness-of-fit test with unknown parameters. See [energy::poisson.mtest()]
 #'   for a different poisson goodness-of-fit test based on mean distances. The
-#'   tests for (multivariate) Normal in the [energy] package are implemented
+#'   tests for (multivariate) Normal in the energy package are implemented
 #'   with compiled code, and are faster than the one available in the energyfit
 #'   package.
 #'
@@ -49,7 +49,7 @@
 #' * composite_p: TRUE/FALSE composite predicate
 #' * statistic: The value of the energy statistic (\eqn{Q=nE^*})
 #' * p.value
-#' * sim_reps: bootstrap simulation data
+#' * sim_reps: bootstrap simulation of energy statistic
 #' * estimate: Any parameter estimates, if the test is composite
 #' @aliases ef.test
 #'
@@ -127,7 +127,7 @@
 #' distributed copy of X.
 #'
 #' If X and Y are independent and E(|X|^s + |Y|^s) is finite, then for 0 < s <
-#' 2, then
+#' 2,
 #'
 #' \deqn{2E|X-Y|^s - E|X-X'|^s - E|Y-Y'|^s \ge 0.}
 #'
@@ -146,17 +146,17 @@
 #'
 #' In most tests in the energyfit package s = 1. In some cases (Pareto, Cauchy,
 #' Stable), E|Y| is not finite, so we need to use an s < 1. This is done by
-#' passing `pow` into `...`.
+#' passing `pow` into `...` (but in all tests a default `pow` is provided)
 #'
-#' In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (which
-#' is hidden) follows the same distribution as Y, which is specified. If X and
-#' Y have the same distribution, then \eqn{Q = nE^*} is a quadratic form of
-#' centered Gaussian random variables with expected value \eqn{E|Y-Y'|}. If X
-#' and Y differ, then Q goes to Inf. So, Q can be used to test goodness-of-fit,
-#' even in some situations where E|Y| is not finite. And that's what
-#' energyfit.test does. Asymptotic theory of V-statistics can be applied
-#' to prove that tests based on Q are statistically consistent goodness-of-fit
-#' tests.
+#' In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (where
+#' the distribution of X is hidden) follows the same distribution as Y, which
+#' is specified. If X and Y have the same distribution, then \eqn{Q = nE^*} is
+#' a quadratic form of centered Gaussian random variables with expected value
+#' \eqn{E|Y-Y'|^s}. If X and Y differ, then Q goes to Inf. So, Q provides a
+#' consistent goodness-of-fit test, even in some situations where E|Y| is not
+#' finite. And that's what energyfit.test does. Asymptotic theory of
+#' V-statistics can be applied to prove that tests based on Q are statistically
+#' consistent goodness-of-fit tests.
 #'
 #'
 #' @examples
@@ -185,22 +185,23 @@
 #' ## Alternatively, use the energyfit generic directly, which is slightly less
 #' ## verbose. ef is an alias for energyfit.
 #'
-#' ef(y, weibull_dist(1, 3), nsim = 10
+#' ef(y, weibull_dist(1, 3), nsim = 10)
+#'
+#'
+#' ## Conduct a generalized GOF test. Pow is the exponent s in the generalized
+#' ## energy statistic. Pow is only necessary when testing Stable, Cauchy, and
+#' ## Pareto distributions. If you don't set a pow, there is a default for each
+#' ## of the distributions, but the default isn't necessarily better than any
+#' ## other number.
+#'
+#' ef(rcauchy(100),
+#'    cauchy_dist(location = 0, scale = 1, pow = 0.5))
 #'
 #' ## energyfit does not support "partially composite" GOF tests, so this will
 #' ## result in an error.
 #'
-#' ## Conduct a generalized GOF test. Pow is the exponent s in the generalized
-#' #energy statistic. Pow is only necessary when testing Stable, Cauchy, and
-#' #Pareto distributions. If you don't set a pow, there is a default for each
-#' #of the distributions, but the default isn't necessarily better than any
-#' #other number.
-#'
-#' x <- rcauchy(10)
-#' ef(x, cauchy_dist(location = 0, scale = 1, pow = 0.5))
-#'
 #' \dontrun{
-#' energyfit.test(x, "normal", mean = 0, nsim = 10) # sd is missing
+#'   energyfit.test(x, "normal", mean = 0, nsim = 10) # sd is missing
 #' }
 #'
 #' @references
@@ -231,23 +232,25 @@
 #'
 #'
 #'
-#' @export
-#'
 #'
 #'
 #' @importFrom stats dlnorm dnorm integrate median pbeta pchisq pexp pgamma
 #' pgeom pnorm ppois pweibull rbeta rbinom rcauchy rchisq rexp rgamma rgeom
-#' rlnorm rnorm rpois runif rweibull sd
+#' rlnorm rnorm rpois runif rweibull sd dbeta dbinom
 #'
 #' @importFrom statmod dinvgauss pinvgauss qinvgauss rinvgauss
-
-
-### Code
-
-#### energyfit.test (ef.test) user function
+#'
+#' @importFrom LaplacesDemon ralaplace dalaplace palaplace qalaplace
+#'
+#' @importFrom fitdistrplus fitdist
+#'
+#'
+#'
+#' @export energyfit.test
 energyfit.test <- function(x, dist = c("uniform",
                                        "exponential",
-                                       "bernoulli", "binomial",
+                                       "bernoulli",
+                                       "binomial",
                                        "geometric",
                                        "normal", "gaussian",
                                        "beta",
@@ -260,7 +263,8 @@ energyfit.test <- function(x, dist = c("uniform",
                                        "chisq", "chisquared",
                                        "gamma",
                                        "weibull",
-                                       "cauchy", "stable",
+                                       "cauchy",
+                                       "stable",
                                        "pareto"),
                            nsim = 100,
                            ...) {
@@ -271,6 +275,7 @@ energyfit.test <- function(x, dist = c("uniform",
   energyfit(x, dist, nsim)
 }
 
+#' @export ef.test
 ef.test <- energyfit.test
 
 #### Validation
@@ -357,7 +362,7 @@ char_to_dist <- function(name, ...) {
 
 #### Transform x for some tests
 ## Separate function for outside bootstrap loop
-#' @export
+
 xform_x <- function(x, dist) {
   UseMethod("xform_x", dist)
 }
@@ -371,6 +376,15 @@ xform_x.CauchyDist <- function(x, dist) {
   x
 }
 
+#' @export
+xform_x.StableDist <- function(x, dist) {
+  # Must transform in Simple case.
+  ## I don't think there will be a composite test, but i can leave the if statement.
+  if (!dist$composite) {
+    x <- dist$xform(x, dist$par)
+  }
+  x
+}
 
 
 #' @export
@@ -388,7 +402,6 @@ xform_x.GOFDist <- function(x, dist) {
 }
 
 #### Transform dist for some tests
-#' @export
 xform_dist <- function(x, dist) {
   UseMethod("xform_dist", dist)
 }
@@ -448,7 +461,6 @@ xform_dist.GOFDist <- function(x, dist) {
 }
 #### EXXhat
 
-#' @export
 EXXhat <- function(x, dist) {
   UseMethod("EXXhat", dist)
 }
@@ -469,7 +481,7 @@ EXXhat.GeneralizedGOFDist <- function(x, dist) {
 
 
 #### Compute Energy GOF statistic: can make modifications to x
-#' @export
+
 Qhat <- function(x, dist, EYY) {
   UseMethod("Qhat", dist)
 }
@@ -550,25 +562,26 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #' @inheritSection energyfit.test Distributions available to test
 #' @aliases ef
 #' @examples
+#' ## Simple, normal test
+#' energyfit(rnorm(10), normal_dist(0, 1), nsim = 10)
 #'
-#' x <- rnorm(10)
-#' d <- normal_dist(0,1)
-#' ef(x, d, nsim = 10)
+#' ## Simple, Poisson test
+#' energyfit(rpois(10,1), poisson_dist(1), nsim = 0) # No p-value
 #'
-#' ef(rpois(10,1), poisson_dist(1)) # No p-value
+#' ## Composite Normal test
+#' energyfit(rnorm(10), normal_dist(), nsim = 10)
 #'
-#' ef(rnorm(10), normal_dist(), nsim = 10) # Composite test
+#' ## In real application, you should increase nsim to at least 10,000.
 #'
-#' [TODO] example with quantile function.
 #'
-#' @export
-#'
+#' @export energyfit
 energyfit <- function(x, dist, nsim = 100) {
   validate_x(x, dist)
   nsim <- validate_nsim(nsim)
   UseMethod("energyfit", dist)
 }
 
+#' @export ef
 ef <- energyfit
 
 #' @export
@@ -624,22 +637,22 @@ set_composite_class <- function(dist) {
 }
 
 #' @export
-print.GOFDist <- function(dist, ...) {
+print.GOFDist <- function(x, ...) {
   cat(" Energy goodness-of-fit test for:\n")
-  cat("   *", dist$name, "Distribution\n")
-  if (!dist$composite_p)
-    cat("   * Test Parameters: ", paste(names(dist$par),
-                                        unlist(dist$par),
+  cat("   *", x$name, "Distribution\n")
+  if (!x$composite_p)
+    cat("   * Test Parameters: ", paste(names(x$par),
+                                        unlist(x$par),
                                         sep = "=", collapse = ", "), "\n")
-  cat("   * Sampler Parameters: ", paste(names(dist$sampler_par),
-                                         unlist(dist$sampler_par),
+  cat("   * Sampler Parameters: ", paste(names(x$sampler_par),
+                                         unlist(x$sampler_par),
                                          sep = "=", collapse = ", "), "\n")
   cat("   * Test type:",
-      if (dist$composite_p)
+      if (x$composite_p)
         "Composite (parameters unknown)"
       else
         "Simple (parameters known)", "\n")
-  cat("   * S3 Classes:", class(dist), "\n")
+  cat("   * S3 Classes:", class(x), "\n")
 }
 
 ##### Normal
@@ -873,7 +886,8 @@ bernoulli_dist <- function(prob = 0.5) {
 #'   energyfit to execute the eneregy goodness-of-fit test against a Binomial
 #'   distribution.
 #' @inherit normal_dist description return author
-#' @param prob Same as [rbinom()], but must be length 1.
+#' @param prob Same as [stats::rbinom()], but must be length 1.
+#' @param size Same as [stats::rbinom()], but must be length 1.
 #'
 #' @export
 binomial_dist <- function(size = 1, prob = 0.5) {
@@ -963,7 +977,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
         ## Probability integral transform
         pbeta(x, par$shape1, par$shape2),
       statistic = function(x) {
-        as.list(fitdistrplus::fitdist(x, "beta")$estimate)}
+        as.list(fitdist(x, "beta")$estimate)}
     ), class = c("BetaDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
@@ -1176,7 +1190,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       },
       xform = function(x, par) exp((log(x) - par$meanlog) / par$sdlog), # ~ logNormal(0, 1)
       statistic = function(x) {
-        as.list(fitdistrplus::fitdist(x, "lnorm")$estimate)}
+        as.list(fitdist(x, "lnorm")$estimate)}
     ), class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
@@ -1264,7 +1278,7 @@ asymmetric_laplace_dist <- function(location = NULL,
       },
       statistic = function(x) {
         out <- suppressWarnings(
-          as.list(fitdistrplus::fitdist(
+          as.list(fitdist(
             x, "alaplace",
             start = list(location = 0,
                          scale = 1,
@@ -1325,7 +1339,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
         }
       },
       statistic = function(x) {
-        as.list(fitdistrplus::fitdist(x, "weibull")$estimate)
+        as.list(fitdist(x, "weibull")$estimate)
       },
       xform = function(x, par) {
         (x / par$scale)^par$shape # ~ exp(1)
@@ -1340,8 +1354,8 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
 
 #' @title Create a gamma distribution object for energy testing
 #' @inherit normal_dist description return author
-#' @param shape Same shape parameter in [rgamma()] (must be length 1)
-#' @param rate Same rate parameter in [rgamma()] (must be length 1)
+#' @param shape Same shape parameter in [stats::rgamma()] (must be length 1)
+#' @param rate Same rate parameter in [stats::rgamma()] (must be length 1)
 #'
 #'
 #' @export
@@ -1387,7 +1401,7 @@ gamma_dist <- function(shape = 1, rate = 1) {
         }
       },
       statistic = function(x) {
-        as.list(fitdistrplus::fitdist(x, "gamma")$estimate)
+        as.list(fitdist(x, "gamma")$estimate)
       },
       xform = function(x, par) {
         x / 2 * par$rate # ~ gamma (a/2, 1/2) ~ chisq (a)
@@ -1404,7 +1418,7 @@ gamma_dist <- function(shape = 1, rate = 1) {
 
 #' @title Create a Chi-squared distribution object for energy testing
 #' @inherit normal_dist description return author
-#' @param df Same as in [rchisq()].
+#' @param df Same as in [stats::rchisq()].
 #' @export
 chisq_dist <- function(df = 2) {
   dist <- structure(
@@ -1462,6 +1476,7 @@ chisq_dist <- function(df = 2) {
 #' a half-normal distribution (conditional on the parameter estimates), and the
 #' performance is much better, as there is no numerical integration in this
 #' case.
+#'
 #'
 #' @export
 inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
@@ -1525,11 +1540,11 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
           d$EYY(list(df = 1))
         }
       },
-    statistic = function(x) {
-      as.list(suppressWarnings(
-        fitdistrplus::fitdist(x, "invgauss",
-                              start = list(mean = 1, shape = 1)
-                              ))$estimate)
+      statistic = function(x) {
+        as.list(suppressWarnings(
+          fitdist(x, "invgauss",
+                  start = list(mean = 1, shape = 1)
+                  ))$estimate)
     },
     xform = function(x, par) {
       ## The half-normal transformation seems to not be sensitive?
@@ -1718,7 +1733,7 @@ cauchy_dist <- function(location = NULL, scale = NULL,
         (x - par$location) / par$scale
       },
       statistic = function(x) {
-        as.list(fitdistrplus::fitdist(x, "cauchy")$estimate)
+        as.list(fitdist(x, "cauchy")$estimate)
       }
     ), class = c("CauchyDist", "GeneralizedGOFDist", "GOFDist")
   )
@@ -1730,8 +1745,8 @@ cauchy_dist <- function(location = NULL, scale = NULL,
 
 #' @title Create a stable distribution object for energy testing
 #' @inherit normal_dist description return author
-#' @param location Same as in [rcauchy()]
-#' @param scale Same as in [rcauchy()]
+#' @param location Same as in [stats::rcauchy()]
+#' @param scale Same as in [stats::rcauchy()]
 #' @param skew -1 < skew < 1 is required
 #' @param stability The tail index or stability index. Controls the fatness of the tails. 0 < stability <= 2 is required.
 #' @param pow Exponent of the energy test. 0 < stability/2 is required.
@@ -1771,7 +1786,8 @@ stable_dist <- function(location = 0, scale = 1,
         s <- par$scale
         b <- par$skew
         a <- par$stability
-        stabledist::rstable(n, alpha = a, beta = b, gamma = s, delta = d)
+        stabledist::rstable(n, alpha = a, beta = b,
+                            gamma = s, delta = d)
       },
       EXYhat = function(x, par) {
         n <- length(x)
@@ -1779,44 +1795,49 @@ stable_dist <- function(location = 0, scale = 1,
         b <- par$skew
         pow <- par$pow
         if (a == 1 && b != 0) {
+          # skewed and cauchy-like
           A <- 2 / pi * gamma(pow + 1)
-          B <- sin(pi * pow / 2)
-          integrand <- function(t, x, par, pow) {
+          B <- sinpi(pow / 2)
+          integrand <- function(t, x, par) {
             a <- par$stability
             b <- par$skew
+            pow <- par$pow
             (1 - exp(-t^a) * cos(b * t^a * log(t) + x * t)) / t^(pow + 1)
           }
           I <- 0
           for (i in 1:n) {
-            I <- if (x[i] > 2000) {
-              I + abs(x[i])
+            if (x[i] > 2000) {
+              I <- I + abs(x[i])^pow
             } else {
-              I + integrate(integrand, 0, Inf, x = x[i], par = par, pow = pow)$value
+              I <- I + integrate(integrand, 0, 1e5, x = x[i], par = par,
+                                 subdivisions = 1000)$value
             }
             return (A * B * I / n)
           }
         } else if (a != 1 && b != 0) {
-          # General case
+          # General Asymmetric case
           A <- 2 / pi * gamma(pow + 1)
-          B <- sin(pi * pow / 2)
+          B <- sinpi(pow / 2)
           integrand <- function(t, x, par, pow) {
             a <- par$stability
             b <- par$skew
-            (1 - exp(-t^a) * cos(b * t^a * tan(pi * a / 2) - x * t)) / t^(pow + 1)
+            (1 - exp(-t^a) * cos(b * t^a * tanpi(a / 2) - x * t)) / t^(pow + 1)
           }
           I <- 0
           for (i in 1:n) {
             I <- if (x[i] > 2000) {
               I + abs(x[i])
             } else {
-              I + integrate(integrand, 0, Inf, x = x[i], par = par, pow = pow)$value
+              I + integrate(integrand, 0, Inf, x = x[i], par = par,
+                            subdivisions = 1000)$value
             }
           }
           return(A * B * I / n)
         } else if (a != 1 && b == 0){
-          #Symmetric Case
-          integrand <- function(t, x, par, pow) {
+          #General Symmetric Case
+          integrand <- function(t, x, par) {
             a <- par$stability
+            pow <- par$pow
             (1 - exp(-t^a) * cos(x * t)) / t^(pow + 1)
           }
           I <- 0
@@ -1824,33 +1845,29 @@ stable_dist <- function(location = 0, scale = 1,
             I <- if (x[i] > 2000) {
               I + abs(x[i])
             } else {
-              I + integrate(integrand, 0, Inf, x = x[i], par = par, pow = pow)$value
+              I + integrate(integrand, 0, 1e5, x = x[i],
+                            par = par, subdivisions = 1000,
+                            rel.tol = 1e-4, abs.tol = 1e-4)$value
             }
           }
           return(I / n)
         } else {
-          # Cauchy Case
-          mean((1 + x^2)^(pow / 2) * cos(pow * atan(x)) / cos(pi * pow / 2))
+          # Cauchy Case: a == 1 and b == 0
+          mean((1 + x^2)^(pow / 2) * cos(pow * atan(x)) / cospi(pow / 2))
         }
       },
       EYY = function(par) {
         a <- par$stability
         b <- par$skew
         pow <- par$pow
-        2^(pow / a + 1) * gamma(1 - pow / a) * gamma(pow) * sin(pi * pow / 2) / pi
+        2^(pow / a + 1) * gamma(1 - pow / a) *
+          gamma(pow) * sinpi(pow / 2) / pi
       },
       xform = function(x, par) {
+        # Must transform in simple case.
         d <- par$location
         s <- par$scale
-        a <- par$stability
-        b <- par$skew
-        A <- (1 / s)^(1 / a)
-        B <- if (a != 1) {
-          -d * (1 / s)^(1 / a - 1)
-        } else {
-          -d + 2 * b * log(1 / s) / pi
-        }
-        A * x + s * B
+        (x - d) / s
       }
     ), class = c("StableDist", "GeneralizedGOFDist", "SimpleGOFDist", "GOFDist")
   )

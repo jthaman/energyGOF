@@ -7,7 +7,7 @@
 chisq_dist(df = 2)
 }
 \arguments{
-\item{df}{Same as in \code{\link[=rchisq]{rchisq()}}.}
+\item{df}{Same as in \code{\link[stats:Chisquare]{stats::rchisq()}}.}
 }
 \value{
 S3 data object containing the fields. This all used internally by

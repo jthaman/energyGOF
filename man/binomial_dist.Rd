@@ -7,7 +7,9 @@
 binomial_dist(size = 1, prob = 0.5)
 }
 \arguments{
-\item{prob}{Same as \code{\link[=rbinom]{rbinom()}}, but must be length 1.}
+\item{size}{Same as \code{\link[stats:Binomial]{stats::rbinom()}}, but must be length 1.}
+
+\item{prob}{Same as \code{\link[stats:Binomial]{stats::rbinom()}}, but must be length 1.}
 }
 \value{
 S3 data object containing the fields. This all used internally by
