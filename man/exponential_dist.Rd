@@ -2,6 +2,7 @@
 % Please edit documentation in R/energyfit.R
 \name{exponential_dist}
 \alias{exponential_dist}
+\alias{exp_dist}
 \title{Create an Exponential distribution object for energy testing}
 \usage{
 exponential_dist(rate = NULL)
@@ -39,6 +40,12 @@ Only available in certain distribution objects.
 Create an S3 object that sets all the required data needed by
 energyfit to execute the eneregy goodness-of-fit test against a
 exponential distribution. If rate is NULL, a composite test is performed.
+}
+\examples{
+
+d <- exponential_dist(1)
+ef(rexp(10, 1), d)
+
 }
 \author{
 John T. Haman

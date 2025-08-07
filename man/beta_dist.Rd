@@ -42,6 +42,11 @@ energyfit to execute the eneregy goodness-of-fit test against a beta
 distribution. If shape1 and shape2 are NULL, a composite test is
 performed.
 }
+\examples{
+d <- beta_dist(5, 5)
+ef(rbeta(10, 5, 5), d)
+
+}
 \author{
 John T. Haman
 }

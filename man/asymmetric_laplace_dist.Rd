@@ -2,9 +2,12 @@
 % Please edit documentation in R/energyfit.R
 \name{asymmetric_laplace_dist}
 \alias{asymmetric_laplace_dist}
+\alias{alaplace_dist}
 \title{Create a asymmetric Laplace distribution object for energy testing}
 \usage{
 asymmetric_laplace_dist(location = NULL, scale = NULL, skew = NULL)
+
+alaplace_dist(location = NULL, scale = NULL, skew = NULL)
 }
 \arguments{
 \item{location}{NULL, or a location parameter}
@@ -55,6 +58,15 @@ This is exactly the distribution corresponding to the pdf
 , }
 
 where \eqn{\theta} = \code{location}, \eqn{\sigma} = \code{scale}, and \eqn{\kappa} = \code{skew}.
+}
+\examples{
+
+d <- asymmetric_laplace_dist(0, 1, .5)
+x <- d$sampler(10, d$par)
+
+ef(x, d)
+
+
 }
 \author{
 John T. Haman

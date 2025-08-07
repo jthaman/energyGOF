@@ -41,6 +41,11 @@ Create an S3 object that sets all the required data needed by
 energyfit to execute the eneregy goodness-of-fit test against a normal
 distribution. If \code{mean} and \code{sd} are both NULL, perform a composite test.
 }
+\examples{
+d <- gamma_dist(4, 4)
+ef(rgamma(10, 4, 4), d)
+
+}
 \author{
 John T. Haman
 }

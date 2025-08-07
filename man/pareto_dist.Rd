@@ -42,8 +42,20 @@ Only available in certain distribution objects.
 }
 }
 \description{
+Create an S3 object that sets all the required data needed by
+energyfit to execute the eneregy goodness-of-fit test against a normal
+distribution. If \code{mean} and \code{sd} are both NULL, perform a composite test.
+}
+\details{
 If shape > 1, the energy test is more difficult, so X is
-transformed to X^shape ~ Pareto(scale^shape, 1).
+transformed to X^shape ~ Pareto(scale^shape, 1). If both shape and scale
+are NULL, then a composite test is performed.
+}
+\examples{
+d <- pareto_dist(1, .5)
+x <- d$sampler(10, d$par)
+ef(x, d)
+
 }
 \author{
 John T. Haman

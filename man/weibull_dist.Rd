@@ -9,7 +9,8 @@ weibull_dist(shape = NULL, scale = NULL)
 \arguments{
 \item{shape}{NULL, or if specifide, same as the shape parameter in \code{\link[stats:Weibull]{stats::rweibull()}}}
 
-\item{scale}{NULL, of if specified, same as the scale parameter in \code{\link[stats:Weibull]{stats::rweibull()}}}
+\item{scale}{NULL, of if specified, same as the scale parameter in
+\code{\link[stats:Weibull]{stats::rweibull()}}}
 }
 \value{
 S3 data object containing the fields. This all used internally by
@@ -40,6 +41,12 @@ Only available in certain distribution objects.
 Create an S3 object that sets all the required data needed by
 energyfit to execute the eneregy goodness-of-fit test against a normal
 distribution. If \code{mean} and \code{sd} are both NULL, perform a composite test.
+}
+\examples{
+
+d <- weibull_dist(3, 3)
+ef(rweibull(10, 3, 3), d)
+
 }
 \author{
 John T. Haman

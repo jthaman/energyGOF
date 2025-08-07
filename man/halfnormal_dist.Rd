@@ -43,6 +43,12 @@ half-normal distribution. If scale is NULL, a composite test is performed.
 This is exactly the distribution of \eqn{|X|}, where \eqn{X ~
   N(0,\theta = scale)}
 }
+\examples{
+
+d <- halfnormal_dist(4)
+ef(abs(rnorm(10, 4)), d)
+
+}
 \author{
 John T. Haman
 }

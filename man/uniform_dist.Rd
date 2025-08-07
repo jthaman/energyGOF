@@ -41,6 +41,14 @@ Create an S3 object that sets all the required data needed by
 energyfit to execute the eneregy goodness-of-fit test against a uniform
 distribution.
 }
+\examples{
+
+d <- uniform_dist(0, 1)
+
+ef(runif(10), d)
+
+
+}
 \author{
 John T. Haman
 }

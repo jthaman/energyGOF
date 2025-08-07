@@ -9,7 +9,12 @@ lognormal_dist(meanlog = NULL, sdlog = NULL)
 \arguments{
 \item{meanlog}{NULL or as in \code{\link[=rlnorm]{rlnorm()}}, must be length 1.}
 
-\item{sdlog}{NULL or as in \code{\link[=rlnorm]{rlnorm()}}, must be length 1.}
+\item{sdlog}{NULL or as in \code{\link[=rlnorm]{rlnorm()}}, must be length 1.
+
+d <- lognormal_dist(0, 1)
+x <- d$sampler(10, d$par)
+
+ef(x, d)}
 }
 \value{
 S3 data object containing the fields. This all used internally by

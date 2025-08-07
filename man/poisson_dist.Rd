@@ -40,6 +40,12 @@ Create an S3 object that sets all the required data needed by
 energyfit to execute the eneregy goodness-of-fit test against a Poisson
 distribution. If lambda is NULL, a composite test is performed.
 }
+\examples{
+d <- poisson_dist(1)
+
+ef(rpois(10, 1), d)
+
+}
 \author{
 John T. Haman
 }

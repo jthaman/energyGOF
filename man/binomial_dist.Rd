@@ -41,6 +41,12 @@ Create an S3 object that sets all the required data needed by
 energyfit to execute the eneregy goodness-of-fit test against a Binomial
 distribution.
 }
+\examples{
+
+d <- binomial_dist(1, 0.5)
+ef(rbinom(10, 1, .5), d)
+
+}
 \author{
 John T. Haman
 }

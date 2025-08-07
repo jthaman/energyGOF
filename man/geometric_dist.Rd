@@ -39,6 +39,12 @@ Create an S3 object that sets all the required data needed by
 energyfit to execute the eneregy goodness-of-fit test against a geometric
 distribution
 }
+\examples{
+
+d <- geometric_dist(.5)
+ef(rgeom(10, .5), d)
+
+}
 \author{
 John T. Haman
 }

@@ -6,6 +6,8 @@
 \title{Create a inverse Gaussian distribution object for energy testing}
 \usage{
 inverse_gaussian_dist(mean = NULL, shape = NULL)
+
+invgauss_dist(mean = NULL, shape = NULL)
 }
 \arguments{
 \item{mean}{NULL or a positive mean parameter}
@@ -41,9 +43,9 @@ Only available in certain distribution objects.
 This is exactly the distribution corresponding to the pdf
 
 \deqn{
-  f(x | \mu, \shape) =
-  \left( \frac{\shape}{2 \pi x^3} \right)^{1/2}
-  \exp \left( -\frac{\shape (x - \mu)^2}{2 \mu^2 x} \right),
+  f(x | \mu, \lambda) =
+  \left( \frac{\lambda}{2 \pi x^3} \right)^{1/2}
+  \exp \left( -\frac{\lambda (x - \mu)^2}{2 \mu^2 x} \right),
   \qquad x > 0.
 }
 
@@ -55,6 +57,13 @@ for samples up to 1000. For the composite case, the data are transformed to
 a half-normal distribution (conditional on the parameter estimates), and the
 performance is much better, as there is no numerical integration in this
 case.
+}
+\examples{
+d <- inverse_gaussian_dist(4, 4)
+x <- d$sampler(10, d$par)
+
+ef(x, d)
+
 }
 \author{
 John T. Haman

@@ -48,6 +48,14 @@ This is exactly the distribution corresponding to the pdf
 
 where \code{location} = \eqn{mu} and \code{scale} = \eqn{b}.
 }
+\examples{
+d <- laplace_dist(1, 1)
+
+x <- d$sampler(10, d$par)
+
+ef(x, d)
+
+}
 \author{
 John T. Haman
 }

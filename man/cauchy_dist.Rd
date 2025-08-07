@@ -7,12 +7,12 @@
 cauchy_dist(location = NULL, scale = NULL, pow = 0.5)
 }
 \arguments{
-\item{location}{Same as in \code{\link[=rcauchy]{rcauchy()}}}
+\item{location}{NULL, or same as in \code{\link[stats:Cauchy]{stats::rcauchy()}}}
 
-\item{scale}{Same as in \code{\link[=rcauchy]{rcauchy()}}}
+\item{scale}{NULL, or same as in \code{\link[stats:Cauchy]{stats::rcauchy()}}}
 
 \item{pow}{Exponent of the energy test. 0 < pow < 1 is required for the
-Cauchy distribution.}
+Cauchy distribution. Default is 0.5.}
 }
 \value{
 S3 data object containing the fields. This all used internally by
@@ -43,6 +43,12 @@ Only available in certain distribution objects.
 Create an S3 object that sets all the required data needed by
 energyfit to execute the eneregy goodness-of-fit test against a normal
 distribution. If \code{mean} and \code{sd} are both NULL, perform a composite test.
+}
+\examples{
+d <- cauchy_dist(4, 4)
+x <- rcauchy(10, 4, 4)
+ef(x, d)
+
 }
 \author{
 John T. Haman
