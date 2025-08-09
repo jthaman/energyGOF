@@ -417,7 +417,7 @@ xform_dist.PoissonDist <- function(x, dist) {
 
 #' @export
 xform_dist.InverseGaussianDist <- function(x, dist) {
-  # Must transform in Simple case.
+  # Must transform in composite case.
   if (dist$composite) {
     dist$sampler_par <- dist$statistic(x)
   }

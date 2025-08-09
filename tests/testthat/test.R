@@ -293,6 +293,69 @@ test_that ("validate support checks", {
   expect_error(validate_x(unifx, sd))
 })
 
+#### Tests for expected distances
+
+##### Normal
+
+test_that("Normal EYY Distance",{
+  d <- normal_dist(10, 10)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  mc <- mean(abs(x - y))
+  dd <- d$EYY(d$par)
+  err <- (mc - dd) / dd
+  expect_lt(err, 0.01)
+})
+
+test_that("Normal EXY Distance",{
+  d <- normal_dist(10, 10)
+  y <- d$sampler(1e6, d$par)
+  mc <- mean(abs(5 - y))
+  dd <- d$EXYhat(5, d$par)
+  err <- (mc - dd) / dd
+  expect_lt(err, 0.01)
+})
+
+
+##### Uniform
+
+
+test_that("Uniform Distances",{
+  d <- uniform_dist(-10, 10)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(4 - y))
+  dd2 <- d$EXYhat(4, d$par)
+  err2 <- (mc - dd) / dd
+  expect_lt(err2, 0.01)
+})
+
+##### Exp
+##### Poisson
+##### Bernoulli
+##### Binomial
+##### Beta
+##### Geo
+##### Half-Normal
+##### Laplace
+##### Lognormal
+##### A-Laplace
+##### Weibull
+##### Gamma
+##### Chi-Sq
+##### Inv Gaussian
+##### Pareto
+##### Cauchy
+##### Stable
+
+
+
 ##### Normal Tests
 test_that("Normal should not be transformed", {
   x <- rnorm(10)
