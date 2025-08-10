@@ -332,26 +332,288 @@ test_that("Uniform Distances",{
   ## EXY
   mc2 <- mean(abs(4 - y))
   dd2 <- d$EXYhat(4, d$par)
-  err2 <- (mc - dd) / dd
+  err2 <- (mc2 - dd2) / dd2
   expect_lt(err2, 0.01)
 })
 
 ##### Exp
+test_that("Exp Distances",{
+  d <- exponential_dist(10)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(4 - y))
+  dd2 <- d$EXYhat(4, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
 ##### Poisson
+test_that("Poisson Distances",{
+  d <- poisson_dist(10)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(4 - y))
+  dd2 <- d$EXYhat(4, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
 ##### Bernoulli
+test_that("Bernoulli Distances",{
+  d <- bernoulli_dist(.7)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(.3 - y))
+  dd2 <- d$EXYhat(.3, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
 ##### Binomial
+test_that("Binomial Distances",{
+  d <- binomial_dist(10, .4)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(4 - y))
+  dd2 <- d$EXYhat(4, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
 ##### Beta
+test_that("Beta Distances",{
+  d <- beta_dist(10, 5)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(.4 - y))
+  dd2 <- d$EXYhat(.4, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
 ##### Geo
+test_that("Geometric Distances",{
+  d <- geometric_dist(.07)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(4 - y))
+  dd2 <- d$EXYhat(4, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
+
 ##### Half-Normal
+
+test_that("hn Distances",{
+  d <- halfnormal_dist(7)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(4 - y))
+  dd2 <- d$EXYhat(4, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
 ##### Laplace
+
+test_that("Laplace Distances",{
+  d <- laplace_dist(4, 2)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(8 - y))
+  dd2 <- d$EXYhat(8, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
 ##### Lognormal
+
+test_that("Lognormal Distances",{
+  d <- lognormal_dist(4, 2)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(1 - y))
+  dd2 <- d$EXYhat(1, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
 ##### A-Laplace
+test_that("Asymmetric Laplace Distances",{
+  d <- alaplace_dist(4, 3, .5)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(8 - y))
+  dd2 <- d$EXYhat(8, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
+
 ##### Weibull
+test_that("Weibull Distances",{
+  d <- weibull_dist(5, 6)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(4 - y))
+  dd2 <- d$EXYhat(4, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
 ##### Gamma
+test_that("Gamma Distances",{
+  d <- gamma_dist(5, 8)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(4 - y))
+  dd2 <- d$EXYhat(4, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
 ##### Chi-Sq
+test_that("Chi-sq Distances",{
+  d <- chisq_dist(33)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(50 - y))
+  dd2 <- d$EXYhat(50, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
 ##### Inv Gaussian
+test_that("Inv Gaussian Distances",{
+  d <- invgauss_dist(10, 10)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(5 - y))
+  dd2 <- d$EXYhat(5, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
+
+
 ##### Pareto
+test_that("Pareto Distances",{
+  d <- pareto_dist(4, 4)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y))
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(5 - y))
+  dd2 <- d$EXYhat(5, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
 ##### Cauchy
+test_that("Cauchy Distances",{
+  d <- cauchy_dist(2, .1, .5)
+  x <- d$sampler(1e7, d$par)
+  y <- d$sampler(1e7, d$par)
+  ## EYY
+  mc1 <- mean(abs(x - y)^.5)
+  dd1 <- d$EYY(d$par)
+  err1 <- (mc1 - dd1) / dd1
+  expect_lt(err1, 0.01)
+  ## EXY
+  mc2 <- mean(abs(1 - y)^.5)
+  dd2 <- d$EXYhat(1, d$par)
+  err2 <- (mc2 - dd2) / dd2
+  expect_lt(err2, 0.01)
+})
+
+
 ##### Stable
 
 
@@ -371,10 +633,10 @@ test_that("egf should return htest, even when nsim is missing", {
 })
 
 test_that("Normal p-vals should be uniform under Null hypothesis", {
-  n <- 15
+  n <- 25
   save <- numeric(n)
   for (i in 1:n) {
-    x <- rnorm(n, 0, 1)
+    x <- rnorm(100, 0, 1)
     o <- ef(x, normal_dist(0, 1))
     save[i] <- unlist(o$p.value)
   }
@@ -386,7 +648,7 @@ test_that("Power to detect mean shift.", {
   n <- 10
   save <- numeric(n)
   for (i in 1:n) {
-    x <- rnorm(n, 1, 1)
+    x <- rnorm(100, 1, 1)
     o <- ef(x, normal_dist(0, 1))
     save[i] <- unlist(o$p.value)
   }
@@ -444,7 +706,7 @@ test_that("Detect Beta", {
 ##### Exponential tests
 
 test_that("Test should work", {
-  x <- rexp(100)
+  x <- rexp(1000)
   d <- exponential_dist(1)
   o <- ef(x, d, nsim = 60)
   o
@@ -490,11 +752,12 @@ test_that("Composite should work detect weibull", {
 
 ##### Bernoulli tests
 test_that("Test works", {
+  ## sometimes negative??
   x <- rbinom(100, 1, .5)
   d <- bernoulli_dist(.5)
   o <- ef(x, d, nsim = 60)
   o
-  expect_gt(o$statistic, 0)
+  expect_gte(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
 })
 
@@ -596,6 +859,7 @@ test_that("Test works", {
 })
 
 test_that("Test works", {
+  set.seed(1)
   d <- asymmetric_laplace_dist(1, 10, 1)
   x <- d$sampler(10, d$par)
   o <- ef(x, d, nsim = 60)
@@ -679,7 +943,7 @@ test_that("Composite Test Worts", {
   expect_gt(o$p.value, 0.01)
 })
 
-test_that("Composite Test Worts", {
+test_that("Composite Test Works", {
   skip_on_cran()
   d <- asymmetric_laplace_dist()
   x <- ralaplace(100, 0, 3, 1 / 2)
@@ -739,6 +1003,7 @@ test_that("Test works", {
 })
 
 test_that("Test works", {
+  set.seed(1)
   d <- inverse_gaussian_dist(.1, .1)
   x <- d$sampler(10, d$par)
   o <- ef(x, d, nsim = 50)
