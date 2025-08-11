@@ -1650,10 +1650,14 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
         }
       },
       statistic = function(x) {
-        as.list(suppressWarnings(
-          fitdist(x, "invgauss",
-                  start = list(mean = 1, shape = 1)
-                  ))$estimate)
+        list(mean = mean(x),
+             shape = {
+               n <- length(x)
+               x.tilde <- n / sum(1 / x)
+               x.bar <- mean(x)
+               ilam.hat <- 1 / x.tilde - 1 / x.bar
+               1 / ilam.hat
+             })
       },
       xform = function(x, par) {
         ## The half-normal transformation seems to not be sensitive?
