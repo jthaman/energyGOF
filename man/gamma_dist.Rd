@@ -13,7 +13,7 @@ gamma_dist(shape = 1, rate = 1)
 }
 \value{
 S3 data object containing the fields. This all used internally by
-\code{\link[=energyfit]{energyfit()}} and \code{\link[=energyfit.test]{energyfit.test()}}.
+\code{\link[=energyGOF]{energyGOF()}} and \code{\link[=energyGOF.test]{energyGOF.test()}}.
 \itemize{
 \item name: String
 \item composite_p: TRUE if test is composite
@@ -28,7 +28,7 @@ this distribution
 generalized test.)
 \item EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or
 \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according
-to \code{dist} and x is the data under test (which is passed in ef.test or ef).
+to \code{dist} and x is the data under test (which is passed in eg.test or eg).
 \item xform: Function that may be used to transform x. Only available in certain
 distribution objects.
 \item statistic: Function that returns a list of maximum likelihood estimates.
@@ -38,12 +38,12 @@ Only available in certain distribution objects.
 }
 \description{
 Create an S3 object that sets all the required data needed by
-energyfit to execute the eneregy goodness-of-fit test against a normal
+energyGOF to execute the energy goodness-of-fit test against a normal
 distribution. If \code{mean} and \code{sd} are both NULL, perform a composite test.
 }
 \examples{
 d <- gamma_dist(4, 4)
-ef(rgamma(10, 4, 4), d)
+eg(rgamma(10, 4, 4), d)
 
 }
 \author{

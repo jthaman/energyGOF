@@ -25,7 +25,7 @@ stable_dist(
 }
 \value{
 S3 data object containing the fields. This all used internally by
-\code{\link[=energyfit]{energyfit()}} and \code{\link[=energyfit.test]{energyfit.test()}}.
+\code{\link[=energyGOF]{energyGOF()}} and \code{\link[=energyGOF.test]{energyGOF.test()}}.
 \itemize{
 \item name: String
 \item composite_p: TRUE if test is composite
@@ -40,7 +40,7 @@ this distribution
 generalized test.)
 \item EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or
 \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according
-to \code{dist} and x is the data under test (which is passed in ef.test or ef).
+to \code{dist} and x is the data under test (which is passed in eg.test or eg).
 \item xform: Function that may be used to transform x. Only available in certain
 distribution objects.
 \item statistic: Function that returns a list of maximum likelihood estimates.

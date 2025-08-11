@@ -2,7 +2,7 @@
 
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
-## the Free Software F[]oundation, either version 2 of the License, or
+## the Free Software Foundation, either version 2 of the License, or
 ## (at your option) any later version.
 
 ## This program is distributed in the hope that it will be useful,
@@ -35,7 +35,7 @@
 #' @seealso \link[stats]{Distributions} for a list of distributions available
 #'   in most R installations. [energy::normal.test()] for the energy
 #'   goodness-of-fit test with unknown parameters. See
-#'   [energy::poisson.mtest()] for a different poisson goodness-of-fit test
+#'   [energy::poisson.mtest()] for a different Poisson goodness-of-fit test
 #'   based on mean distances. The tests for (multivariate) Normal in the energy
 #'   package are implemented with compiled code, and are faster than the one
 #'   available in the energyGOF package.
@@ -60,18 +60,18 @@
 #' function, *simple* and *composite*. It's important to know the difference to
 #' use this package, because they yield different results. Simple GOF tests
 #' test the data `x` against a specific distribution with _known parameters_
-#' that you must pass to energyGOF.test in the ellipsis agrument (...). You
+#' that you must pass to energyGOF.test in the ellipsis argument (...). You
 #' should use a simple GOF test if you wish to test questions like
 #' "my data is Normal with mean 1 and sd 2". energyGOF.test can also conduct
 #' _some_ composite GOF tests. A composite test is performed if no parameters
-#' are passed in the ellpisis argument (...). You should conduct a composite
+#' are passed in the ellipsis argument (...). You should conduct a composite
 #' test if your research question is
 #' "my data is Normal, but I don't know what the parameters are." Obviously,
 #' this composite question is much more common in practice.
 #'
 #' All the composite tests in energyGOF assume that none of the parameters are
 #' known. So while there is a statistical test of Normality with known mean and
-#' unknown sd, this is not implemented in the energygof package. So, either
+#' unknown sd, this is not implemented in the energyGOF package. So, either
 #' pass all the distribution parameters or none of them. (In the special case
 #' of the Normal distribution, you can use the energy package to test the GOF
 #' hypothesis with any combination of known and known parameters.)
@@ -89,8 +89,8 @@
 #' whether a composite GOF test may be performed.
 #'
 #'
-#'                         \tabular{llll}{
-#'   \strong{Distribution} \tab \strong{Function} \tab \strong{Paramater} \tab \strong{CompositeAllowed} \cr
+#' \tabular{llll}{
+#'   \strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab \strong{CompositeAllowed} \cr
 #'                         \tab                        \tab                                       \tab    \cr
 #'   Normal                \tab normal_dist            \tab mean, sd                              \tab Yes\cr
 #'   Normal                \tab normal_dist            \tab mean, sd                              \tab Yes\cr
@@ -107,7 +107,7 @@
 #'   Weibull               \tab weibull_dist           \tab shape, scale                          \tab No \cr
 #'   Gamma                 \tab gamma_dist             \tab shape, rate                           \tab No \cr
 #'   Chi Squared           \tab chisq_dist             \tab df                                    \tab No \cr
-#'   Inverse Gaussion      \tab inversegaussian_dist   \tab mean, shape  \tab No \cr
+#'   Inverse Gaussian      \tab inversegaussian_dist   \tab mean, shape  \tab No \cr
 #'   Pareto                \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
 #'   Cauchy                \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
 #'   Stable                \tab stable_dist            \tab location, scale, skew, stability, pow \tab No
@@ -117,7 +117,7 @@
 #'
 #' Székely, G. J., & Rizzo, M. L. (2023) provide the motivation:
 #'
-#'" Data energy is a real number (typically a nonnegative number) that depends
+#'" Data energy is a real number (typically a non-negative number) that depends
 #' on the distances between data. This concept is based on the notion of
 #' Newton’s gravitational potential energy, which is also a function of the
 #' distance between bodies. The idea of data energy or energy statistics is to
@@ -171,7 +171,7 @@
 #' energyGOF.test(x, "normal", nsim = 10)
 #'
 #' ## Simple energy goodness-of-fit test (test for Normality with known
-#' ## parameters). ef is an alias for energyGOF.test.
+#' ## parameters). eg is an alias for energyGOF.test.
 #'
 #' eg.test(x, "normal", nsim = 10, mean = 0, sd = 1)
 #'
@@ -186,9 +186,9 @@
 #' energyGOF.test(y, "weibull", shape = 1, scale = 3, nsim = 10)
 #'
 #' ## Alternatively, use the energyGOF generic directly, which is slightly less
-#' ## verbose. ef is an alias for energyGOF.
+#' ## verbose. eg is an alias for energyGOF.
 #'
-#' ef(y, weibull_dist(1, 3), nsim = 10)
+#' eg(y, weibull_dist(1, 3), nsim = 10)
 #'
 #'
 #' ## Conduct a generalized GOF test. Pow is the exponent s in the generalized
@@ -197,7 +197,7 @@
 #' ## of the distributions, but the default isn't necessarily better than any
 #' ## other number.
 #'
-#' ef(rcauchy(100),
+#' eg(rcauchy(100),
 #'    cauchy_dist(location = 0, scale = 1, pow = 0.5))
 #'
 #' ## energyGOF does not support "partially composite" GOF tests, so this will
@@ -565,7 +565,7 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #' @inheritParams energyGOF.test
 #' @inheritSection energyGOF.test About Energy
 #' @inheritSection energyGOF.test Distributions available to test
-#' @aliases ef
+#' @aliases eg
 #' @examples
 #' ## Simple, normal test
 #' energyGOF(rnorm(10), normal_dist(0, 1), nsim = 10)
@@ -586,7 +586,7 @@ energyGOF <- function(x, dist, nsim = 100) {
   UseMethod("energyGOF", dist)
 }
 
-#' @export ef
+#' @export eg
 eg <- energyGOF
 
 #' @export
@@ -664,7 +664,7 @@ print.GOFDist <- function(x, ...) {
 #' @title Create a Normal distribution object for energy testing
 #' @author John T. Haman
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a normal
+#'   energyGOF to execute the energy goodness-of-fit test against a normal
 #'   distribution. If `mean` and `sd` are both NULL, perform a composite test.
 #' @param mean NULL, or if specified, same as [rnorm()], but must be length 1.
 #' @param sd NULL, or if specified, Same as [rnorm()], but must be length 1
@@ -738,7 +738,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
 
 #' @title Create a Uniform distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a uniform
+#'   energyGOF to execute the energy goodness-of-fit test against a uniform
 #'   distribution.
 #' @inherit normal_dist return author
 #' @param min Some as in [runif()], but must be length 1
@@ -748,7 +748,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
 #'
 #' d <- uniform_dist(0, 1)
 #'
-#' ef(runif(10), d)
+#' eg(runif(10), d)
 #'
 #'
 #' @export
@@ -784,7 +784,7 @@ uniform_dist<- function(min = 0, max = 1) {
 
 #' @title Create an Exponential distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a
+#'   energyGOF to execute the energy goodness-of-fit test against a
 #'   exponential distribution. If rate is NULL, a composite test is performed.
 #' @inherit normal_dist return author
 #' @param rate NULL, or a positive rate parameter as in [rexp()], but must be
@@ -793,7 +793,7 @@ uniform_dist<- function(min = 0, max = 1) {
 #' @examples
 #'
 #' d <- exponential_dist(1)
-#' ef(rexp(10, 1), d)
+#' eg(rexp(10, 1), d)
 #'
 #' @export
 exponential_dist <- function(rate = NULL) {
@@ -828,7 +828,7 @@ exp_dist <- exponential_dist
 
 #' @title Create a Poisson distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a Poisson
+#'   energyGOF to execute the energy goodness-of-fit test against a Poisson
 #'   distribution. If lambda is NULL, a composite test is performed.
 #' @inherit normal_dist description return author
 #' @param lambda NULL, or if specified, same as the lambda in [rpois()], but
@@ -837,7 +837,7 @@ exp_dist <- exponential_dist
 #' @examples
 #' d <- poisson_dist(1)
 #'
-#' ef(rpois(10, 1), d)
+#' eg(rpois(10, 1), d)
 #'
 #' @export
 poisson_dist <- function(lambda = NULL) {
@@ -882,14 +882,14 @@ poisson_dist <- function(lambda = NULL) {
 
 #' @title Create a Bernoulli distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a Bernoulli
+#'   energyGOF to execute the energy goodness-of-fit test against a Bernoulli
 #'   distribution.
 #' @inherit normal_dist description return author
 #' @param prob Same as [rbinom()], but must be length 1.
 #' @examples
 #'
 #' d <- bernoulli_dist(.5)
-#' ef(rbinom(10, 1, .5), d)
+#' eg(rbinom(10, 1, .5), d)
 #'
 #' @export
 bernoulli_dist <- function(prob = 0.5) {
@@ -926,7 +926,7 @@ bernoulli_dist <- function(prob = 0.5) {
 
 #' @title Create a Binomial distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a Binomial
+#'   energyGOF to execute the energy goodness-of-fit test against a Binomial
 #'   distribution.
 #' @inherit normal_dist description return author
 #' @param prob Same as [stats::rbinom()], but must be length 1.
@@ -934,7 +934,7 @@ bernoulli_dist <- function(prob = 0.5) {
 #' @examples
 #'
 #' d <- binomial_dist(1, 0.5)
-#' ef(rbinom(10, 1, .5), d)
+#' eg(rbinom(10, 1, .5), d)
 #'
 #' @export
 binomial_dist <- function(size = 1, prob = 0.5) {
@@ -979,7 +979,7 @@ binomial_dist <- function(size = 1, prob = 0.5) {
 
 #' @title Create a beta distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a beta
+#'   energyGOF to execute the energy goodness-of-fit test against a beta
 #'   distribution. If shape1 and shape2 are NULL, a composite test is
 #'   performed.
 #' @inherit normal_dist description return author
@@ -988,7 +988,7 @@ binomial_dist <- function(size = 1, prob = 0.5) {
 #'
 #' @examples
 #' d <- beta_dist(5, 5)
-#' ef(rbeta(10, 5, 5), d)
+#' eg(rbeta(10, 5, 5), d)
 #'
 #' @export
 beta_dist <- function(shape1 = NULL, shape2 = NULL) {
@@ -1045,14 +1045,14 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
 
 #' @title Create a geometric distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a geometric
+#'   energyGOF to execute the energy goodness-of-fit test against a geometric
 #'   distribution
 #' @inherit normal_dist  return author
 #' @param prob Same as [rgeom()], but must be length 1.
 #' @examples
 #'
 #' d <- geometric_dist(.5)
-#' ef(rgeom(10, .5), d)
+#' eg(rgeom(10, .5), d)
 #'
 #' @export
 geometric_dist  <- function(prob = 0.5) {
@@ -1088,7 +1088,7 @@ geometric_dist  <- function(prob = 0.5) {
 ##### Half-Normal
 #' @title Create a half-normal distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a
+#'   energyGOF to execute the energy goodness-of-fit test against a
 #'   half-normal distribution. If scale is NULL, a composite test is performed.
 #' @inherit normal_dist return author
 #' @param scale NULL, or a positive scale parameter, like sd in [rnorm()]. Must
@@ -1099,7 +1099,7 @@ geometric_dist  <- function(prob = 0.5) {
 #' @examples
 #'
 #' d <- halfnormal_dist(4)
-#' ef(abs(rnorm(10, 4)), d)
+#' eg(abs(rnorm(10, 4)), d)
 #'
 #' @export
 halfnormal_dist <- function(scale = NULL) {
@@ -1146,13 +1146,13 @@ halfnormal_dist <- function(scale = NULL) {
 
 #' @title Create a Laplace distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a Laplace
+#'   energyGOF to execute the energy goodness-of-fit test against a Laplace
 #'   distribution. If location and scale are both NULL, a composite test is
 #'   performed.
 #' @inherit normal_dist  return author
 #' @param location NULL, or the median of the distribution
 #' @param scale NULL or a positive scale parameter
-#' @description This is exactly the distribution corresponding to the pdf
+#' @description This is exactly the distribution corresponding to the PDF
 #'
 #' \deqn{f(x|\mu, b) = \frac{1}{2b} \exp \{ - \frac{|x - \mu}{b}\}, }
 #'
@@ -1163,7 +1163,7 @@ halfnormal_dist <- function(scale = NULL) {
 #'
 #' x <- d$sampler(10, d$par)
 #'
-#' ef(x, d)
+#' eg(x, d)
 #'
 #' @export
 laplace_dist <- function(location = NULL, scale = NULL) {
@@ -1210,7 +1210,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
 
 #' @title Create a log-normal distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the eneregy goodness-of-fit test against a log-normal
+#'   energyGOF to execute the energy goodness-of-fit test against a log-normal
 #'   distribution. If `meanlog` and `sdlog` are both `NULL`, a composite test is
 #'   performed.
 #' @inherit normal_dist description return author
@@ -1220,7 +1220,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
 #' d <- lognormal_dist(0, 1)
 #' x <- d$sampler(10, d$par)
 #'
-#' ef(x, d)
+#' eg(x, d)
 #'
 #' @export
 lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
@@ -1267,7 +1267,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
         integrate(integrand, lower = 0, upper = Inf, par = par)$value # TODO
         # should be Inf
       },
-      xform = function(x, par) exp((log(x) - par$meanlog) / par$sdlog), # ~ logNormal(0, 1)
+      xform = function(x, par) exp((log(x) - par$meanlog) / par$sdlog), # ~ lognormal(0, 1)
       statistic = function(x) {
         as.list(fitdist(x, "lnorm")$estimate)}
     ), class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
@@ -1288,7 +1288,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 #' a symmetric Laplace distribution (though note the difference between the PDF
 #' in this description and the one in [laplace_dist()]).
 #' @aliases alaplace_dist
-#' @description This is exactly the distribution corresponding to the pdf
+#' @description This is exactly the distribution corresponding to the PDF
 #'
 #' \deqn{
 #'   f(x | \theta, \sigma, \kappa) =
@@ -1308,7 +1308,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 #' d <- asymmetric_laplace_dist(0, 1, .5)
 #' x <- d$sampler(10, d$par)
 #'
-#' ef(x, d)
+#' eg(x, d)
 #'
 #'
 #' @export
@@ -1393,7 +1393,7 @@ alaplace_dist <- asymmetric_laplace_dist
 #' @examples
 #'
 #' d <- f_dist(3, 3)
-#' eg(rg(10, 3, 3), d)
+#' eg(rf(10, 3, 3), d)
 #'
 #' @export
 f_dist <- function(df1 = NULL, df2 = NULL) {
@@ -1441,14 +1441,14 @@ f_dist <- function(df1 = NULL, df2 = NULL) {
 ##### Weibull
 #' @title Create a Weibull distribution object for energy testing
 #' @inherit normal_dist description return author
-#' @param shape NULL, or if specifide, same as the shape parameter in [stats::rweibull()]
+#' @param shape NULL, or if specified, same as the shape parameter in [stats::rweibull()]
 #' @param scale NULL, of if specified, same as the scale parameter in
 #' [stats::rweibull()]
 #'
 #' @examples
 #'
 #' d <- weibull_dist(3, 3)
-#' ef(rweibull(10, 3, 3), d)
+#' eg(rweibull(10, 3, 3), d)
 #'
 #' @export
 weibull_dist <- function(shape = NULL, scale = NULL) {
@@ -1510,7 +1510,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
 #' @param rate Same rate parameter in [stats::rgamma()] (must be length 1)
 #' @examples
 #' d <- gamma_dist(4, 4)
-#' ef(rgamma(10, 4, 4), d)
+#' eg(rgamma(10, 4, 4), d)
 #'
 #' @export
 gamma_dist <- function(shape = 1, rate = 1) {
@@ -1575,7 +1575,7 @@ gamma_dist <- function(shape = 1, rate = 1) {
 #' @param df Same as in [stats::rchisq()].
 #' @examples
 #' d <- chisq_dist(4)
-#' ef(rchisq(10, 4), d)
+#' eg(rchisq(10, 4), d)
 #'
 #' @export
 chisq_dist <- function(df = 2) {
@@ -1617,7 +1617,7 @@ chisq_dist <- function(df = 2) {
 #' @aliases invgauss_dist
 #' @param mean NULL or a positive mean parameter
 #' @param shape NULL or a positive shape parameter
-#' @description This is exactly the distribution corresponding to the pdf
+#' @description This is exactly the distribution corresponding to the PDF
 #'
 #' \deqn{
 #'   f(x | \mu, \lambda) =
@@ -1639,14 +1639,14 @@ chisq_dist <- function(df = 2) {
 #' d <- inverse_gaussian_dist(4, 4)
 #' x <- d$sampler(10, d$par)
 #'
-#' ef(x, d)
+#' eg(x, d)
 #'
 #' @export
 inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
   cp <- is_composite(mean, shape)
   dist <- structure(
     list(
-      name = "Inverse Gaussion",
+      name = "Inverse Gaussian",
       composite_p = cp,
       par = list(mean = mean, shape = shape),
       support = function(x, par) {
@@ -1754,7 +1754,7 @@ invgauss_dist <- inverse_gaussian_dist
 #' @examples
 #' d <- pareto_dist(1, .5)
 #' x <- d$sampler(10, d$par)
-#' ef(x, d)
+#' eg(x, d)
 #'
 #' @export
 pareto_dist <- function(scale = NULL, shape = NULL,
@@ -1880,7 +1880,7 @@ pareto_set_sampler_par <- function(dist) {
 #' @examples
 #' d <- cauchy_dist(4, 4)
 #' x <- rcauchy(10, 4, 4)
-#' ef(x, d)
+#' eg(x, d)
 #'
 #' @export
 cauchy_dist <- function(location = NULL, scale = NULL,
@@ -2081,7 +2081,7 @@ stable_dist <- function(location = 0, scale = 1,
 ## deats <- data.frame(
 ##   Distribution = character(1),
 ##   Function = character(1),
-##   Paramater = character(1),
+##   Parameter = character(1),
 ##   CompositeAllowed = character(1)
 ## )
 ##
@@ -2100,7 +2100,7 @@ stable_dist <- function(location = 0, scale = 1,
 ## deats <- rbind(deats, list("Weibull", "weibull_dist", "shape, scale", "No"))
 ## deats <- rbind(deats, list("Gamma", "gamma_dist", "shape, rate", "No"))
 ## deats <- rbind(deats, list("Chi Squared", "chisq_dist", "df", "No"))
-## deats <- rbind(deats, list("Inverse Gaussion", "inversegaussian_dist", "mean, shape", "No"))
+## deats <- rbind(deats, list("Inverse Gaussian", "inversegaussian_dist", "mean, shape", "No"))
 ## deats <- rbind(deats, list("Pareto", "pareto_dist", "scale, shape, pow, r", "No"))
 ## deats <- rbind(deats, list("Cauchy", "cauchy_dist", "location, scale, pow", "No"))
 ## deats <- rbind(deats, list("Stable", "stable_dist", "location, scale, skew, stability, pow", "No"))
