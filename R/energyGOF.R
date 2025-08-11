@@ -1416,12 +1416,14 @@ f_dist <- function(df1 = NULL, df2 = NULL) {
       },
       sampler = function(n, par) {
         rf(n, df1 = par$df1, df2 = par$df2)},
+      ## Wrong
       EXYhat = function(x, par) {
         EX <- df2 /(df2 - 2)
         u <- df1 * x / (df1 * x + df2)
         mean(x * (2 * pf(x, par$df1, par$df2) - 1) +
                EX * (1 - 2 * pbeta(u, df1 / 2, df2 / 2)))
       },
+      ## Wrong
       EYY = function(par) {
         EX <- df2 /(df2 - 2)
         integrand <- function(t, df1, df2) {
@@ -1436,6 +1438,7 @@ f_dist <- function(df1 = NULL, df2 = NULL) {
     ), class = c("FDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
+  dist
 }
 
 
