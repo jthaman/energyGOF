@@ -476,7 +476,8 @@ EXXhat.EuclideanGOFDist <- function(x, dist) {
 #' @export
 EXXhat.GeneralizedGOFDist <- function(x, dist) {
   pow <- dist$sampler_par$pow
-  mean(as.matrix(dist(x, "minkowski", p = pow))^pow)
+  n <- length(x)
+  2 * sum(dist(x)^pow) /n^2
 }
 
 
@@ -1774,8 +1775,8 @@ pareto_dist <- function(scale = NULL, shape = NULL,
         xform = function(x, par) {x^par$shape},
         notes = {
           if (!is.null(shape) && shape > 1 && pow != 1)
-            message("\n Note: Shape > 1 and pow != 1. Transforming data by data^r to conduct energy GOF test.\n")}
-      ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
+            message("\n Note: Shape > 1 and pow != 1. Transforming data by data^shape to conduct energy GOF test.\n")}
+    ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
     )
     validate_par(dist)
     ## Specific to Pareto: transform the params if necessary.
