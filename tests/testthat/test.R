@@ -5,7 +5,7 @@ set.seed(730)
 test_that("formals same as switch", {
   b <- names(as.list(body(char_to_dist))[[2]][-c(1, 2)])
   b <- b[b != ""] # drop the ""
-  f <- unlist(as.list(formals(ef.test)$dist)[-1])
+  f <- unlist(as.list(formals(eg.test)$dist)[-1])
   expect_setequal(b, f)
 })
 
@@ -130,13 +130,13 @@ test_that("Dists", {
   expect_error(stable_dist(1, 1, 1, 1, 1))
 })
 
-##### ef.test tests
+##### eg.test tests
 
-test_that("ef.test", {
+test_that("eg.test", {
   x <- rnorm(10)
-  expect_s3_class(ef.test(x, "normal"), "htest")
-  expect_s3_class(ef.test(x, "laplace"), "htest")
-  expect_s3_class(ef.test(x, "cauchy"), "htest")
+  expect_s3_class(eg.test(x, "normal"), "htest")
+  expect_s3_class(eg.test(x, "laplace"), "htest")
+  expect_s3_class(eg.test(x, "cauchy"), "htest")
 })
 
 ##### Test that classes are correctly formed
@@ -621,13 +621,13 @@ test_that("Cauchy Distances",{
 ##### Normal Tests
 test_that("Normal should not be transformed", {
   x <- rnorm(10)
-  o <- ef(x, normal_dist(0, 1))
+  o <- eg(x, normal_dist(0, 1))
   expect_identical(names(o$statistic), "E-statistic")
 })
 
 test_that("egf should return htest, even when nsim is missing", {
   x <- rnorm(10)
-  o <- ef(x, normal_dist(0, 1))
+  o <- eg(x, normal_dist(0, 1))
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -637,10 +637,10 @@ test_that("Normal p-vals should be uniform under Null hypothesis", {
   save <- numeric(n)
   for (i in 1:n) {
     x <- rnorm(100, 0, 1)
-    o <- ef(x, normal_dist(0, 1))
+    o <- eg(x, normal_dist(0, 1))
     save[i] <- unlist(o$p.value)
   }
-  expect_gt(ef(save, uniform_dist(0, 1))$p.value, 0.05)
+  expect_gt(eg(save, uniform_dist(0, 1))$p.value, 0.05)
   expect_gt(o$statistic, 0)
 })
 
@@ -649,7 +649,7 @@ test_that("Power to detect mean shift.", {
   save <- numeric(n)
   for (i in 1:n) {
     x <- rnorm(100, 1, 1)
-    o <- ef(x, normal_dist(0, 1))
+    o <- eg(x, normal_dist(0, 1))
     save[i] <- unlist(o$p.value)
   }
   expect_lt(mean(save[i]), 0.05)
@@ -661,7 +661,7 @@ test_that("Power to detect sd shift.", {
   save <- numeric(n)
   for (i in 1:n) {
     x <- rnorm(n, 0, 3)
-    o <- ef(x, normal_dist(0, 1))
+    o <- eg(x, normal_dist(0, 1))
     save[i] <- unlist(o$p.value)
   }
   expect_lt(mean(save[i]), 0.05)
@@ -670,7 +670,7 @@ test_that("Power to detect sd shift.", {
 
 test_that("Composite Test should work", {
   x <- rnorm (10)
-  o <- ef(x, normal_dist(), nsim = 0)
+  o <- eg(x, normal_dist(), nsim = 0)
   expect_gt(o$statistic, 0)
 })
 
@@ -679,7 +679,7 @@ test_that("Composite Test should work", {
 test_that("Test should work", {
   x <- runif(100)
   d <- uniform_dist(0, 1)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -688,7 +688,7 @@ test_that("Test should work", {
 test_that("Test should work", {
   x <- runif(100, -10, 10)
   d <- uniform_dist(-10, 10)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$statistic, 0.01)
@@ -697,7 +697,7 @@ test_that("Test should work", {
 test_that("Detect Beta", {
   x <- rbeta(100, 20, 20)
   d <- uniform_dist(0, 1)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, .1)
@@ -708,7 +708,7 @@ test_that("Detect Beta", {
 test_that("Test should work", {
   x <- rexp(1000)
   d <- exponential_dist(1)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -717,7 +717,7 @@ test_that("Test should work", {
 test_that("Test should work", {
   x <- rexp(1000, 50)
   d <- exponential_dist(50)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -726,7 +726,7 @@ test_that("Test should work", {
 test_that("Test should detect weibull", {
   x <- rweibull(1000, 4, 4)
   d <- exponential_dist(4)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -735,7 +735,7 @@ test_that("Test should detect weibull", {
 test_that("Composite should work", {
   x <- rexp(100, 4)
   d <- exponential_dist()
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -744,7 +744,7 @@ test_that("Composite should work", {
 test_that("Composite should work detect weibull", {
   x <- rweibull(100, 4, 4)
   d <- exponential_dist()
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -755,7 +755,7 @@ test_that("Test works", {
   ## sometimes negative??
   x <- rbinom(100, 1, .5)
   d <- bernoulli_dist(.5)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gte(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -764,7 +764,7 @@ test_that("Test works", {
 test_that("Detect p shift", {
   x <- rbinom(100, 1, .8)
   d <- bernoulli_dist(.5)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -775,7 +775,7 @@ test_that("Detect p shift", {
 test_that("Test works", {
   x <- rbinom(100, 10, .5)
   d <- binomial_dist(10, .5)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -784,7 +784,7 @@ test_that("Test works", {
 test_that("Detect p shift", {
   x <- rbinom(100, 10, .8)
   d <- binomial_dist(10, .5)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -793,7 +793,7 @@ test_that("Detect p shift", {
 test_that("Detect size shift", {
   x <- rbinom(100, 5, .5)
   d <- binomial_dist(10, .5)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -803,7 +803,7 @@ test_that("Detect size shift", {
 test_that("Test works", {
   x <- rgeom(100, .5)
   d <- geometric_dist(.5)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -812,7 +812,7 @@ test_that("Test works", {
 test_that("Detect p shift", {
   x <- rgeom(100, .2)
   d <- geometric_dist(.5)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -822,7 +822,7 @@ test_that("Detect p shift", {
 test_that("Test works", {
   x <- rpois(100, 10)
   d <- poisson_dist(10)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -831,7 +831,7 @@ test_that("Test works", {
 test_that("Detect lam shift", {
   x <- rpois(100,5)
   d <- poisson_dist(10)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -840,7 +840,7 @@ test_that("Detect lam shift", {
 test_that("Composite Test works", {
   x <- rpois(100, 10)
   d <- poisson_dist()
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -852,7 +852,7 @@ test_that("Composite Test works", {
 test_that("Test works", {
   d <- asymmetric_laplace_dist(3, 3, 1)
   x <- d$sampler(10, d$par)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -862,7 +862,7 @@ test_that("Test works", {
   set.seed(1)
   d <- asymmetric_laplace_dist(1, 10, 1)
   x <- d$sampler(10, d$par)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -872,7 +872,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- asymmetric_laplace_dist(10, 10, 3)
   x <- d$sampler(10, d$par)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -881,7 +881,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- asymmetric_laplace_dist(1, 10, 1 / 10)
   x <- d$sampler(10, d$par)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -890,7 +890,7 @@ test_that("Test works", {
 test_that("Test is sensitive", {
   d <- asymmetric_laplace_dist(1, 1, 1 / 10)
   x <- rnorm(100)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -899,7 +899,7 @@ test_that("Test is sensitive", {
 test_that("Test is sensitive", {
   d <- asymmetric_laplace_dist(1, 1, 1)
   x <- rnorm(100)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -909,7 +909,7 @@ test_that("Test is sensitive", {
 test_that("Test is sensitive", {
   d <- asymmetric_laplace_dist(3, 1, 1)
   x <- rnorm(100)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -918,7 +918,7 @@ test_that("Test is sensitive", {
 test_that("Test is sensitive", {
   d <- asymmetric_laplace_dist(3, 1, 10)
   x <- rnorm(100)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -927,7 +927,7 @@ test_that("Test is sensitive", {
 test_that("Test is sensitive", {
   d <- asymmetric_laplace_dist(3, 1, 1 / 10)
   x <- rnorm(100)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -937,7 +937,7 @@ test_that("Composite Test Worts", {
   skip_on_cran()
   d <- asymmetric_laplace_dist()
   x <- ralaplace(100, 0, 1, 2)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -947,7 +947,7 @@ test_that("Composite Test Works", {
   skip_on_cran()
   d <- asymmetric_laplace_dist()
   x <- ralaplace(100, 0, 3, 1 / 2)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -957,7 +957,7 @@ test_that("Composite Test is sensitive", {
   skip_on_cran()
   d <- asymmetric_laplace_dist()
   x <- rcauchy(1000)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -967,7 +967,7 @@ test_that("Composite Test is sensitive", {
   skip_on_cran()
   d <- asymmetric_laplace_dist()
   x <- rnorm(4000, 3, 3)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -977,7 +977,7 @@ test_that("Composite Test is sensitive", {
 test_that("Test works", {
   d <- inverse_gaussian_dist(3, 2)
   x <- d$sampler(10, d$par)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -986,7 +986,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- inverse_gaussian_dist(1, 1)
   x <- d$sampler(10, d$par)
-  o <- ef(x, d, nsim = 60)
+  o <- eg(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -996,7 +996,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- inverse_gaussian_dist(5, 5)
   x <- d$sampler(10, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1006,7 +1006,7 @@ test_that("Test works", {
   set.seed(1)
   d <- inverse_gaussian_dist(.1, .1)
   x <- d$sampler(10, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1016,7 +1016,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- inverse_gaussian_dist(.1, 10)
   x <- d$sampler(10, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1026,7 +1026,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- inverse_gaussian_dist(10, .1)
   x <- d$sampler(10, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1038,7 +1038,7 @@ test_that("Composite Test works", {
   set.seed(1)
   d <- inverse_gaussian_dist()
   x <- rinvgauss(10, 5, 5)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1048,7 +1048,7 @@ test_that("Composite Test works", {
   skip_on_cran()
   d <- inverse_gaussian_dist()
   x <- rinvgauss(1000, 1, 1)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1058,7 +1058,7 @@ test_that("Composite Test works", {
 test_that("Composite Test is sensitive", {
   d <- inverse_gaussian_dist()
   x <- rweibull(1000, 4, 5)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1067,7 +1067,7 @@ test_that("Composite Test is sensitive", {
 test_that("Simple test is sensitive ", {
   d <- inverse_gaussian_dist(3, 1)
   x <- rinvgauss(100, 3, 3)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.05)
@@ -1076,7 +1076,7 @@ test_that("Simple test is sensitive ", {
 test_that("Simple test is sensitive ", {
   d <- inverse_gaussian_dist(3, 1)
   x <- rweibull(100, 3, 3)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1086,7 +1086,7 @@ test_that("Simple test is sensitive ", {
 test_that("Test works", {
   d <- halfnormal_dist(1)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1095,7 +1095,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- halfnormal_dist(5)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1104,7 +1104,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- halfnormal_dist(50)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1113,7 +1113,7 @@ test_that("Test works", {
 test_that("Test is sensitive", {
   d <- halfnormal_dist(1)
   x <- rweibull(100, 3, 3)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1122,7 +1122,7 @@ test_that("Test is sensitive", {
 test_that("Test is sensitive", {
   d <- halfnormal_dist(1)
   x <- rexp(1000)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1131,7 +1131,7 @@ test_that("Test is sensitive", {
 test_that("Test is sensitive", {
   d <- halfnormal_dist(scale = 1)
   x <- rexp(1000)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1140,7 +1140,7 @@ test_that("Test is sensitive", {
 test_that("Composite test works", {
   d <- halfnormal_dist(scale = 1)
   x <- d$sampler(1000, d$par)
-  o <- ef(x, halfnormal_dist(), nsim = 50)
+  o <- eg(x, halfnormal_dist(), nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1149,7 +1149,7 @@ test_that("Composite test works", {
 
 test_that("Composite test is sensitive", {
   x <- rexp(1000)
-  o <- ef(x, halfnormal_dist(), nsim = 50)
+  o <- eg(x, halfnormal_dist(), nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1157,7 +1157,7 @@ test_that("Composite test is sensitive", {
 
 test_that("Composite test is sensitive", {
   x <- rweibull(1000, 3, 3)
-  o <- ef(x, halfnormal_dist(), nsim = 50)
+  o <- eg(x, halfnormal_dist(), nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1167,7 +1167,7 @@ test_that("Composite test is sensitive", {
 test_that("Test works", {
   d <- chisq_dist(5)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1177,7 +1177,7 @@ test_that("Test works", {
   set.seed(1)
   d <- chisq_dist(1)
   x <- d$sampler(1000, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1186,7 +1186,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- chisq_dist(40)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1196,7 +1196,7 @@ test_that("Test works", {
 test_that("Test is sensitive", {
   d <- chisq_dist(40)
   x <- rchisq(1000, 4)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1205,7 +1205,7 @@ test_that("Test is sensitive", {
 test_that("Test is sensitive", {
   d <- chisq_dist(40)
   x <- rexp(1000, 4)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1218,7 +1218,7 @@ test_that("Test is sensitive", {
 test_that("Test works", {
   d <- gamma_dist(1, 1)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1227,7 +1227,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- gamma_dist(3, 3)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1236,7 +1236,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- gamma_dist(5, 2)
   x <- d$sampler(1000, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1245,7 +1245,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- gamma_dist(2, 5)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1254,7 +1254,7 @@ test_that("Test works", {
 test_that("Test is sensitive", {
   d <- gamma_dist(2, 5)
   x <- rweibull(1000, 3, 3)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1266,7 +1266,7 @@ test_that("Test is sensitive", {
 test_that("Test works", {
   d <- weibull_dist(1, 1)
   x <- d$sampler(1000, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1275,7 +1275,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- weibull_dist(3, 3)
   x <- d$sampler(1000, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1284,7 +1284,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- weibull_dist(10, 1)
   x <- d$sampler(1000, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1293,7 +1293,7 @@ test_that("Test works", {
 test_that("Test works", {
   d <- weibull_dist(1, 10)
   x <- d$sampler(1000, d$par)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1302,7 +1302,7 @@ test_that("Test works", {
 test_that("Test is sensitive", {
   d <- weibull_dist(1, 10)
   x <- rgamma(1000, 3, 3)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1311,7 +1311,7 @@ test_that("Test is sensitive", {
 test_that("Composite test works", {
   d <- weibull_dist()
   x <- rweibull(1000, 3, 3)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1320,7 +1320,7 @@ test_that("Composite test works", {
 test_that("Composite test works", {
   d <- weibull_dist()
   x <- rweibull(1000, 10, 1)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1330,7 +1330,7 @@ test_that("Composite test works", {
 test_that("Composite test is sensitive", {
   d <- weibull_dist()
   x <- rgamma(1000, 10, 1)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1340,7 +1340,7 @@ test_that("Composite test is sensitive", {
 test_that("test works", {
   d <- cauchy_dist(10, 1)
   x <- rcauchy(1000, 10, 1)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1349,7 +1349,7 @@ test_that("test works", {
 test_that("test works", {
   d <- cauchy_dist(10, 10)
   x <- rcauchy(1000, 10, 10)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1358,7 +1358,7 @@ test_that("test works", {
 test_that("test is sensitive", {
   d <- cauchy_dist(10, 10)
   x <- rnorm(1000, 10, 10)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1367,7 +1367,7 @@ test_that("test is sensitive", {
 test_that("composite test works", {
   d <- cauchy_dist()
   x <- rcauchy(1000, 10, 10)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1376,7 +1376,7 @@ test_that("composite test works", {
 test_that("composite test is sensitive", {
   d <- cauchy_dist()
   x <- rnorm(1000, 10, 10)
-  o <- ef(x, d, nsim = 50)
+  o <- eg(x, d, nsim = 50)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
@@ -1388,7 +1388,7 @@ test_that("composite test is sensitive", {
 ## test_that("Test works", {
 ##   d <- stable_dist(0, 1, 0, 1)
 ##   x <- d$sampler(100, d$par)
-##   o <- ef(x, d)
+##   o <- eg(x, d)
 ##   o
 ##   expect_gt(o$statistic, 0)
 ##   expect_gt(o$p.value, 0.01)})
@@ -1396,7 +1396,7 @@ test_that("composite test is sensitive", {
 ## test_that("Test works", {
 ##   d <- stable_dist(0, 1, 0, 1.5, 1 / 100)
 ##   x <- d$sampler(100, d$par)
-##   o <- ef(x, d)
+##   o <- eg(x, d)
 ##   o
 ##   expect_gt(o$statistic, 0)
 ##   expect_gt(o$p.value, 0.01)})
@@ -1404,7 +1404,7 @@ test_that("composite test is sensitive", {
 ## test_that("Test works", {
 ##   d <- stable_dist(0, 1, 0, 2)
 ##   x <- d$sampler(100, d$par)
-##   o <- ef(x, d)
+##   o <- eg(x, d)
 ##   o
 ##   expect_gt(o$statistic, 0)
 ##   expect_gt(o$p.value, 0.01)})
@@ -1414,7 +1414,7 @@ test_that("composite test is sensitive", {
 ## test_that("Test works", {
 ##   d <- stable_dist(0, 1, .5, 1)
 ##   x <- d$sampler(100, d$par)
-##   o <- ef(x, d)
+##   o <- eg(x, d)
 ##   o
 ##   expect_gt(o$statistic, 0)
 ##   expect_gt(o$p.value, 0.01)})
@@ -1423,7 +1423,7 @@ test_that("composite test is sensitive", {
 ## test_that("Test works", {
 ##   d <- stable_dist(0, 1, -.5, 1)
 ##   x <- d$sampler(100, d$par)
-##   o <- ef(x, d)
+##   o <- eg(x, d)
 ##   o
 ##   expect_gt(o$statistic, 0)
 ##   expect_gt(o$p.value, 0.01)})
@@ -1431,7 +1431,7 @@ test_that("composite test is sensitive", {
 ## test_that("Test works", {
 ##   d <- stable_dist(0, 1, 1, 1, 0.25)
 ##   x <- d$sampler(100, d$par)
-##   o <- ef(x, d)
+##   o <- eg(x, d)
 ##   o
 ##   expect_gt(o$statistic, 0)
 ##   expect_gt(o$p.value, 0.01)})
@@ -1442,21 +1442,21 @@ test_that("composite test is sensitive", {
 test_that("Beta Estat should be positive", {
   d <- beta_dist(20, 20)
   x <- rbeta(100, 20, 20)
-  o <- ef(x, d)
+  o <- eg(x, d)
   o
   expect_gt(o$statistic, 0)})
 
 test_that("Beta Estat should be positive", {
   d <- beta_dist(.5, 1.5)
   x <- rbeta(100, .5, 1.5)
-  o <- ef(x, d)
+  o <- eg(x, d)
   o
   expect_gt(o$statistic, 0)})
 
 test_that("Beta Estat should be sensitive to parameter change", {
   d <- beta_dist(.5, 1.5)
   x <- rbeta(100, 20, 20)
-  o <- ef(x, d)
+  o <- eg(x, d)
   o
   expect_lt(o$p.value, .01)})
 
@@ -1464,14 +1464,14 @@ test_that("Beta Estat should be sensitive to parameter change", {
 test_that("Beta Composite should work", {
   d <- beta_dist()
   x <- rbeta(100, 20, 20)
-  o <- ef(x, d)
+  o <- eg(x, d)
   o
   expect_gt(o$statistic, 0)})
 
 test_that("Beta Composite should work", {
   d <- beta_dist()
   x <- rbeta(100, 1 / 60, 70)
-  o <- ef(x, d)
+  o <- eg(x, d)
   o
   expect_gt(o$statistic, 0)})
 
@@ -1480,7 +1480,7 @@ test_that("Pareto: shape, scale >1", {
   # erratic
   d <- pareto_dist(3, 3)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 25)
+  o <- eg(x, d, nsim = 25)
   o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
@@ -1494,7 +1494,7 @@ test_that("Pareto: shape = scale = pow > 1", {
 test_that("Pareto: shape, scale >1", {
   d <- pareto_dist(5, 5)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 100)
+  o <- eg(x, d, nsim = 100)
   o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
@@ -1504,7 +1504,7 @@ test_that("Pareto: shape, scale >1", {
 test_that("Pareto: shape, scale <1", {
   d <- pareto_dist(.1, .1)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 0)
+  o <- eg(x, d, nsim = 0)
   o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
@@ -1513,7 +1513,7 @@ test_that("Pareto: shape, scale <1", {
 test_that("Pareto: shape, scale = 1", {
   d <- pareto_dist(1, 1)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 0)
+  o <- eg(x, d, nsim = 0)
   o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
@@ -1522,7 +1522,7 @@ test_that("Pareto: shape, scale = 1", {
 test_that("Pareto: mixed", {
   d <- pareto_dist(.1, 10)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 0)
+  o <- eg(x, d, nsim = 0)
   o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
@@ -1531,7 +1531,7 @@ test_that("Pareto: mixed", {
 test_that("Pareto: mixed", {
   d <- pareto_dist(10, .1)
   x <- d$sampler(100, d$par)
-  o <- ef(x, d, nsim = 0)
+  o <- eg(x, d, nsim = 0)
   o
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
@@ -1552,11 +1552,11 @@ test_that("Pareto: pow > shape", {
 test_that("Binomial", {
   x <- rbinom(10, 10, .5)
   d <- binomial_dist(size = 10, prob = .5)
-  o <- ef(x, d, 0)
+  o <- eg(x, d, 0)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
   x <- rbinom(10, 10, .9)
-  o <- ef(x, d)
+  o <- eg(x, d)
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.5)
   x <- rexp(10)
@@ -1568,7 +1568,7 @@ test_that("Binomial", {
 
 test_that("lnorm test", {
   x <- rlnorm(1000)
-  o <- ef(x, lognormal_dist(0, 1), nsim = 25)
+  o <- eg(x, lognormal_dist(0, 1), nsim = 25)
   o
   expect_gt(o$statistic, 0)
 })
@@ -1577,7 +1577,7 @@ test_that("lnorm test", {
   set.seed(1)
   x <- rlnorm(1000, 5, 5)
   d <- lognormal_dist(5, 5)
-  o <- ef(x, d, nsim = 25)
+  o <- eg(x, d, nsim = 25)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.001)
@@ -1586,7 +1586,7 @@ test_that("lnorm test", {
 test_that("lnorm test should detect meanlog shift", {
   x <- rlnorm(1000, 7, 5)
   d <- lognormal_dist(5, 5)
-  o <- ef(x, d, nsim = 25)
+  o <- eg(x, d, nsim = 25)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.5)
@@ -1595,7 +1595,7 @@ test_that("lnorm test should detect meanlog shift", {
 test_that("lnorm composite test ", {
   x <- rlnorm(1000, 2, 2)
   d <- lognormal_dist()
-  o <- ef(x, d, nsim = 25)
+  o <- eg(x, d, nsim = 25)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1604,7 +1604,7 @@ test_that("lnorm composite test ", {
 test_that("lnorm composite test can detect weibull ", {
   x <- rweibull(1000, 2, 2)
   d <- lognormal_dist()
-  o <- ef(x, d, nsim = 25)
+  o <- eg(x, d, nsim = 25)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.05)
@@ -1615,7 +1615,7 @@ test_that("lnorm composite test can detect weibull ", {
 test_that("laplace test", {
   d <- laplace_dist(0, 1)
   x <- d$sampler(1000, d$par)
-  o <- ef(x, d, nsim = 25)
+  o <- eg(x, d, nsim = 25)
   o
   expect_gt(o$statistic, 0)
 })
@@ -1623,7 +1623,7 @@ test_that("laplace test", {
 test_that("laplace test, different params. ", {
   d <- laplace_dist(5, 5)
   x <- d$sampler(1000, d$par)
-  o <- ef(x, d, nsim = 25)
+  o <- eg(x, d, nsim = 25)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.001)
@@ -1632,7 +1632,7 @@ test_that("laplace test, different params. ", {
 test_that("laplace test should detect location shift", {
   d <- laplace_dist(5, 5)
   x <- d$sampler(1000, list(location = 0, scale = 5))
-  o <- ef(x, d, nsim = 25)
+  o <- eg(x, d, nsim = 25)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.05)
@@ -1641,7 +1641,7 @@ test_that("laplace test should detect location shift", {
 test_that("laplace composite test ", {
   d <- laplace_dist()
   x <- d$sampler(1000, list(location = 0, scale = 5))
-  o <- ef(x, d, nsim = 25)
+  o <- eg(x, d, nsim = 25)
   o
   expect_gt(o$statistic, 0)
   expect_gt(o$p.value, 0.01)
@@ -1650,7 +1650,7 @@ test_that("laplace composite test ", {
 test_that("laplace composite test can detect normal ", {
   d <- laplace_dist()
   x <- rnorm(1000)
-  o <- ef(x, d, nsim = 25)
+  o <- eg(x, d, nsim = 25)
   o
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
