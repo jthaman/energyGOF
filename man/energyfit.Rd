@@ -11,9 +11,9 @@ energyfit(x, dist, nsim = 100)
 \item{x}{A numeric vector.}
 
 \item{dist}{A object of class GOFDist. The distribution to test \code{x} against.
-GOFDist objects are created with the various \code{name_dist(...)}
-functions in this package. See, for example, \code{\link[=normal_dist]{normal_dist()}} for details
-on this class.}
+GOFDist objects are created with the various \code{name_dist()} functions in
+this package. See, for example, \code{\link[=normal_dist]{normal_dist()}} for details on these class
+objects .}
 
 \item{nsim}{A positive integer. The number of parametric bootstrap
 replicates taken to calculate the p-value.}
@@ -36,11 +36,11 @@ goodness-of-fit hypothesis test. The htest object has the list elements:
 }
 \description{
 This is an alternative interface that provides the same test as
-\code{\link[=ef.test]{ef.test()}}, but allows the user to pass a distribution object like
-\code{\link[=normal_dist]{normal_dist()}}. The advantage is that you do not need to pass
-distribution parameters into a \code{...} argument as in \code{ef.test}. \code{ef.test}
-uses this function under the hood, but it's perfectly suitable for the
-user to use as well.
+\code{\link[=energyfit.test]{energyfit.test()}}, but allows the user to pass a distribution object like
+\code{\link[=normal_dist]{normal_dist()}} (Distribution objects are specific to this package). The
+advantage is that you do not need to pass distribution parameters into a
+\code{...} argument as in \code{energyfit.test}. \code{energyfit.test} uses this function
+under the hood, but it's perfectly suitable for the user to use as well.
 }
 \details{
 There are two types of goodness-of-fit tests covered by the energyfit

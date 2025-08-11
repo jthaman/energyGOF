@@ -456,7 +456,7 @@ xform_dist.WeibullDist <- function(x, dist) {
 
 #' @export
 xform_dist.GOFDist <- function(x, dist) {
-  # Must transform in Simple case.
+  # Done
   dist
 }
 #### EXXhat
@@ -481,7 +481,7 @@ EXXhat.GeneralizedGOFDist <- function(x, dist) {
 }
 
 
-#### Compute Energy GOF statistic: can make modifications to x
+#### Compute Energy GOF statistic
 
 Qhat <- function(x, dist, EYY) {
   UseMethod("Qhat", dist)
@@ -525,6 +525,7 @@ simulate_pval <- function(x, dist, nsim, Qhat, EYY) {
 output_htest <- function(x, dist, nsim, E_stat, sim) {
   cp <- inherits(dist, "CompositeGOFDist")
   gen <- inherits(dist, "GeneralizedGOFDist")
+  names(E_stat) <- paste0("E-statistic")
   if (cp) mle <- unlist(dist$statistic(x))
   structure(list(
     method = paste0((if (cp) "Composite" else "Simple"),
@@ -548,15 +549,15 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #### energyfit_test Generic & Methods
 
 #' @description This is an alternative interface that provides the same test as
-#'   [ef.test()], but allows the user to pass a distribution object like
-#'   [normal_dist()]. The advantage is that you do not need to pass
-#'   distribution parameters into a `...` argument as in `ef.test`. `ef.test`
-#'   uses this function under the hood, but it's perfectly suitable for the
-#'   user to use as well.
+#'   [energyfit.test()], but allows the user to pass a distribution object like
+#'   [normal_dist()] (Distribution objects are specific to this package). The
+#'   advantage is that you do not need to pass distribution parameters into a
+#'   `...` argument as in `energyfit.test`. `energyfit.test` uses this function
+#'   under the hood, but it's perfectly suitable for the user to use as well.
 #' @param dist A object of class GOFDist. The distribution to test `x` against.
-#'   GOFDist objects are created with the various `name_dist(...)`
-#'   functions in this package. See, for example, [normal_dist()] for details
-#'   on this class.
+#'   GOFDist objects are created with the various `name_dist()` functions in
+#'   this package. See, for example, [normal_dist()] for details on these class
+#'   objects .
 #' @inherit energyfit.test return author title references details seealso
 #' @inheritParams energyfit.test
 #' @inheritSection energyfit.test About Energy
@@ -600,7 +601,6 @@ energyfit.GOFDist <- function(x, dist, nsim = 100) {
   EYY <- dist$EYY(dist$sampler_par)
   E_stat <- Qhat(x, dist, EYY)
   sim <- simulate_pval(x, dist, nsim, Qhat, EYY)
-  names(E_stat) <- paste0("E-statistic")
   output_htest(x, dist, nsim, E_stat, sim)
 }
 
@@ -623,7 +623,7 @@ composite_not_allowed <- function(...) {
   if (n_null == 0) {
     FALSE  # simple test: all pars supplied
   } else {
-    stop("Composite test not implemented.")
+    stop("Composite test not implemented for this distribution.")
   }
 }
 
@@ -708,7 +708,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
       sampler_par = list(mean = 0, sd = 1),
       par_domain = function(par) {
         all(
-          length(mean) == 1 || is.null(mean), # todo, do this for other dists
+          length(mean) == 1 || is.null(mean),
           length(sd) == 1 || is.null(sd),
           par$sd > 0 || is.null(par$sd),
           is.finite(par$mean) || is.null(par$mean))
@@ -1674,6 +1674,8 @@ invgauss_dist <- inverse_gaussian_dist
 ##### Inverse Gamma?
 
 ##### Gumbel?
+
+##### Generalized Lambda?
 
 #### Generalized Goodness-of-fit Tests
 
