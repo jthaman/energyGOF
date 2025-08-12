@@ -103,12 +103,13 @@
 #'   Beta                  \tab beta_dist              \tab shape1, shape2                        \tab No \cr
 #'   Half-Normal           \tab halfnormal_dist        \tab theta                                 \tab No \cr
 #'   Laplace               \tab laplace_dist           \tab location, scale                       \tab No \cr
-#'   Lognormal            \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
+#'   Lognormal             \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
 #'   Asymmetric Laplace    \tab asymmetriclaplace_dist \tab location, scale, skew                 \tab No \cr
+#'   F                     \tab d_dist                 \tab df1, df2                              \tab No \cr
 #'   Weibull               \tab weibull_dist           \tab shape, scale                          \tab No \cr
 #'   Gamma                 \tab gamma_dist             \tab shape, rate                           \tab No \cr
 #'   Chi Squared           \tab chisq_dist             \tab df                                    \tab No \cr
-#'   Inverse Gaussian      \tab inversegaussian_dist   \tab mean, shape  \tab No \cr
+#'   Inverse Gaussian      \tab inversegaussian_dist   \tab mean, shape                           \tab No \cr
 #'   Pareto                \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
 #'   Cauchy                \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
 #'   Stable                \tab stable_dist            \tab location, scale, skew, stability, pow \tab No
@@ -118,7 +119,7 @@
 #'
 #' Székely, G. J., & Rizzo, M. L. (2023) provide the motivation:
 #'
-#'" Data energy is a real number (typically a non-negative number) that depends
+#' "Data energy is a real number (typically a non-negative number) that depends
 #' on the distances between data. This concept is based on the notion of
 #' Newton’s gravitational potential energy, which is also a function of the
 #' distance between bodies. The idea of data energy or energy statistics is to
@@ -234,7 +235,8 @@
 #' Rizzo, M. L. (2009). New goodness-of-fit tests for Pareto distributions.
 #' ASTIN Bulletin: The Journal of the IAA, 39(2), 691-715.
 #'
-#'
+#' Yang, G. (2012). The Energy Goodness-of-fit Test for Univariate Stable
+#' Distributions (Doctoral dissertation, Bowling Green State University).
 #'
 #'
 #'
