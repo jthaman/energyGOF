@@ -2,7 +2,7 @@
 % Please edit documentation in R/energyGOF.R
 \name{lognormal_dist}
 \alias{lognormal_dist}
-\title{Create a log-normal distribution object for energy testing}
+\title{Create a lognormal distribution object for energy testing}
 \usage{
 lognormal_dist(meanlog = NULL, sdlog = NULL)
 }
@@ -43,7 +43,7 @@ objects.
 }
 \description{
 Create an S3 object that sets all the required data needed by
-energyGOF to execute the energy goodness-of-fit test against a log-normal
+energyGOF to execute the energy goodness-of-fit test against a lognormal
 distribution. If \code{meanlog} and \code{sdlog} are both \code{NULL}, a composite test is
 performed.
 }

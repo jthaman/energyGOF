@@ -46,8 +46,10 @@ This is exactly the distribution corresponding to the PDF
   f(x | \mu, \lambda) =
   \left( \frac{\lambda}{2 \pi x^3} \right)^{1/2}
   \exp \left( -\frac{\lambda (x - \mu)^2}{2 \mu^2 x} \right),
-  \qquad x > 0.
+  \qquad x > 0,
 }
+
+where \code{mean} is \eqn{\mu} and \code{shape} is \eqn{\lambda}.
 
 If mean and shape are both NULL, a composite test is performed.
 

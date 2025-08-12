@@ -9,8 +9,9 @@
   x,
   dist = c("uniform", "exponential", "bernoulli", "binomial", "geometric", "normal",
     "gaussian", "beta", "poisson", "lognormal", "lnorm", "laplace", "doubleexponential",
-    "asymmetriclaplace", "alaplace", "inversegaussian", "halfnormal", "chisq",
-    "chisquared", "gamma", "weibull", "cauchy", "stable", "pareto"),
+    "asymmetriclaplace", "alaplace", "inversegaussian", "invgaussian", "halfnormal",
+    "half-normal", "chisq", "chisquared", "F", "gamma", "weibull", "cauchy", "stable",
+    "pareto"),
   nsim = 100,
   ...
 )
@@ -86,10 +87,7 @@ The table summarizes the available distributions, their parameters, and
 whether a composite GOF test may be performed.
 
 \tabular{llll}{
-\strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab
-\strong{Composite Allowed} \cr
-\tab                        \tab                                       \tab    \cr
-Normal                \tab normal_dist            \tab mean, sd                              \tab Yes\cr
+\strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab \strong{Composite Allowed} \cr
 Normal                \tab normal_dist            \tab mean, sd                              \tab Yes\cr
 Uniform               \tab uniform_dist           \tab min, max                              \tab No \cr
 Exponential           \tab exponential_dist       \tab rate                                  \tab Yes\cr
@@ -99,16 +97,20 @@ Binomial              \tab binomial_dist          \tab prob                     
 Beta                  \tab beta_dist              \tab shape1, shape2                        \tab No \cr
 Half-Normal           \tab halfnormal_dist        \tab theta                                 \tab No \cr
 Laplace               \tab laplace_dist           \tab location, scale                       \tab No \cr
-Log-normal            \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
+Lognormal             \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
 Asymmetric Laplace    \tab asymmetriclaplace_dist \tab location, scale, skew                 \tab No \cr
+F                     \tab d_dist                 \tab df1, df2                              \tab No \cr
 Weibull               \tab weibull_dist           \tab shape, scale                          \tab No \cr
 Gamma                 \tab gamma_dist             \tab shape, rate                           \tab No \cr
 Chi Squared           \tab chisq_dist             \tab df                                    \tab No \cr
-Inverse Gaussian      \tab inversegaussian_dist   \tab mean, shape  \tab No \cr
+Inverse Gaussian      \tab inversegaussian_dist   \tab mean, shape                           \tab No \cr
 Pareto                \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
 Cauchy                \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
 Stable                \tab stable_dist            \tab location, scale, skew, stability, pow \tab No
 }
+
+Note: Although it may be proper to hyphenate some distribution names in
+text, there are no hyphens in any \verb{*_dist} function names.
 }
 
 \section{About Energy}{
@@ -116,7 +118,7 @@ Stable                \tab stable_dist            \tab location, scale, skew, st
 
 Székely, G. J., & Rizzo, M. L. (2023) provide the motivation:
 
-" Data energy is a real number (typically a non-negative number) that depends
+"Data energy is a real number (typically a non-negative number) that depends
 on the distances between data. This concept is based on the notion of
 Newton’s gravitational potential energy, which is also a function of the
 distance between bodies. The idea of data energy or energy statistics is to
@@ -231,6 +233,9 @@ University).
 
 Rizzo, M. L. (2009). New goodness-of-fit tests for Pareto distributions.
 ASTIN Bulletin: The Journal of the IAA, 39(2), 691-715.
+
+Yang, G. (2012). The Energy Goodness-of-fit Test for Univariate Stable
+Distributions (Doctoral dissertation, Bowling Green State University).
 }
 \seealso{
 \link[stats]{Distributions} for a list of distributions available

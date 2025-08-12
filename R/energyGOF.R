@@ -265,7 +265,7 @@ energyGOF.test <- function(x, dist = c("uniform",
                                        "laplace", "doubleexponential",
                                        "asymmetriclaplace", "alaplace",
                                        "inversegaussian", "invgaussian",
-                                       "halfnormal", "half-normal"
+                                       "halfnormal", "half-normal",
                                        "chisq", "chisquared",
                                        "F",
                                        "gamma",

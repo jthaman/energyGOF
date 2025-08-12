@@ -2,7 +2,7 @@
 % Please edit documentation in R/energyGOF.R
 \name{halfnormal_dist}
 \alias{halfnormal_dist}
-\title{Create a half-normal distribution object for energy testing}
+\title{Create a halfnormal distribution object for energy testing}
 \usage{
 halfnormal_dist(scale = NULL)
 }
@@ -38,7 +38,7 @@ objects.
 \description{
 Create an S3 object that sets all the required data needed by
 energyGOF to execute the energy goodness-of-fit test against a
-half-normal distribution. If scale is NULL, a composite test is performed.
+halfnormal distribution. If scale is NULL, a composite test is performed.
 
 This is exactly the distribution of \eqn{|X|}, where \eqn{X ~
   N(0,\theta = scale)}
