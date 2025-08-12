@@ -10,6 +10,8 @@ test_that("formals same as switch", {
 })
 
 
+#### Idea; tests that ensure the p-value distributions are uniform under Null.
+
 ##### test that distributions are correctly formed
 
 test_that("Dists", {

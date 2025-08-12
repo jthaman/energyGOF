@@ -550,18 +550,19 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
   ), class = "htest")
 }
 
-#### energyGOF_test Generic & Methods
+#### energyGOF Generic & Methods
 
 #' @description This is an alternative interface that provides the same test as
 #'   [energyGOF.test()], but allows the user to pass a distribution object like
-#'   [normal_dist()] (Distribution objects are specific to this package). The
-#'   advantage is that you do not need to pass distribution parameters into a
-#'   `...` argument as in `energyGOF.test`. `energyGOF.test` uses this function
-#'   under the hood, but it's perfectly suitable for the user to use as well.
-#' @param dist An object of class GOFDist. The distribution to test `x` against.
-#'   GOFDist objects are created with the various `name_dist()` functions in
-#'   this package. See, for example, [normal_dist()] for details on these class
-#'   objects .
+#'   [normal_dist()] (Distribution objects are specific to the implementation
+#'   of this R package). The advantage is that you do not need to pass
+#'   distribution parameters into a `...` argument as in `energyGOF.test`.
+#'   `energyGOF.test` uses this function under the hood, but it's perfectly
+#'   suitable for the user to use as well.
+#' @param dist An object of class GOFDist. The distribution to test `x`
+#'   against. GOFDist objects are created with the various `name_dist()`
+#'   functions in this package. See, for example, [normal_dist()] for details
+#'   on these class objects .
 #' @inherit energyGOF.test return author title references details seealso
 #' @inheritParams energyGOF.test
 #' @inheritSection energyGOF.test About Energy
