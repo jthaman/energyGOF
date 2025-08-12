@@ -103,7 +103,7 @@
 #'   Beta                  \tab beta_dist              \tab shape1, shape2                        \tab No \cr
 #'   Half-Normal           \tab halfnormal_dist        \tab theta                                 \tab No \cr
 #'   Laplace               \tab laplace_dist           \tab location, scale                       \tab No \cr
-#'   Log-normal            \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
+#'   Lognormal            \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
 #'   Asymmetric Laplace    \tab asymmetriclaplace_dist \tab location, scale, skew                 \tab No \cr
 #'   Weibull               \tab weibull_dist           \tab shape, scale                          \tab No \cr
 #'   Gamma                 \tab gamma_dist             \tab shape, rate                           \tab No \cr
@@ -262,9 +262,10 @@ energyGOF.test <- function(x, dist = c("uniform",
                                        "lognormal", "lnorm",
                                        "laplace", "doubleexponential",
                                        "asymmetriclaplace", "alaplace",
-                                       "inversegaussian",
-                                       "halfnormal",
+                                       "inversegaussian", "invgaussian",
+                                       "halfnormal", "half-normal"
                                        "chisq", "chisquared",
+                                       "F",
                                        "gamma",
                                        "weibull",
                                        "cauchy",
@@ -349,9 +350,11 @@ char_to_dist <- function(name, ...) {
          "asymmetriclaplace" = asymmetric_laplace_dist(...),
          "alaplace" = asymmetric_laplace_dist(...),
          "inversegaussian" = inverse_gaussian_dist(...),
+         "invgaussian" = inverse_gaussian_dist(...),
          "halfnormal" = halfnormal_dist(...),
          "chisq" = chisq_dist(...),
          "chisquared" = chisq_dist(...),
+         "F" = f_dist(...),
          "binomial" = binomial_dist(...),
          "bernoulli" = bernoulli_dist(...),
          "geometric" = geometric_dist(...),
@@ -1099,10 +1102,10 @@ geometric_dist  <- function(prob = 0.5) {
 ##### Negative Binomial?
 
 ##### Half-Normal
-#' @title Create a half-normal distribution object for energy testing
+#' @title Create a halfnormal distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
 #'   energyGOF to execute the energy goodness-of-fit test against a
-#'   half-normal distribution. If scale is NULL, a composite test is performed.
+#'   halfnormal distribution. If scale is NULL, a composite test is performed.
 #' @inherit normal_dist return author
 #' @param scale NULL, or a positive scale parameter, like sd in [rnorm()]. Must
 #'   be length 1.
@@ -1221,9 +1224,9 @@ laplace_dist <- function(location = NULL, scale = NULL) {
 
 ##### Log-Normal
 
-#' @title Create a log-normal distribution object for energy testing
+#' @title Create a lognormal distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOF to execute the energy goodness-of-fit test against a log-normal
+#'   energyGOF to execute the energy goodness-of-fit test against a lognormal
 #'   distribution. If `meanlog` and `sdlog` are both `NULL`, a composite test is
 #'   performed.
 #' @inherit normal_dist description return author
@@ -1240,7 +1243,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
   cp <- is_composite(meanlog, sdlog)
   dist <- structure(
     list(
-      name = "Log-Normal",
+      name = "Lognormal",
       composite_p = cp,
       par = list(meanlog = meanlog, sdlog = sdlog),
       sampler_par = if (cp) {
@@ -1642,8 +1645,10 @@ chisq_dist <- function(df = 2) {
 #'   f(x | \mu, \lambda) =
 #'   \left( \frac{\lambda}{2 \pi x^3} \right)^{1/2}
 #'   \exp \left( -\frac{\lambda (x - \mu)^2}{2 \mu^2 x} \right),
-#'   \qquad x > 0.
+#'   \qquad x > 0,
 #' }
+#'
+#' where `mean` is \eqn{\mu} and `shape` is \eqn{\lambda}.
 #'
 #' If mean and shape are both NULL, a composite test is performed.
 #'
