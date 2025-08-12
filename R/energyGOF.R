@@ -90,10 +90,7 @@
 #'
 #'
 #' \tabular{llll}{
-#'   \strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab
-#' \strong{Composite Allowed} \cr
-#'                         \tab                        \tab                                       \tab    \cr
-#'   Normal                \tab normal_dist            \tab mean, sd                              \tab Yes\cr
+#'   \strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab \strong{Composite Allowed} \cr
 #'   Normal                \tab normal_dist            \tab mean, sd                              \tab Yes\cr
 #'   Uniform               \tab uniform_dist           \tab min, max                              \tab No \cr
 #'   Exponential           \tab exponential_dist       \tab rate                                  \tab Yes\cr
@@ -114,6 +111,9 @@
 #'   Cauchy                \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
 #'   Stable                \tab stable_dist            \tab location, scale, skew, stability, pow \tab No
 #' }
+#'
+#' Note: Although it may be proper to hyphenate some distribution names in
+#' text, there are no hyphens in any `*_dist` function names.
 #'
 #' @section About Energy:
 #'
