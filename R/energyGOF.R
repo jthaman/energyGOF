@@ -594,6 +594,7 @@ eg <- energyGOF
 #' @export
 energyGOF.function <- function(x, dist, nsim = 100) {
   # TODO, for supplying a quantile function.
+  # TODO, for supplying a rng sampler
 }
 
 #' @export
@@ -1396,7 +1397,8 @@ asymmetric_laplace_dist <- function(location = NULL,
 #' @rdname asymmetric_laplace_dist
 alaplace_dist <- asymmetric_laplace_dist
 
-##### F Distribution
+##### F Distribution (Fisher Distribution)
+######  Todo add  tests
 #' @title Create a F distribution object for energy testing
 #' @inherit normal_dist description return author
 #' @param df1 Same as the shape parameter in [stats::rf()]
@@ -1423,28 +1425,30 @@ f_dist <- function(df1 = NULL, df2 = NULL) {
       par_domain = function(par) {
         all(
         (par$df1 > 0 && length(par$df1) == 1),
-        (par$df2 > 0 && length(par$df2) == 1))
+        (par$df2 > 2 && length(par$df2) == 1))
       },
       sampler = function(n, par) {
         rf(n, df1 = par$df1, df2 = par$df2)},
-      ## Wrong
       EXYhat = function(x, par) {
+        df1 <- par$df1
+        df2 <- par$df2
         EX <- df2 /(df2 - 2)
         u <- df1 * x / (df1 * x + df2)
-        mean(x * (2 * pf(x, par$df1, par$df2) - 1) +
-               EX * (1 - 2 * pbeta(u, df1 / 2, df2 / 2)))
+        mean(x * (2 * pf(x, df1, df2) - 1) +
+               EX * (1 - 2 * pbeta(u, df1 / 2 + 1, df2 / 2 - 1)))
       },
       ## Wrong
       EYY = function(par) {
-        EX <- df2 /(df2 - 2)
+        df1 <- par$df1
+        df2 <- par$df2
+        EY <- df2 /(df2 - 2)
         integrand <- function(t, df1, df2) {
           a <- df1 / 2
           b <- df2 / 2
-          u <- df1 * t / (df1 * t + df2)
-          (1 - pbeta(u, a, b)^2 / (1 - u)^2)
+          (1 - pbeta(t, a, b))^2 / (1 - t)^2
         }
         I <- integrate(integrand, 0, 1, df1 = df1, df2 = df2)$value
-        2 * EX - 2 * df2 / df1 * I
+        2 * EY - 2 * df2 / df1 * I
       }
     ), class = c("FDist", "EuclideanGOFDist", "GOFDist")
   )
