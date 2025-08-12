@@ -670,11 +670,9 @@ print.GOFDist <- function(x, ...) {
 #' @param mean NULL, or if specified, same as [rnorm()], but must be length 1.
 #' @param sd NULL, or if specified, Same as [rnorm()], but must be length 1
 #'
-#' @return S3 data object containing the fields. This is all used internally by
-#'   [energyGOF()] and [energyGOF.test()].
-#'
+#' @return S3 data object containing following the fields.
 #' * name: String
-#' * composite_p: TRUE if test is composite
+#' * composite_p: Composite predicate. TRUE if test is composite.
 #' * par: Distribution parameters, list of the formals.
 #' * sampler_par: Distribution parameters used for the calculation of energy
 #' statistic. These may be different than `par`.
@@ -686,21 +684,33 @@ print.GOFDist <- function(x, ...) {
 #' generalized test.)
 #' * EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or
 #' \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according
-#' to `dist` and x is the data under test (which is passed in eg.test or eg).
+#' to `dist` and x is the data under test (which is passed in `eg.test` or `eg`).
 #' * xform: Function that may be used to transform x. Only available in certain
 #' distribution objects.
 #' * statistic: Function that returns a list of maximum likelihood estimates.
 #' Only available in certain distribution objects.
-#' * notes: Distribution specific messages.
+#' * notes: Distribution specific messages. Only used in certain distribution
+#' objects.
 #'
 #' @examples
-#'
-#' normal_dist(0, 1)
+#' d <- normal_dist(0, 1)
 #'
 #' # Composite test
-#' d <- normal_dist()
+#' dc <- normal_dist()
+#' eg(rnorm(10), dc)
 #'
-#' eg(rnorm(10), d)
+#'
+#' ### Expected distances:
+#'
+#' d$EYY(d$par)
+#'
+#' ## should be about the same as mean(abs(rnorm(1e5) - rnorm(1e5)))
+#'
+#' x <- 3
+#'
+#' d$EXYhat(3, d$par)
+#'
+#' ## should be about the same as mean(abs(x - rnorm(1e5)))
 #'
 #' @export
 normal_dist <- function(mean = NULL, sd = NULL) {
