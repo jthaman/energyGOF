@@ -282,7 +282,7 @@ energyGOF.test <- function(x, dist = c("uniform",
   energyGOF(x, dist, nsim)
 }
 
-#' @export eg.test
+#' @rdname energyGOF.test
 eg.test <- energyGOF.test
 
 #### Validation
