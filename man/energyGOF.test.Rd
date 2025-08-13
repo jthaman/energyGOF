@@ -87,7 +87,7 @@ The table summarizes the available distributions, their parameters, and
 whether a composite GOF test may be performed.
 
 \tabular{llll}{
-\strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab \strong{Composite Allowed} \cr
+\strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab \strong{Composite\nAllowed} \cr
 Normal                \tab normal_dist            \tab mean, sd                              \tab Yes\cr
 Uniform               \tab uniform_dist           \tab min, max                              \tab No \cr
 Exponential           \tab exponential_dist       \tab rate                                  \tab Yes\cr

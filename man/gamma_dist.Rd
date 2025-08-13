@@ -14,25 +14,25 @@ gamma_dist(shape = 1, rate = 1)
 \value{
 S3 data object containing following the fields.
 \itemize{
-\item name: String
-\item composite_p: Composite predicate. TRUE if test is composite.
-\item par: Distribution parameters, list of the formals.
-\item sampler_par: Distribution parameters used for the calculation of energy
+\item \code{name}: String
+\item \code{composite_p}: Composite predicate. TRUE if test is composite.
+\item \code{par}: Distribution parameters, list of the formals.
+\item \code{sampler_par}: Distribution parameters used for the calculation of energy
 statistic. These may be different than \code{par}.
-\item par_domain: Function used to ensure \code{par} and \code{sampler_par} are valid for
+\item \code{par_domain}: Function used to ensure \code{par} and \code{sampler_par} are valid for
 this distribution
-\item support: Function to check that data \code{x} can be tested against \code{dist}
-\item sampler: Function used for rng by \code{\link[boot:boot]{boot::boot()}}
-\item EYY: Function to compute \eqn{E|Y-Y'|} (or \eqn{E|Y-Y'|^{pow}}, for the
+\item \code{support}: Function to check that data \code{x} can be tested against \code{dist}
+\item \code{sampler}: Function used for rng by \code{\link[boot:boot]{boot::boot()}}
+\item \code{EYY}: Function to compute \eqn{E|Y-Y'|} (or \eqn{E|Y-Y'|^{pow}}, for the
 generalized test.)
-\item EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or
+\item \code{EXYhat}: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or
 \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according
 to \code{dist} and x is the data under test (which is passed in \code{eg.test} or \code{eg}).
-\item xform: Function that may be used to transform x. Only available in certain
+\item \code{xform}: Function that may be used to transform x. Only available in certain
 distribution objects.
-\item statistic: Function that returns a list of maximum likelihood estimates.
+\item \code{statistic}: Function that returns a list of maximum likelihood estimates.
 Only available in certain distribution objects.
-\item notes: Distribution specific messages. Only used in certain distribution
+\item \code{notes}: Distribution specific messages. Only used in certain distribution
 objects.
 }
 }

@@ -678,25 +678,25 @@ print.GOFDist <- function(x, ...) {
 #' @param sd NULL, or if specified, Same as [rnorm()], but must be length 1
 #'
 #' @return S3 data object containing following the fields.
-#' * name: String
-#' * composite_p: Composite predicate. TRUE if test is composite.
-#' * par: Distribution parameters, list of the formals.
-#' * sampler_par: Distribution parameters used for the calculation of energy
+#' * `name`: String
+#' * `composite_p`: Composite predicate. TRUE if test is composite.
+#' * `par`: Distribution parameters, list of the formals.
+#' * `sampler_par`: Distribution parameters used for the calculation of energy
 #' statistic. These may be different than `par`.
-#' * par_domain: Function used to ensure `par` and `sampler_par` are valid for
+#' * `par_domain`: Function used to ensure `par` and `sampler_par` are valid for
 #' this distribution
-#' * support: Function to check that data `x` can be tested against `dist`
-#' * sampler: Function used for rng by [boot::boot()]
-#' * EYY: Function to compute \eqn{E|Y-Y'|} (or \eqn{E|Y-Y'|^{pow}}, for the
+#' * `support`: Function to check that data `x` can be tested against `dist`
+#' * `sampler`: Function used for rng by [boot::boot()]
+#' * `EYY`: Function to compute \eqn{E|Y-Y'|} (or \eqn{E|Y-Y'|^{pow}}, for the
 #' generalized test.)
-#' * EXYhat: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or
+#' * `EXYhat`: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or
 #' \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according
 #' to `dist` and x is the data under test (which is passed in `eg.test` or `eg`).
-#' * xform: Function that may be used to transform x. Only available in certain
+#' * `xform`: Function that may be used to transform x. Only available in certain
 #' distribution objects.
-#' * statistic: Function that returns a list of maximum likelihood estimates.
+#' * `statistic`: Function that returns a list of maximum likelihood estimates.
 #' Only available in certain distribution objects.
-#' * notes: Distribution specific messages. Only used in certain distribution
+#' * `notes`: Distribution specific messages. Only used in certain distribution
 #' objects.
 #'
 #' @examples
