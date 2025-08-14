@@ -299,27 +299,18 @@ validate_par <- function(dist) {
   }
 }
 
-##### Validate Distribution Obj
-validate_dist <- function(dist) {
-  # Not done!
-  stopifnot(all(c("name", "par", "ref_par",
-                  "support", "sampler",
-                  "EYY", "EXYhat") %in% names(dist)))
-  stopifnot(setequal(names(dist$par), formals(dist)))
-  stopifnot(setequal(names(dist$ref_par), formals(dist)))
-}
-
 
 ##### Validate x
 validate_x <- function(x, dist) {
-  if (any(is.na(x)) || any(is.null(x)) || any(is.infinite(x))) {
+  if (any(is.na(x),
+          is.null(x),
+          is.infinite(x))) {
     stop ("Missing data are not supported.")
   }
   if (!dist$support(x, dist$par)) {
     stop(sprintf("Not all elements of x lie in the support of distribution: %s
 Support test:  %s",
-dist$name, paste0(deparse(body(dist$support)),
-                  collapse = "")))
+dist$name, paste0(deparse(body(dist$support)), collapse = "")))
   }
 }
 
