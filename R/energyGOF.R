@@ -42,16 +42,16 @@
 #'
 #' @return An object of class `htest' representing the result of the energy
 #'   goodness-of-fit hypothesis test. The htest object has the elements:
-#' * method: Simple or Composite
-#' * data.name
-#' * distribution: The distribution object created to test
-#' * parameter: List of parameters if the test is simple
-#' * nsim: Number of bootstrap replicates
-#' * composite_p: TRUE/FALSE composite predicate
-#' * statistic: The value of the energy statistic (\eqn{Q=nE^*})
-#' * p.value
-#' * sim_reps: bootstrap simulation of energy statistic
-#' * estimate: Any parameter estimates, if the test is composite
+#' * `method`: Simple or Composite
+#' * `data.name`
+#' * `distribution`: The distribution object created to test
+#' * `parameter`: List of parameters if the test is simple
+#' * `nsim`: Number of bootstrap replicates
+#' * `composite_p`: TRUE/FALSE composite predicate
+#' * `statistic`: The value of the energy statistic (\eqn{Q=nE^*})
+#' * `p.value`
+#' * `sim_reps`: bootstrap replicates of energy statistic
+#' * `estimate`: Any parameter estimates, if the test is composite
 #' @aliases eg.test
 #'
 #' @details
@@ -1801,6 +1801,7 @@ pareto_dist <- function(scale = NULL, shape = NULL,
         (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
         (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
         par$pow < par$shape / 2,
+        par$pow > 0,
         any(
           is.null(par$shape),
           par$shape < 1,
@@ -1924,7 +1925,8 @@ cauchy_dist <- function(location = NULL, scale = NULL,
         all(
           (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
           (length(par$location) == 1) || is.null(par$location),
-          par$pow < 1 && par$pow > 0
+          par$pow < 1,
+          par$pow > 0
         )
       },
       sampler = function(n, par) {
@@ -1990,7 +1992,8 @@ stable_dist <- function(location = 0, scale = 1,
           is.finite(par$location),
           par$scale > 0,
           par$skew >= -1 && par$skew <= 1,
-          par$pow < par$stability / 2
+          par$pow < par$stability / 2,
+          par$pow > 0
         )
       },
       sampler = function(n, par) {
