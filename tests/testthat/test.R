@@ -15,6 +15,12 @@ test_that("formals same as switch", {
 ##### test that distributions are correctly formed
 
 test_that("Dists", {
+  ## F
+  expect_s3_class(f_dist(4, 4), "GOFDist")
+  expect_error(f_dist(4, NULL))
+  expect_error(f_dist(NULL, 4))
+  expect_error(f_dist(NULL, NULL))
+  expect_error(f_dist(2, 2))
   ## Uniform
   expect_s3_class(uniform_dist(0, 1), "GOFDist")
   expect_s3_class(uniform_dist(-100, 100), "GOFDist")
@@ -146,6 +152,7 @@ test_that("eg.test", {
 ##### Test that X is correctly validated
 
 test_that ("validate support checks", {
+  f <- f_dist(3, 3)
   nd <- normal_dist()
   ed <- exponential_dist()
   bd <- bernoulli_dist()
@@ -171,6 +178,13 @@ test_that ("validate support checks", {
   x01 <- rbinom(10, 1, .5)
   unifx <- rbeta(10, 6, 6)
 
+  ## F
+  expect_error(validate_x(normalx, ed))
+  expect_no_error(validate_x(posx, ed))
+  expect_error(validate_x(intx, ed))
+  expect_error(validate_x(negx, ed))
+  expect_error(validate_x(x01, ed))
+  expect_no_error(validate_x(unifx, ed))
   ## Normal
   expect_no_error(validate_x(normalx, nd))
   expect_no_error(validate_x(posx, nd))
@@ -296,6 +310,28 @@ test_that ("validate support checks", {
 })
 
 #### Tests for expected distances
+
+##### F
+
+test_that("F EYY Distance",{
+  d <- f_dist(10, 10)
+  x <- d$sampler(1e6, d$par)
+  y <- d$sampler(1e6, d$par)
+  mc <- mean(abs(x - y))
+  dd <- d$EYY(d$par)
+  err <- (mc - dd) / dd
+  expect_lt(err, 0.01)
+})
+
+test_that("F EXY Distance",{
+  d <- f_dist(10, 10)
+  y <- d$sampler(1e6, d$par)
+  mc <- mean(abs(5 - y))
+  dd <- d$EXYhat(5, d$par)
+  err <- (mc - dd) / dd
+  expect_lt(err, 0.01)
+})
+
 
 ##### Normal
 
@@ -619,6 +655,33 @@ test_that("Cauchy Distances",{
 ##### Stable
 
 
+##### F Tests
+test_that("Test should work", {
+  x <- rf(1000, 10, 10)
+  d <- f_dist(10, 10)
+  o <- eg(x, d, nsim = 60)
+  o
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test should work", {
+  x <- rf(1000, 50, 50)
+  d <- f_dist(50, 50)
+  o <- eg(x, d, nsim = 60)
+  o
+  expect_gt(o$statistic, 0)
+  expect_gt(o$p.value, 0.01)
+})
+
+test_that("Test should detect weibull", {
+  x <- rweibull(1000, 4, 4)
+  d <- f_dist(4, 4)
+  o <- eg(x, d, nsim = 60)
+  o
+  expect_gt(o$statistic, 0)
+  expect_lt(o$p.value, 0.01)
+})
 
 ##### Normal Tests
 test_that("Normal should not be transformed", {
