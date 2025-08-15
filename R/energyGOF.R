@@ -345,6 +345,7 @@ char_to_dist <- function(name, ...) {
          "inversegaussian" = inverse_gaussian_dist(...),
          "invgaussian" = inverse_gaussian_dist(...),
          "halfnormal" = halfnormal_dist(...),
+         "half-normal" = halfnormal_dist(...),
          "chisq" = chisq_dist(...),
          "chisquared" = chisq_dist(...),
          "F" = f_dist(...),
