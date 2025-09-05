@@ -18,27 +18,37 @@
 #' @description Perform a goodness-of-fit test of univariate data `x` against a
 #'   distribution `dist`. Both simple (known parameter) and composite (unknown
 #'   parameter) cases are supported, but not all distributions allow for a
-#'   composite test. P-values are determined via parametric bootstrap. For
-#'   distributions where E|Y| is not finite (Cauchy, Pareto, Stable), a
-#'   generalized energy goodness-of-fit test is performed, and an additional
+#'   composite test. See [energyGOF-package] for the table of supported
+#'   distibutions. *P*-values are determined via parametric bootstrap. For
+#'   distributions where \eqn{E|Y|} is not finite (Cauchy, Pareto), a
+#'   *generalized* energy goodness-of-fit test is performed, and an additional
 #'   tuning parameter `pow` is required.
 #' @param x A numeric vector.
 #' @param dist A string. The distribution to test `x` against.
 #' @param nsim A positive integer. The number of parametric bootstrap
-#'   replicates taken to calculate the p-value.
-#' @param ... Parameters of the distribution `dist`. For distributions in the R
-#'   `stats' library, parameter argument names are identical. To test the
-#'   _composite_ goodness-of-fit hypothesis that `x` is distributed according
-#'   to the _family of distributions_ `dist`, don't pass parameters in `...`.
-#'   For generalized energy tests, you can also optionally pass the generalized
-#'   energy exponent `pow` here.
-#' @seealso \link[stats]{Distributions} for a list of distributions available
-#'   in most R installations. [energy::normal.test()] for the energy
-#'   goodness-of-fit test with unknown parameters. See
-#'   [energy::poisson.mtest()] for a different Poisson goodness-of-fit test
-#'   based on mean distances. The tests for (multivariate) Normal in the energy
-#'   package are implemented with compiled code, and are faster than the one
-#'   available in the energyGOF package.
+#'   replicates taken to calculate the *p*-value.
+#' @param ... Parameters of the distribution `dist`. Required for a simple
+#'   test. For distributions in the [stats] library, parameter argument names
+#'   are identical. To test the *composite* goodness-of-fit hypothesis that `x`
+#'   is distributed according to the *family of distributions* `dist`, don't
+#'   pass parameters in `...`. For *generalized* energy tests, you can also
+#'   optionally pass the generalized energy exponent `pow` here. (As you can
+#'   see, there is a lot going on in `...` and if you don't like that, you may
+#'   want to check out [energyGOF] instead.)
+#'
+#' @seealso
+#'  * [energyGOF] for the alternate S3 interface.
+#'
+#'  * \link[stats]{Distributions} for a list of distributions available
+#'   in most R installations.
+#'
+#'  * [energy::normal.test()] for the energy goodness-of-fit test with unknown
+#' parameters. The tests for (multivariate) Normal in the energy package are
+#' implemented with compiled code, and are faster than the one available in the
+#' energyGOF package.
+#'
+#'  * [energy::poisson.mtest()] for a different Poisson goodness-of-fit test
+#'   based on mean distances.
 #'
 #' @return An object of class `htest' representing the result of the energy
 #'   goodness-of-fit hypothesis test. The htest object has the elements:
@@ -57,32 +67,32 @@
 #'
 #' @details
 #'
-#' There are two types of goodness-of-fit tests covered by the energyGOF.test
-#' function, *simple* and *composite*. It's important to know the difference to
-#' use this package, because they yield different results. Simple GOF tests
-#' test the data `x` against a specific distribution with _known parameters_
-#' that you must pass to energyGOF.test in the ellipsis argument (...). You
-#' should use a simple GOF test if you wish to test questions like
-#' "my data is Normal with mean 1 and sd 2". energyGOF.test can also conduct
+#' There are two types of goodness-of-fit tests covered by the energyGOF
+#' package, *simple* and *composite*. It's important to know the difference
+#' because they yield different results. Simple GOF tests test the data `x`
+#' against a specific distribution with _known parameters_ that you must pass
+#' to energyGOF.test in the ellipsis argument (...). You should use a simple
+#' GOF test if you wish to test questions like
+#' "my data is Normal with mean 1 and sd 2". `energyGOF` can also conduct
 #' _some_ composite GOF tests. A composite test is performed if no parameters
 #' are passed in the ellipsis argument (...). You should conduct a composite
 #' test if your research question is
-#' "my data is Normal, but I don't know what the parameters are." Obviously,
+#' "my data are Normal, but I don't know what the parameters are." Obviously,
 #' this composite question is much more common in practice.
 #'
-#' All the composite tests in energyGOF assume that none of the parameters are
-#' known. So while there is a statistical test of Normality with known mean and
-#' unknown sd, this is not implemented in the energyGOF package. So, either
-#' pass all the distribution parameters or none of them. (In the special case
-#' of the Normal distribution, you can use the energy package to test the GOF
-#' hypothesis with any combination of known and unknown parameters.)
+#' All the composite tests in energyGOF assume that *none* of the parameters
+#' are known. So while there is a statistical test of Normality with known mean
+#' and unknown sd, this is not implemented in the energyGOF package, you will
+#' get an error is you try ask for that. So, either pass all the distribution
+#' parameters or none of them. (In the special case of the Normal distribution,
+#' you can use the energy package to test the GOF hypothesis with any
+#' combination of known and unknown parameters.)
 #'
-#' For each test, energyGOF.test calculates the test statistic and a *p*-value.
-#' Although it is not the only option, in all cases the p-value is calculated
-#' via parametric bootstrap. For large `nsim`, the p-values should be
-#' reasonably honest in small-ish samples. You should set nsim to be a very
-#' large number in practice. I recommend at least 10,000. The default value
-#' (100) is not a robust choice.
+#' For each test, `energyGOF` calculates the test statistic and a
+#' *p*-value. In all cases the *p*-value is calculated via parametric bootstrap.
+#' For large `nsim`, the *p*-values should be reasonably honest in small-ish
+#' samples. You should set nsim to be a very large number in practice. I
+#' recommend at least 10,000.
 #'
 #' @examples
 #' x <- rnorm(10)
@@ -139,8 +149,6 @@
 #'
 #' @importFrom fitdistrplus fitdist
 #'
-#'
-#'
 #' @export energyGOF.test
 energyGOF.test <- function(x, dist = c("uniform",
                                        "exponential",
@@ -162,7 +170,7 @@ energyGOF.test <- function(x, dist = c("uniform",
                                        "cauchy",
                                        "stable",
                                        "pareto"),
-                           nsim = 100,
+                           nsim,
                            ...) {
   valid_dists <- eval(formals(energyGOF.test)$dist)
   distname <- match.arg(tolower(dist), choices = valid_dists)
@@ -172,6 +180,7 @@ energyGOF.test <- function(x, dist = c("uniform",
 }
 
 #' @rdname energyGOF.test
+#' @export egof.test
 egof.test <- energyGOF.test
 
 #### Validation
@@ -438,6 +447,7 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 
 #### energyGOF Generic & Methods
 
+#' @title Goodness-of-fit tests via the energy of data
 #' @description This is an alternative interface that provides the same test as
 #'   [energyGOF.test()], but allows the user to pass a distribution object like
 #'   [normal_dist()] (Distribution objects are specific to the implementation
@@ -446,10 +456,10 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #'   `energyGOF.test` uses this function under the hood, but it's perfectly
 #'   suitable for the user to use as well.
 #' @param dist An object of class GOFDist. The distribution to test `x`
-#'   against. GOFDist objects are created with the various `name_dist()`
+#'   against. GOFDist objects are created with the various "`name_dist()`"
 #'   functions in this package. See, for example, [normal_dist()] for details
-#'   on these class objects .
-#' @inherit energyGOF.test return author title details seealso
+#'   on these class objects.
+#' @inherit energyGOF.test return author
 #' @inheritParams energyGOF.test
 #' @aliases egof
 #' @examples
@@ -465,23 +475,24 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #'
 #'
 #' @export energyGOF
-energyGOF <- function(x, dist, nsim = 100) {
+energyGOF <- function(x, dist, nsim) {
   validate_x(x, dist)
   nsim <- validate_nsim(nsim)
   UseMethod("energyGOF", dist)
 }
 
-#' @export eg
-eg <- energyGOF
+#' @rdname energyGOF
+#' @export egof
+egof <- energyGOF
 
 #' @export
-energyGOF.function <- function(x, dist, nsim = 100) {
+energyGOF.function <- function(x, dist, nsim) {
   # TODO, for supplying a quantile function.
   # TODO, for supplying a rng sampler
 }
 
 #' @export
-energyGOF.GOFDist <- function(x, dist, nsim = 100) {
+energyGOF.GOFDist <- function(x, dist, nsim) {
   ## Setup
   cp <- inherits(dist, "CompositeGOFDist")
   ## Run functions

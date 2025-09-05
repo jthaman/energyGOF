@@ -17,20 +17,15 @@
 #' @title energyGOF: Goodness-of-fit tests via the energy of data
 #' @author John T. Haman
 #'
-#' @description Perform a parametric goodness-of-fit test of univariate data.
-#'   Both simple (known parameter) and composite (unknown parameter) cases are
-#'   supported, but not all distributions allow for a composite test. In all
-#'   cases, *p*-values are determined via parametric bootstrap. The energyGOF
-#'   package supporting testing certain distribution families that lack finite
-#'   first absolute moment (currently just Cauchy and Pareto).
 #'
 #' @section Getting Started:
+#' The main entry point is energyGOF.test. The only documentation you need to
+#' read is [energyGOF.test] and [energyGOF-package].
 #'
-#' The main entry point is [energyGOF.test], but you may alternatively use
-#'   [energyGOF], which is a different, non-standard interface.
 #'
-#' Here is a simple example
+#' Here is a simple example to get you going
 #'
+#' ```
 #' x <- rnorm(10)
 #'
 #' ## Composite energy goodness-of-fit test (test for Normality with unknown
@@ -39,10 +34,17 @@
 #' energyGOF.test(x, "normal", nsim = 10)
 #'
 #' ## Simple energy goodness-of-fit test (test for Normality with known
-#' ## parameters). eg is an alias for energyGOF.test.
+#' ## parameters). egof.test is an alias for energyGOF.test.
 #'
 #' egof.test(x, "normal", nsim = 10, mean = 0, sd = 1)
+#' ```
 #'
+#' You may alternatively use the [energyGOF] function, which is a different
+#' interface using S3 objects, but it provides the same result. There is a lot
+#' of documentation in this package for the various S3 constructors that are
+#' needed by [energyGOF], **BUT** if you just want to do some testing and use the
+#' standard interface, you can probably ignore all of that and just read the
+#' page for [energyGOF.test].
 #'
 #' @section Distributions Supported:
 #'  The following distributions are supported
@@ -67,7 +69,6 @@
 #'   Inverse Gaussian      \tab inversegaussian_dist   \tab mean, shape                           \tab No \cr
 #'   Pareto                \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
 #'   Cauchy                \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
-#'   Stable                \tab stable_dist            \tab location, scale, skew, stability, pow \tab No
 #' }
 #'
 #' Note: Although it may be proper to hyphenate some distribution names in
@@ -86,41 +87,44 @@
 #' potential energy of data, which is zero if and only if an underlying
 #' statistical hypothesis is true."
 #'
-#' The notation X' indicates that X' is an independent and identically
-#' distributed copy of X.
+#' The notation \eqn{X'} indicates that \eqn{X'} is an independent and
+#' identically distributed copy of \eqn{X}.
 #'
-#' If X and Y are independent and E(|X|^s + |Y|^s) is finite, then for 0 < s <
-#' 2,
+#' If \eqn{X} and \eqn{Y} are independent and \eqn{E(|X|^s + |Y|^s)} is finite,
+#' then for \eqn{0 < s < 2},
 #'
 #' \deqn{2E|X-Y|^s - E|X-X'|^s - E|Y-Y'|^s \ge 0.}
 #'
-#' Equality is attained if and only if X and Y are identically distributed. The
-#' left side of the equation is the energy between X and Y. Energy can be
-#' generalized to multivariate data and even more exotic data types, but in
-#' this R package, we only treat univariate data.
+#' Equality is attained if and only if \eqn{X} and \eqn{Y} are identically
+#' distributed. The left side of the equation is the energy between \eqn{X} and
+#' \eqn{Y}. Energy can be generalized to multivariate data and even more exotic
+#' data types, but in this R package, we only treat univariate data.
 #'
 #' The concept of data energy between two random variables can be adapted to
-#' the one-sample goodness-of-fit problem. The one-sample *s*-energy is
+#' the one-sample goodness-of-fit problem. The one-sample \eqn{s}-energy is
 #'
 #' \deqn{E^* = \frac{2}{n} \sum_i E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2}
 #' \sum_i \sum_j |x_i - x_j|^s,}
 #'
 #' when \eqn{0 < s < 2} and \eqn{E|X|^s, E|Y|^s < \infty.}
 #'
-#' In most tests in the energyGOF package s = 1. In some cases (Pareto, Cauchy,
-#' Stable), E|Y| is not finite, so we need to use an s < 1. This is done by
-#' passing `pow` into `...` (but in all tests a default `pow` is provided).
-#' These tests are called generalized energy goodness-of-fit tests.
+#' In most tests in the `energyGOF` package \eqn{s = 1}. In some cases (Pareto
+#' and Cauchy), \eqn{E|Y|} is not finite, so we need to use an \eqn{s < 1}.
+#' This is done by passing `pow` into `...` (but in all tests a default `pow`
+#' is provided). These tests are called *generalized* energy goodness-of-fit
+#' tests in this package as well as in Székely, G. J., & Rizzo, M. L. (2023).
 #'
-#' In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (where
-#' the distribution of X is hidden) follows the same distribution as Y, which
-#' is specified. If X and Y have the same distribution, then \eqn{Q = nE^*} is
-#' a quadratic form of centered Gaussian random variables with expected value
-#' \eqn{E|Y-Y'|^s}. If X and Y differ, then Q goes to Inf. So, Q provides a
-#' consistent goodness-of-fit test, even in some situations where E|Y| is not
-#' finite. And that's what energyGOF.test does. Asymptotic theory of
-#' V-statistics can be applied to prove that tests based on Q are statistically
-#' consistent goodness-of-fit tests.
+#' To connect energy back to GOF testing, in the one-sample goodness-of-fit
+#' regime, we test if a sample \eqn{x_1, \ldots, x_n \sim X} (where the
+#' distribution of \eqn{X} is hidden) follows the same distribution as \eqn{Y},
+#' which is specified. If \eqn{X} and \eqn{Y} have the same distribution, then
+#' the distribution of \eqn{Q = nE^*} is a quadratic form of centered Gaussian
+#' random variables with expected value \eqn{E|Y-Y'|^s}. If \eqn{X} and \eqn{Y}
+#' differ, then \eqn{Q \to \infty} with \eqn{n}. So, \eqn{Q} provides a
+#' consistent goodness-of-fit test, even in some situations where \eqn{E|Y|} is
+#' not finite. And that's what `energyGOF.test` does. Asymptotic theory of
+#' V-statistics can be applied to prove that tests based on \eqn{Q} are
+#' statistically consistent goodness-of-fit tests.
 #'
 #' @references
 #'
@@ -151,8 +155,6 @@
 #' Yang, G. (2012). The Energy Goodness-of-fit Test for Univariate Stable
 #' Distributions (Doctoral dissertation, Bowling Green State University).
 #'
-#'
-#' @docType package
-#' @name energyGOF
-#' @keywords internal
+#' @aliases energyGOF-package
+
 "_PACKAGE"
