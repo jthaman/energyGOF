@@ -52,11 +52,12 @@
 #' * `p.value`
 #' * `sim_reps`: bootstrap replicates of energy statistic
 #' * `estimate`: Any parameter estimates, if the test is composite
-#' @aliases eg.test
+#'
+#' @aliases egof.test
 #'
 #' @details
 #'
-#' There are two types of goodness-of-fit tests covered by the energyGOF
+#' There are two types of goodness-of-fit tests covered by the energyGOF.test
 #' function, *simple* and *composite*. It's important to know the difference to
 #' use this package, because they yield different results. Simple GOF tests
 #' test the data `x` against a specific distribution with _known parameters_
@@ -76,93 +77,12 @@
 #' of the Normal distribution, you can use the energy package to test the GOF
 #' hypothesis with any combination of known and unknown parameters.)
 #'
-#' For each test, energyGOF.test calculates the test statistic and a p-value.
+#' For each test, energyGOF.test calculates the test statistic and a *p*-value.
 #' Although it is not the only option, in all cases the p-value is calculated
 #' via parametric bootstrap. For large `nsim`, the p-values should be
 #' reasonably honest in small-ish samples. You should set nsim to be a very
 #' large number in practice. I recommend at least 10,000. The default value
 #' (100) is not a robust choice.
-#'
-#' @section Distributions available to test:
-#'
-#' The table summarizes the available distributions, their parameters, and
-#' whether a composite GOF test may be performed.
-#'
-#'
-#' \tabular{llll}{
-#'   \strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab \strong{Composite Allowed} \cr
-#'   Normal                \tab normal_dist            \tab mean, sd                              \tab Yes\cr
-#'   Uniform               \tab uniform_dist           \tab min, max                              \tab No \cr
-#'   Exponential           \tab exponential_dist       \tab rate                                  \tab Yes\cr
-#'   Poisson               \tab poisson_dist           \tab lambda                                \tab Yes\cr
-#'   Bernoulli             \tab bernoulli_dist         \tab prob                                  \tab No \cr
-#'   Binomial              \tab binomial_dist          \tab prob                                  \tab Yes\cr
-#'   Beta                  \tab beta_dist              \tab shape1, shape2                        \tab No \cr
-#'   Half-Normal           \tab halfnormal_dist        \tab theta                                 \tab No \cr
-#'   Laplace               \tab laplace_dist           \tab location, scale                       \tab No \cr
-#'   Lognormal             \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
-#'   Asymmetric Laplace    \tab asymmetriclaplace_dist \tab location, scale, skew                 \tab No \cr
-#'   F                     \tab d_dist                 \tab df1, df2                              \tab No \cr
-#'   Weibull               \tab weibull_dist           \tab shape, scale                          \tab No \cr
-#'   Gamma                 \tab gamma_dist             \tab shape, rate                           \tab No \cr
-#'   Chi Squared           \tab chisq_dist             \tab df                                    \tab No \cr
-#'   Inverse Gaussian      \tab inversegaussian_dist   \tab mean, shape                           \tab No \cr
-#'   Pareto                \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
-#'   Cauchy                \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
-#'   Stable                \tab stable_dist            \tab location, scale, skew, stability, pow \tab No
-#' }
-#'
-#' Note: Although it may be proper to hyphenate some distribution names in
-#' text, there are no hyphens in any `*_dist` function names.
-#'
-#' @section About Energy:
-#'
-#' Székely, G. J., & Rizzo, M. L. (2023) provide the motivation:
-#'
-#' "Data energy is a real number (typically a non-negative number) that depends
-#' on the distances between data. This concept is based on the notion of
-#' Newton’s gravitational potential energy, which is also a function of the
-#' distance between bodies. The idea of data energy or energy statistics is to
-#' consider statistical observations (data) as heavenly bodies governed by the
-#' potential energy of data, which is zero if and only if an underlying
-#' statistical hypothesis is true."
-#'
-#' The notation X' indicates that X' is an independent and identically
-#' distributed copy of X.
-#'
-#' If X and Y are independent and E(|X|^s + |Y|^s) is finite, then for 0 < s <
-#' 2,
-#'
-#' \deqn{2E|X-Y|^s - E|X-X'|^s - E|Y-Y'|^s \ge 0.}
-#'
-#' Equality is attained if and only if X and Y are identically distributed. The
-#' left side of the equation is the energy between X and Y. Energy can be
-#' generalized to multivariate data and even more exotic data types, but in
-#' this R package, we only treat univariate data.
-#'
-#' The concept of data energy between two random variables can be adapted to
-#' the one-sample goodness-of-fit problem. The one-sample *s*-energy is
-#'
-#' \deqn{E^* = \frac{2}{n} \sum_i E|x_i - Y|^s - E|Y-Y'|^s - \frac{1}{n^2}
-#' \sum_i \sum_j |x_i - x_j|^s,}
-#'
-#' when \eqn{0 < s < 2} and \eqn{E|X|^s, E|Y|^s < \infty.}
-#'
-#' In most tests in the energyGOF package s = 1. In some cases (Pareto, Cauchy,
-#' Stable), E|Y| is not finite, so we need to use an s < 1. This is done by
-#' passing `pow` into `...` (but in all tests a default `pow` is provided).
-#' These tests are called generalized energy goodness-of-fit tests.
-#'
-#' In the one-sample goodness-of-fit regime, we wonder if \eqn{x_i ~ X} (where
-#' the distribution of X is hidden) follows the same distribution as Y, which
-#' is specified. If X and Y have the same distribution, then \eqn{Q = nE^*} is
-#' a quadratic form of centered Gaussian random variables with expected value
-#' \eqn{E|Y-Y'|^s}. If X and Y differ, then Q goes to Inf. So, Q provides a
-#' consistent goodness-of-fit test, even in some situations where E|Y| is not
-#' finite. And that's what energyGOF.test does. Asymptotic theory of
-#' V-statistics can be applied to prove that tests based on Q are statistically
-#' consistent goodness-of-fit tests.
-#'
 #'
 #' @examples
 #' x <- rnorm(10)
@@ -175,7 +95,7 @@
 #' ## Simple energy goodness-of-fit test (test for Normality with known
 #' ## parameters). eg is an alias for energyGOF.test.
 #'
-#' eg.test(x, "normal", nsim = 10, mean = 0, sd = 1)
+#' egof.test(x, "normal", nsim = 10, mean = 0, sd = 1)
 #'
 #' ## Alternatively, use the energyGOF generic directly so that you do not need
 #' ## to pass parameter names into `...`
@@ -190,8 +110,7 @@
 #' ## Alternatively, use the energyGOF generic directly, which is slightly less
 #' ## verbose. eg is an alias for energyGOF.
 #'
-#' eg(y, weibull_dist(1, 3), nsim = 10)
-#'
+#' egof(y, weibull_dist(1, 3), nsim = 10)
 #'
 #' ## Conduct a generalized GOF test. Pow is the exponent s in the generalized
 #' ## energy statistic. Pow is only necessary when testing Stable, Cauchy, and
@@ -199,7 +118,7 @@
 #' ## of the distributions, but the default isn't necessarily better than any
 #' ## other number.
 #'
-#' eg(rcauchy(100),
+#' egof(rcauchy(100),
 #'    cauchy_dist(location = 0, scale = 1, pow = 0.5))
 #'
 #' ## energyGOF does not support "partially composite" GOF tests, so this will
@@ -208,36 +127,6 @@
 #' \dontrun{
 #'   energyGOF.test(x, "normal", mean = 0, nsim = 10) # sd is missing
 #' }
-#'
-#' @references
-#'
-#' Székely, G. J., & Rizzo, M. L. (2023). The energy of data and distance
-#' correlation. Chapman and Hall/CRC.
-#'
-#' Székely, G. J., & Rizzo, M. L. (2013). Energy statistics: A class of
-#' statistics based on distances. Journal of statistical planning and
-#' inference, 143(8), 1249-1272.
-#'
-#' Li, Y. (2015). Goodness-of-fit tests for Dirichlet distributions with
-#' applications. Bowling Green State University.
-#'
-#' Rizzo, M. L. (2002). A new rotation invariant goodness-of-fit test (PhD
-#' thesis). Bowling Green State University
-#'
-#' Haman, J. T. (2018). The energy goodness-of-fit test and EM type estimator
-#' for asymmetric Laplace distributions (Doctoral dissertation, Bowling Green
-#' State University).
-#'
-#' Ofosuhene, P. (2020). The energy goodness-of-fit test for the inverse
-#' Gaussian distribution (Doctoral dissertation, Bowling Green State
-#' University).
-#'
-#' Rizzo, M. L. (2009). New goodness-of-fit tests for Pareto distributions.
-#' ASTIN Bulletin: The Journal of the IAA, 39(2), 691-715.
-#'
-#' Yang, G. (2012). The Energy Goodness-of-fit Test for Univariate Stable
-#' Distributions (Doctoral dissertation, Bowling Green State University).
-#'
 #'
 #'
 #' @importFrom stats dlnorm dnorm integrate median pbeta pchisq pexp pgamma
@@ -283,7 +172,7 @@ energyGOF.test <- function(x, dist = c("uniform",
 }
 
 #' @rdname energyGOF.test
-eg.test <- energyGOF.test
+egof.test <- energyGOF.test
 
 #### Validation
 
@@ -560,22 +449,19 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #'   against. GOFDist objects are created with the various `name_dist()`
 #'   functions in this package. See, for example, [normal_dist()] for details
 #'   on these class objects .
-#' @inherit energyGOF.test return author title references details seealso
+#' @inherit energyGOF.test return author title details seealso
 #' @inheritParams energyGOF.test
-#' @inheritSection energyGOF.test About Energy
-#' @inheritSection energyGOF.test Distributions available to test
-#' @aliases eg
+#' @aliases egof
 #' @examples
-#' ## Simple, normal test
+#' ## Simple normal test
 #' energyGOF(rnorm(10), normal_dist(0, 1), nsim = 10)
 #'
-#' ## Simple, Poisson test
+#' ## Simple Poisson test
 #' energyGOF(rpois(10,1), poisson_dist(1), nsim = 0) # No p-value
 #'
 #' ## Composite Normal test
 #' energyGOF(rnorm(10), normal_dist(), nsim = 10)
 #'
-#' ## In real application, you should increase nsim to at least 10,000.
 #'
 #'
 #' @export energyGOF
@@ -683,7 +569,7 @@ print.GOFDist <- function(x, ...) {
 #' generalized test.)
 #' * `EXYhat`: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or
 #' \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according
-#' to `dist` and x is the data under test (which is passed in `eg.test` or `eg`).
+#' to `dist` and x is the data under test (which is passed in `egof.test` or `egof`).
 #' * `xform`: Function that may be used to transform x. Only available in certain
 #' distribution objects.
 #' * `statistic`: Function that returns a list of maximum likelihood estimates.
@@ -696,7 +582,7 @@ print.GOFDist <- function(x, ...) {
 #'
 #' # Composite test
 #' dc <- normal_dist()
-#' eg(rnorm(10), dc)
+#' egof(rnorm(10), dc)
 #'
 #'
 #' ### Expected distances:
@@ -758,7 +644,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
 #'
 #' d <- uniform_dist(0, 1)
 #'
-#' eg(runif(10), d)
+#' egof(runif(10), d)
 #'
 #'
 #' @export
@@ -803,7 +689,7 @@ uniform_dist<- function(min = 0, max = 1) {
 #' @examples
 #'
 #' d <- exponential_dist(1)
-#' eg(rexp(10, 1), d)
+#' egof(rexp(10, 1), d)
 #'
 #' @export
 exponential_dist <- function(rate = NULL) {
@@ -847,7 +733,7 @@ exp_dist <- exponential_dist
 #' @examples
 #' d <- poisson_dist(1)
 #'
-#' eg(rpois(10, 1), d)
+#' egof(rpois(10, 1), d)
 #'
 #' @export
 poisson_dist <- function(lambda = NULL) {
@@ -899,7 +785,7 @@ poisson_dist <- function(lambda = NULL) {
 #' @examples
 #'
 #' d <- bernoulli_dist(.5)
-#' eg(rbinom(10, 1, .5), d)
+#' egof(rbinom(10, 1, .5), d)
 #'
 #' @export
 bernoulli_dist <- function(prob = 0.5) {
@@ -944,7 +830,7 @@ bernoulli_dist <- function(prob = 0.5) {
 #' @examples
 #'
 #' d <- binomial_dist(1, 0.5)
-#' eg(rbinom(10, 1, .5), d)
+#' egof(rbinom(10, 1, .5), d)
 #'
 #' @export
 binomial_dist <- function(size = 1, prob = 0.5) {
@@ -998,7 +884,7 @@ binomial_dist <- function(size = 1, prob = 0.5) {
 #'
 #' @examples
 #' d <- beta_dist(5, 5)
-#' eg(rbeta(10, 5, 5), d)
+#' egof(rbeta(10, 5, 5), d)
 #'
 #' @export
 beta_dist <- function(shape1 = NULL, shape2 = NULL) {
@@ -1062,7 +948,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
 #' @examples
 #'
 #' d <- geometric_dist(.5)
-#' eg(rgeom(10, .5), d)
+#' egof(rgeom(10, .5), d)
 #'
 #' @export
 geometric_dist  <- function(prob = 0.5) {
@@ -1109,7 +995,7 @@ geometric_dist  <- function(prob = 0.5) {
 #' @examples
 #'
 #' d <- halfnormal_dist(4)
-#' eg(abs(rnorm(10, 4)), d)
+#' egof(abs(rnorm(10, 4)), d)
 #'
 #' @export
 halfnormal_dist <- function(scale = NULL) {
@@ -1173,7 +1059,7 @@ halfnormal_dist <- function(scale = NULL) {
 #'
 #' x <- d$sampler(10, d$par)
 #'
-#' eg(x, d)
+#' egof(x, d)
 #'
 #' @export
 laplace_dist <- function(location = NULL, scale = NULL) {
@@ -1230,7 +1116,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
 #' d <- lognormal_dist(0, 1)
 #' x <- d$sampler(10, d$par)
 #'
-#' eg(x, d)
+#' egof(x, d)
 #'
 #' @export
 lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
@@ -1318,7 +1204,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 #' d <- asymmetric_laplace_dist(0, 1, .5)
 #' x <- d$sampler(10, d$par)
 #'
-#' eg(x, d)
+#' egof(x, d)
 #'
 #'
 #' @export
@@ -1404,7 +1290,7 @@ alaplace_dist <- asymmetric_laplace_dist
 #' @examples
 #'
 #' d <- f_dist(3, 3)
-#' eg(rf(10, 3, 3), d)
+#' egof(rf(10, 3, 3), d)
 #'
 #' @export
 f_dist <- function(df1 = NULL, df2 = NULL) {
@@ -1464,7 +1350,7 @@ f_dist <- function(df1 = NULL, df2 = NULL) {
 #' @examples
 #'
 #' d <- weibull_dist(3, 3)
-#' eg(rweibull(10, 3, 3), d)
+#' egof(rweibull(10, 3, 3), d)
 #'
 #' @export
 weibull_dist <- function(shape = NULL, scale = NULL) {
@@ -1526,7 +1412,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
 #' @param rate Same rate parameter in [stats::rgamma()] (must be length 1)
 #' @examples
 #' d <- gamma_dist(4, 4)
-#' eg(rgamma(10, 4, 4), d)
+#' egof(rgamma(10, 4, 4), d)
 #'
 #' @export
 gamma_dist <- function(shape = 1, rate = 1) {
@@ -1591,7 +1477,7 @@ gamma_dist <- function(shape = 1, rate = 1) {
 #' @param df Same as in [stats::rchisq()].
 #' @examples
 #' d <- chisq_dist(4)
-#' eg(rchisq(10, 4), d)
+#' egof(rchisq(10, 4), d)
 #'
 #' @export
 chisq_dist <- function(df = 2) {
@@ -1657,7 +1543,7 @@ chisq_dist <- function(df = 2) {
 #' d <- inverse_gaussian_dist(4, 4)
 #' x <- d$sampler(10, d$par)
 #'
-#' eg(x, d)
+#' egof(x, d)
 #'
 #' @export
 inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
@@ -1772,7 +1658,7 @@ invgauss_dist <- inverse_gaussian_dist
 #' @examples
 #' d <- pareto_dist(1, .5)
 #' x <- d$sampler(10, d$par)
-#' eg(x, d)
+#' egof(x, d)
 #'
 #' @export
 pareto_dist <- function(scale = NULL, shape = NULL,
@@ -1899,7 +1785,7 @@ pareto_set_sampler_par <- function(dist) {
 #' @examples
 #' d <- cauchy_dist(4, 4)
 #' x <- rcauchy(10, 4, 4)
-#' eg(x, d)
+#' egof(x, d)
 #'
 #' @export
 cauchy_dist <- function(location = NULL, scale = NULL,

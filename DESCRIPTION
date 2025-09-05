@@ -2,7 +2,7 @@ Package: energyGOF
 Title: Goodness-of-fit tests via the energy of data
 Version: 0.1
 Authors@R: person("John", "Haman", email = "mail@johnhaman.org", role = c("aut", "cre"))
-Description: This package provides the `energyGOF.test` (alias: `eg.test`) function, which conducts one-sample goodness-of-fit tests for normal, uniform, exponential, Bernoulli, binomial, geometric, beta, Poisson, lognormal, laplace, asymmetric Laplace, inverse Gaussian, halfnormal, chi-squared, gamma, F, Weibull, Cauchy, stable, and Pareto distributions. A subset of the available distributions can be tested for the composite goodness-of-fit hypothesis, that is, one can test for distribution fit with unknown parameters.
+Description: This package provides the `energyGOF.test` (alias: `egof.test`) function, which conducts one-sample goodness-of-fit tests for normal, uniform, exponential, Bernoulli, binomial, geometric, beta, Poisson, lognormal, laplace, asymmetric Laplace, inverse Gaussian, halfnormal, chi-squared, gamma, F, Weibull, Cauchy, stable, and Pareto distributions. A subset of the available distributions can be tested for the composite goodness-of-fit hypothesis, that is, one can test for distribution fit with unknown parameters.
 License: GPL (>= 3)
 Encoding: UTF-8
 Imports: gsl, boot, fitdistrplus, statmod, LaplacesDemon, stabledist
