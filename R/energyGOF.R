@@ -555,7 +555,7 @@ print.GOFDist <- function(x, ...) {
 #' @param mean NULL, or if specified, same as [rnorm()], but must be length 1.
 #' @param sd NULL, or if specified, Same as [rnorm()], but must be length 1
 #'
-#' @return S3 data object containing following the fields.
+#' @return S3 data object containing the following fields.
 #' * `name`: String
 #' * `composite_p`: Composite predicate. TRUE if test is composite.
 #' * `par`: Distribution parameters, list of the formals.
