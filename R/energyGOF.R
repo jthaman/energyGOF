@@ -25,8 +25,8 @@
 #'   tuning parameter `pow` is required.
 #' @param x A numeric vector.
 #' @param dist A string. The distribution to test `x` against.
-#' @param nsim A positive integer. The number of parametric bootstrap
-#'   replicates taken to calculate the *p*-value.
+#' @param nsim A non-negative integer. The number of parametric bootstrap
+#'   replicates taken to calculate the *p*-value. If 0, no simulation.
 #' @param ... Parameters of the distribution `dist`. Required for a simple
 #'   test. For distributions in the [stats] library, parameter argument names
 #'   are identical. To test the *composite* goodness-of-fit hypothesis that `x`
