@@ -13,6 +13,8 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+## TODO: fix s3 descriptions mismatch.
+
 #' @title Goodness-of-fit tests via the energy of data
 #' @author John T. Haman
 #' @description Perform a goodness-of-fit test of univariate data `x` against a
@@ -487,8 +489,7 @@ egof <- energyGOF
 
 #' @export
 energyGOF.function <- function(x, dist, nsim) {
-  # TODO, for supplying a quantile function.
-  # TODO, for supplying a rng sampler
+  # TODO: for supplying a quantile function.
 }
 
 #' @export
@@ -1292,7 +1293,7 @@ asymmetric_laplace_dist <- function(location = NULL,
 alaplace_dist <- asymmetric_laplace_dist
 
 ##### F Distribution (Fisher Distribution)
-######  Todo add  tests
+######  TODO add  tests
 #' @title Create a F distribution object for energy testing
 #' @inherit normal_dist description return author
 #' @param df1 Same as the shape parameter in [stats::rf()]
