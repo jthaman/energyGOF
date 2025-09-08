@@ -129,7 +129,8 @@
 #' ## other number.
 #'
 #' egof(rcauchy(100),
-#'    cauchy_dist(location = 0, scale = 1, pow = 0.5))
+#'    cauchy_dist(location = 0, scale = 1, pow = 0.5),
+#'    nsim = 10)
 #'
 #' ## energyGOF does not support "partially composite" GOF tests, so this will
 #' ## result in an error.
