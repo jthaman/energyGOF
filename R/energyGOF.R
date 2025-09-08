@@ -13,8 +13,6 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-## TODO: fix s3 descriptions mismatch.
-
 #' @title Goodness-of-fit tests via the energy of data
 #' @author John T. Haman
 #' @description Perform a goodness-of-fit test of univariate data `x` against a
@@ -143,7 +141,7 @@
 #'
 #' @importFrom stats dlnorm dnorm integrate median pbeta pchisq pexp pgamma
 #' pgeom pnorm ppois pweibull rbeta rbinom rcauchy rchisq rexp rgamma rgeom
-#' rlnorm rnorm rpois runif rweibull sd dbeta dbinom
+#' rlnorm rnorm rpois runif rweibull sd dbeta dbinom mahalanobis, pf, rf
 #'
 #' @importFrom statmod dinvgauss pinvgauss qinvgauss rinvgauss
 #'
@@ -164,7 +162,7 @@ energyGOF.test <- function(x, dist = c("uniform",
                                        "laplace", "doubleexponential",
                                        "asymmetriclaplace", "alaplace",
                                        "inversegaussian", "invgaussian",
-                                       "halfnormal", "half-normal",
+                                       "halfnormal",
                                        "chisq", "chisquared",
                                        "F",
                                        "gamma",
@@ -245,7 +243,6 @@ char_to_dist <- function(name, ...) {
          "inversegaussian" = inverse_gaussian_dist(...),
          "invgaussian" = inverse_gaussian_dist(...),
          "halfnormal" = halfnormal_dist(...),
-         "half-normal" = halfnormal_dist(...),
          "chisq" = chisq_dist(...),
          "chisquared" = chisq_dist(...),
          "F" = f_dist(...),
@@ -255,7 +252,7 @@ char_to_dist <- function(name, ...) {
          "poisson" = poisson_dist(...),
          ## Generalized GOF Dists
          "cauchy" = cauchy_dist(...),
-         "stable" = stable_dist(...),
+         ##"stable" = stable_dist(...),
          "pareto" = pareto_dist(...),
          stop("Unsupported distribution: ", name)
          )
@@ -598,7 +595,7 @@ print.GOFDist <- function(x, ...) {
 #'
 #' # Composite test
 #' dc <- normal_dist()
-#' egof(rnorm(10), dc)
+#' egof(rnorm(10), dc, 0)
 #'
 #'
 #' ### Expected distances:
@@ -660,7 +657,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
 #'
 #' d <- uniform_dist(0, 1)
 #'
-#' egof(runif(10), d)
+#' egof(runif(10), d, 0)
 #'
 #'
 #' @export
@@ -705,7 +702,7 @@ uniform_dist<- function(min = 0, max = 1) {
 #' @examples
 #'
 #' d <- exponential_dist(1)
-#' egof(rexp(10, 1), d)
+#' egof(rexp(10, 1), d, 0)
 #'
 #' @export
 exponential_dist <- function(rate = NULL) {
@@ -749,7 +746,7 @@ exp_dist <- exponential_dist
 #' @examples
 #' d <- poisson_dist(1)
 #'
-#' egof(rpois(10, 1), d)
+#' egof(rpois(10, 1), d, 0)
 #'
 #' @export
 poisson_dist <- function(lambda = NULL) {
@@ -801,7 +798,7 @@ poisson_dist <- function(lambda = NULL) {
 #' @examples
 #'
 #' d <- bernoulli_dist(.5)
-#' egof(rbinom(10, 1, .5), d)
+#' egof(rbinom(10, 1, .5), d, 0)
 #'
 #' @export
 bernoulli_dist <- function(prob = 0.5) {
@@ -846,7 +843,7 @@ bernoulli_dist <- function(prob = 0.5) {
 #' @examples
 #'
 #' d <- binomial_dist(1, 0.5)
-#' egof(rbinom(10, 1, .5), d)
+#' egof(rbinom(10, 1, .5), d, 0)
 #'
 #' @export
 binomial_dist <- function(size = 1, prob = 0.5) {
@@ -900,7 +897,7 @@ binomial_dist <- function(size = 1, prob = 0.5) {
 #'
 #' @examples
 #' d <- beta_dist(5, 5)
-#' egof(rbeta(10, 5, 5), d)
+#' egof(rbeta(10, 5, 5), d, 0)
 #'
 #' @export
 beta_dist <- function(shape1 = NULL, shape2 = NULL) {
@@ -964,7 +961,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
 #' @examples
 #'
 #' d <- geometric_dist(.5)
-#' egof(rgeom(10, .5), d)
+#' egof(rgeom(10, .5), d, 0)
 #'
 #' @export
 geometric_dist  <- function(prob = 0.5) {
@@ -1011,7 +1008,7 @@ geometric_dist  <- function(prob = 0.5) {
 #' @examples
 #'
 #' d <- halfnormal_dist(4)
-#' egof(abs(rnorm(10, 4)), d)
+#' egof(abs(rnorm(10, 4)), d, 0)
 #'
 #' @export
 halfnormal_dist <- function(scale = NULL) {
@@ -1075,7 +1072,7 @@ halfnormal_dist <- function(scale = NULL) {
 #'
 #' x <- d$sampler(10, d$par)
 #'
-#' egof(x, d)
+#' egof(x, d, 0)
 #'
 #' @export
 laplace_dist <- function(location = NULL, scale = NULL) {
@@ -1132,7 +1129,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
 #' d <- lognormal_dist(0, 1)
 #' x <- d$sampler(10, d$par)
 #'
-#' egof(x, d)
+#' egof(x, d, 0)
 #'
 #' @export
 lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
@@ -1223,7 +1220,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 #' d <- asymmetric_laplace_dist(0, 1, .5)
 #' x <- d$sampler(10, d$par)
 #'
-#' egof(x, d)
+#' egof(x, d, 0)
 #'
 #'
 #' @export
@@ -1311,7 +1308,7 @@ alaplace_dist <- asymmetric_laplace_dist
 #' @examples
 #'
 #' d <- f_dist(3, 3)
-#' egof(rf(10, 3, 3), d)
+#' egof(rf(10, 3, 3), d, 0)
 #'
 #' @export
 f_dist <- function(df1 = 3, df2 = 3) {
@@ -1373,7 +1370,7 @@ f_dist <- function(df1 = 3, df2 = 3) {
 #' @examples
 #'
 #' d <- weibull_dist(3, 3)
-#' egof(rweibull(10, 3, 3), d)
+#' egof(rweibull(10, 3, 3), d, 0)
 #'
 #' @export
 weibull_dist <- function(shape = NULL, scale = NULL) {
@@ -1438,7 +1435,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
 #'   distribution. Only simple tests are supported.
 #' @examples
 #' d <- gamma_dist(4, 4)
-#' egof(rgamma(10, 4, 4), d)
+#' egof(rgamma(10, 4, 4), d, 0)
 #'
 #' @export
 gamma_dist <- function(shape = 1, rate = 1) {
@@ -1506,7 +1503,7 @@ gamma_dist <- function(shape = 1, rate = 1) {
 #' @param df Same as in [stats::rchisq()].
 #' @examples
 #' d <- chisq_dist(4)
-#' egof(rchisq(10, 4), d)
+#' egof(rchisq(10, 4), d, 0)
 #'
 #' @export
 chisq_dist <- function(df = 2) {
@@ -1574,7 +1571,7 @@ chisq_dist <- function(df = 2) {
 #' d <- inverse_gaussian_dist(4, 4)
 #' x <- d$sampler(10, d$par)
 #'
-#' egof(x, d)
+#' egof(x, d, 0)
 #'
 #' @export
 inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
@@ -1690,7 +1687,7 @@ invgauss_dist <- inverse_gaussian_dist
 #' @examples
 #' d <- pareto_dist(1, .5)
 #' x <- d$sampler(10, d$par)
-#' egof(x, d)
+#' egof(x, d, 0)
 #'
 #' @export
 pareto_dist <- function(scale = NULL, shape = NULL,
@@ -1821,7 +1818,7 @@ pareto_set_sampler_par <- function(dist) {
 #' @examples
 #' d <- cauchy_dist(4, 4)
 #' x <- rcauchy(10, 4, 4)
-#' egof(x, d)
+#' egof(x, d, 0)
 #'
 #' @export
 cauchy_dist <- function(location = NULL, scale = NULL,

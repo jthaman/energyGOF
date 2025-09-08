@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(energyfit)
+library(energyGOF)
 
-test_check("energyfit")
+test_check("energyGOF")
