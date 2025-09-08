@@ -129,22 +129,22 @@ test_that("Dists", {
   expect_error(cauchy_dist(0, NULL))
   expect_error(cauchy_dist(NULL, 0))
   ## Stable
-  expect_s3_class(stable_dist(), "GOFDist")
-  expect_error(stable_dist(NULL, 1, 1, 1))
-  expect_error(stable_dist(0, NULL, 1, 1))
-  expect_error(stable_dist(0, 1, NULL, 1))
-  expect_error(stable_dist(0, 0, 1, NULL))
-  expect_error(stable_dist(0, 0, 0, 0))
-  expect_error(stable_dist(1, 1, 1, 1, 1))
+  ## expect_s3_class(stable_dist(), "GOFDist")
+  ## expect_error(stable_dist(NULL, 1, 1, 1))
+  ## expect_error(stable_dist(0, NULL, 1, 1))
+  ## expect_error(stable_dist(0, 1, NULL, 1))
+  ## expect_error(stable_dist(0, 0, 1, NULL))
+  ## expect_error(stable_dist(0, 0, 0, 0))
+  ## expect_error(stable_dist(1, 1, 1, 1, 1))
 })
 
 ##### egof.test tests
 
 test_that("egof.test", {
   x <- rnorm(10)
-  expect_s3_class(egof.test(x, "normal"), "htest")
-  expect_s3_class(egof.test(x, "laplace"), "htest")
-  expect_s3_class(egof.test(x, "cauchy"), "htest")
+  expect_s3_class(egof.test(x, "normal", 0), "htest")
+  expect_s3_class(egof.test(x, "laplace", 0), "htest")
+  expect_s3_class(egof.test(x, "cauchy", 0), "htest")
 })
 
 ##### Test that classes are correctly formed
@@ -686,13 +686,13 @@ test_that("Test should detect weibull", {
 ##### Normal Tests
 test_that("Normal should not be transformed", {
   x <- rnorm(10)
-  o <- egof(x, normal_dist(0, 1))
+  o <- egof(x, normal_dist(0, 1), 0)
   expect_identical(names(o$statistic), "E-statistic")
 })
 
-test_that("egf should return htest, even when nsim is missing", {
+test_that("egof should return htest, even when nsim is zero", {
   x <- rnorm(10)
-  o <- egof(x, normal_dist(0, 1))
+  o <- egof(x, normal_dist(0, 1), 0)
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
 })
@@ -702,40 +702,30 @@ test_that("Normal p-vals should be uniform under Null hypothesis", {
   save <- numeric(n)
   for (i in 1:n) {
     x <- rnorm(100, 0, 1)
-    o <- egof(x, normal_dist(0, 1))
+    o <- egof(x, normal_dist(0, 1), 100)
     save[i] <- unlist(o$p.value)
   }
-  expect_gt(egof(save, uniform_dist(0, 1))$p.value, 0.05)
+  expect_gt(egof(save, uniform_dist(0, 1), 100)$p.value, 0.05)
   expect_gt(o$statistic, 0)
 })
 
-test_that("Power to detect mean shift.", {
-  n <- 10
-  save <- numeric(n)
-  for (i in 1:n) {
-    x <- rnorm(100, 1, 1)
-    o <- egof(x, normal_dist(0, 1))
-    save[i] <- unlist(o$p.value)
-  }
-  expect_lt(mean(save[i]), 0.05)
+test_that("Power to detect mean ", {
+  x <- rnorm(100, 1, 1)
+  o <- egof(x, normal_dist(0, 1), 100)
+  expect_lt(o$p.value, 0.05)
   expect_gt(o$statistic, 0)
 })
 
 test_that("Power to detect sd shift.", {
-  n <- 10
-  save <- numeric(n)
-  for (i in 1:n) {
-    x <- rnorm(n, 0, 3)
-    o <- egof(x, normal_dist(0, 1))
-    save[i] <- unlist(o$p.value)
-  }
-  expect_lt(mean(save[i]), 0.05)
+  x <- rnorm(100, 0, 3)
+  o <- egof(x, normal_dist(0, 1), 100)
+  expect_lt(o$p.value, 0.05)
   expect_gt(o$statistic, 0)
 })
 
 test_that("Composite Test should work", {
-  x <- rnorm (10)
-  o <- egof(x, normal_dist(), nsim = 0)
+  x <- rnorm(10)
+  o <- egof(x, normal_dist(), 0)
   expect_gt(o$statistic, 0)
 })
 
@@ -998,10 +988,9 @@ test_that("Test is sensitive", {
   expect_lt(o$p.value, 0.01)
 })
 
-test_that("Composite Test Worts", {
-  skip_on_cran()
-  d <- asymmetric_laplace_dist()
-  x <- ralaplace(100, 0, 1, 2)
+test_that("Composite Test Works", {
+  d <- asymmetric_laplace_dist(0, 1, 2)
+  x <- d$sampler(100, par = d$par)
   o <- egof(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
@@ -1009,9 +998,8 @@ test_that("Composite Test Worts", {
 })
 
 test_that("Composite Test Works", {
-  skip_on_cran()
-  d <- asymmetric_laplace_dist()
-  x <- ralaplace(100, 0, 3, 1 / 2)
+  d <- asymmetric_laplace_dist(0, 3, 1 / 2)
+  x <- d$sampler(100, par = d$par)
   o <- egof(x, d, nsim = 60)
   o
   expect_gt(o$statistic, 0)
@@ -1019,7 +1007,6 @@ test_that("Composite Test Works", {
 })
 
 test_that("Composite Test is sensitive", {
-  skip_on_cran()
   d <- asymmetric_laplace_dist()
   x <- rcauchy(1000)
   o <- egof(x, d, nsim = 60)
@@ -1029,7 +1016,6 @@ test_that("Composite Test is sensitive", {
 })
 
 test_that("Composite Test is sensitive", {
-  skip_on_cran()
   d <- asymmetric_laplace_dist()
   x <- rnorm(4000, 3, 3)
   o <- egof(x, d, nsim = 60)
@@ -1099,7 +1085,6 @@ test_that("Test works", {
 
 
 test_that("Composite Test works", {
-  skip_on_cran()
   set.seed(1)
   d <- inverse_gaussian_dist()
   x <- rinvgauss(10, 5, 5)
@@ -1110,7 +1095,6 @@ test_that("Composite Test works", {
 })
 
 test_that("Composite Test works", {
-  skip_on_cran()
   d <- inverse_gaussian_dist()
   x <- rinvgauss(1000, 1, 1)
   o <- egof(x, d, nsim = 50)
@@ -1507,21 +1491,21 @@ test_that("composite test is sensitive", {
 test_that("Beta Estat should be positive", {
   d <- beta_dist(20, 20)
   x <- rbeta(100, 20, 20)
-  o <- egof(x, d)
+  o <- egof(x, d, 0)
   o
   expect_gt(o$statistic, 0)})
 
 test_that("Beta Estat should be positive", {
   d <- beta_dist(.5, 1.5)
   x <- rbeta(100, .5, 1.5)
-  o <- egof(x, d)
+  o <- egof(x, d, 0)
   o
   expect_gt(o$statistic, 0)})
 
 test_that("Beta Estat should be sensitive to parameter change", {
   d <- beta_dist(.5, 1.5)
   x <- rbeta(100, 20, 20)
-  o <- egof(x, d)
+  o <- egof(x, d, 100)
   o
   expect_lt(o$p.value, .01)})
 
@@ -1529,14 +1513,14 @@ test_that("Beta Estat should be sensitive to parameter change", {
 test_that("Beta Composite should work", {
   d <- beta_dist()
   x <- rbeta(100, 20, 20)
-  o <- egof(x, d)
+  o <- egof(x, d, 0)
   o
   expect_gt(o$statistic, 0)})
 
 test_that("Beta Composite should work", {
   d <- beta_dist()
   x <- rbeta(100, 1 / 60, 70)
-  o <- egof(x, d)
+  o <- egof(x, d, 0)
   o
   expect_gt(o$statistic, 0)})
 
@@ -1621,7 +1605,7 @@ test_that("Binomial", {
   expect_s3_class(o, "htest")
   expect_gt(o$statistic, 0)
   x <- rbinom(10, 10, .9)
-  o <- egof(x, d)
+  o <- egof(x, d, 99)
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.5)
   x <- rexp(10)
