@@ -13,16 +13,23 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
 #' @title Goodness-of-fit tests via the energy of data
 #' @author John T. Haman
 #' @description Perform a goodness-of-fit test of univariate data `x` against a
-#'   distribution `dist`. Both simple (known parameter) and composite (unknown
-#'   parameter) cases are supported, but not all distributions allow for a
-#'   composite test. See [energyGOF-package] for the table of supported
-#'   distibutions. *P*-values are determined via parametric bootstrap. For
-#'   distributions where \eqn{E|Y|} is not finite (Cauchy, Pareto), a
-#'   *generalized* energy goodness-of-fit test is performed, and an additional
-#'   tuning parameter `pow` is required.
+#'   target `y`. `y` may be one of the following:
+#'
+#'   * A string naming a distribution. For example, "normal".
+#'   * A numeric vector of data.
+#'   * A quantile function. For example, `qt`.
+#'
+#'   Both simple (known parameter) and composite (unknown parameter) cases are
+#'   supported, but not all distributions allow for a composite test. See
+#'   [energyGOF-package] for the table of supported distibutions. *P*-values
+#'   are determined via parametric bootstrap. For distributions where
+#'   \eqn{E|Y|} is not finite (Cauchy, Pareto), a *generalized* energy
+#'   goodness-of-fit test is performed, and an additional tuning parameter
+#'   `pow` is required.
 #' @param x A numeric vector.
 #' @param dist A string. The distribution to test `x` against.
 #' @param nsim A non-negative integer. The number of parametric bootstrap
@@ -37,10 +44,12 @@
 #'   want to check out [energyGOF] instead.)
 #'
 #' @seealso
-#'  * [energyGOF] for the alternate S3 interface.
+#'  * [energyGOF] for the alternate S3 interface for parametric testing.
 #'
 #'  * \link[stats]{Distributions} for a list of distributions available
 #'   in most R installations.
+#'
+#'  * [energy::eqdist.etest()] for information on the two-sample test.
 #'
 #'  * [energy::normal.test()] for the energy goodness-of-fit test with unknown
 #' parameters. The tests for (multivariate) Normal in the energy package are
@@ -149,28 +158,58 @@
 #' @importFrom fitdistrplus mledist
 #'
 #' @export energyGOF.test
-energyGOF.test <- function(x, dist = c("uniform",
-                                       "exponential",
-                                       "bernoulli",
-                                       "binomial",
-                                       "geometric",
-                                       "normal", "gaussian",
-                                       "beta",
-                                       "poisson",
-                                       "lognormal", "lnorm",
-                                       "laplace", "doubleexponential",
-                                       "asymmetriclaplace", "alaplace",
-                                       "inversegaussian", "invgaussian",
-                                       "halfnormal",
-                                       "chisq", "chisquared",
-                                       "F",
-                                       "gamma",
-                                       "weibull",
-                                       "cauchy",
-                                       # "stable",
-                                       "pareto"),
-                           nsim,
-                           ...) {
+
+energyGOF.test <- function(x, y, nsim, ...) {
+  UseMethod(energyGOF.test, "y")
+}
+
+#' @rdname energyGOF.test
+#' @export egof.test
+egof.test <- energyGOF.test
+
+#' @export
+energyGOF.test.function <- function(x, y, nsim) {
+  nsim <- validate_nsim(nsim)
+  validate_quantile(y)
+  xu <- y(x) # could be a do.call?
+  d <- uniform_dist(0, 1)
+  egof(xu, d, nsim = nsim)
+}
+
+#' @export
+energyGOF.test.numeric <- function(x, y, nsim) {
+  nsim <- validate_nsim(nsim)
+  pooled <- matrix(c(x, y))
+  sizes <- c(NROW(x), NROW(y))
+  energy::eqdist.etest(pooled, sizes = sizes,
+                       method = "original", R = nsim)
+}
+
+#' @export
+energyGOF.test.character <- function(x,
+                                     y = c("uniform",
+                                           "exponential",
+                                           "bernoulli",
+                                           "binomial",
+                                           "geometric",
+                                           "normal", "gaussian",
+                                           "beta",
+                                           "poisson",
+                                           "lognormal", "lnorm",
+                                           "laplace", "doubleexponential",
+                                           "asymmetriclaplace", "alaplace",
+                                           "inversegaussian", "invgaussian",
+                                           "halfnormal",
+                                           "chisq", "chisquared",
+                                           "F",
+                                           "gamma",
+                                           "weibull",
+                                           "cauchy",
+                                           # "stable",
+                                           "pareto"),
+                                     nsim,
+                                     ...) {
+  dist <- y
   valid_dists <- eval(formals(energyGOF.test)$dist)
   distname <- match.arg(tolower(dist), choices = valid_dists)
   dots <- list(...)
@@ -178,11 +217,29 @@ energyGOF.test <- function(x, dist = c("uniform",
   energyGOF(x, dist, nsim)
 }
 
-#' @rdname energyGOF.test
-#' @export egof.test
-egof.test <- energyGOF.test
 
 #### Validation
+
+##### Validate Quantile function
+
+validate_quantile <- function(fun, tol = 1e-8, n = 100) {
+  p <- seq(0, 1, length.out = n)
+  # evaluate quantile function
+  qvals <- tryCatch(fun(p), error = function(e) return(NULL))
+  if (is.null(qvals)) {
+    stop("Problem with quantile function. Function not evaluable on [0,1].")
+  }
+  # check length and NA
+  if (anyNA(qvals)) {
+    stop("Problem with quantile function. NA values returned.")
+  }
+  # monotonicity check
+  diffs <- diff(qvals)
+  if (any(diffs < -tol)) {
+    stop("Problem with quantile function. Not non-decreasing.")
+  }
+}
+
 
 ##### Validate Parameters
 validate_par <- function(dist) {
@@ -482,11 +539,6 @@ energyGOF <- function(x, dist, nsim) {
 #' @rdname energyGOF
 #' @export egof
 egof <- energyGOF
-
-#' @export
-energyGOF.function <- function(x, dist, nsim) {
-  # TODO: for supplying a quantile function.
-}
 
 #' @export
 energyGOF.GOFDist <- function(x, dist, nsim) {
