@@ -1052,6 +1052,7 @@ test_that("Composite Test Works", {
 })
 
 test_that("Composite Test is sensitive", {
+  set.seed(1) # why is this needed?
   d <- asymmetric_laplace_dist()
   x <- rcauchy(1000)
   o <- egofd(x, d, nsim = 60)
@@ -1068,6 +1069,8 @@ test_that("Composite Test is sensitive", {
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
 })
+
+
 ##### Inv Gaussian
 
 test_that("Test works", {

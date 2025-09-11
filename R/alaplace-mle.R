@@ -77,9 +77,14 @@ AML_EM <- function(dat, tol = 1e-5, N = 1000){
     Sigma <- Sigma_update(dat, theta[i, ], m[i, ], xi_cur, eta_cur)
   }
 
-  list(theta = theta[i, ],
-       Sigma = Sigma,
-       m = m[i, ])
+  temp <- list(location = theta[i, ],
+               scale = sqrt(c(Sigma)),
+               m = m[i, ])
+  skew <- mu_to_kappa(temp$m, temp$scale)
+
+  list(location = temp$location,
+       scale = temp$scale,
+       skew = skew)
 }
 
 ## xi_eta <- function(dat, theta, m, Sigma){

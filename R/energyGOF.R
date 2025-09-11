@@ -1350,12 +1350,7 @@ asymmetric_laplace_dist <- function(location = NULL,
         (x - par$location) / par$scale # ~ AL(0, 1, kappa)
       },
       statistic = function(x) {
-        out_m <- AML_EM(x)
-        out <- list(location = NA, scale = NA, skew = NA)
-        out$location <- out_m$theta
-        out$scale <- c(sqrt(out_m$Sigma))
-        out$skew <- c(mu_to_kappa(out_m$m, sqrt(out_m$Sigma)))
-        out
+        AML_EM(x)
       }
     ), class = c("AsymmetricLaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
