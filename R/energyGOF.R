@@ -152,7 +152,7 @@
 #'
 #' @importFrom stats dlnorm dnorm integrate median pbeta pchisq pexp pgamma
 #' pgeom pnorm ppois pweibull rbeta rbinom rcauchy rchisq rexp rgamma rgeom
-#' rlnorm rnorm rpois runif rweibull sd dbeta dbinom mahalanobis pf rf
+#' rlnorm rnorm rpois runif rweibull sd dbeta dbinom mahalanobis pf rf setNames
 #'
 #'
 #' @export energyGOF.test
@@ -180,7 +180,7 @@ energyGOF.test.function <- function(x, y, nsim, ...) {
 
 ## TODO: Tests for numeric
 #' @export
-energyGOF.test.numeric <- function(x, y, nsim) {
+energyGOF.test.numeric <- function(x, y, nsim, ...) {
   nsim <- validate_nsim(nsim)
   pooled <- matrix(c(x, y))
   sizes <- c(NROW(x), NROW(y))
@@ -519,6 +519,21 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #' @param nsim A non-negative integer. The number of parametric bootstrap
 #'   replicates taken to calculate the *p*-value. If 0, no simulation.
 #' @inherit energyGOF.test return author
+#' @return  Return an object of class `htest'
+#'   representing the result of the energy goodness-of-fit hypothesis test. The
+#'   htest object has the elements:
+#'
+#'  * `method`: Simple or Composite
+#'  * `data.name`
+#'  * `distribution`: The distribution object created to test
+#'  * `parameter`: List of parameters if the test is simple
+#'  * `nsim`: Number of bootstrap replicates
+#'  * `composite_p`: TRUE/FALSE composite predicate
+#'  * `statistic`: The value of the energy statistic (\eqn{Q=nE^*})
+#'  * `p.value`
+#'  * `sim_reps`: bootstrap replicates of energy statistic
+#'  * `estimate`: Any parameter estimates, if the test is composite
+#'
 #' @aliases egofd
 #' @examples
 #' ## Simple normal test
