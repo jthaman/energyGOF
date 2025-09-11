@@ -1,4 +1,4 @@
-### energyGOF: Goodness-of-fit tests via the energy of data
+### energyGOF: Goodness-of-fit tests for univariate data via energy
 
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -14,36 +14,55 @@
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-#' @title Goodness-of-fit tests via the energy of data
+#' @title Goodness-of-fit tests for univariate data via energy
 #' @author John T. Haman
 #' @description Perform a goodness-of-fit test of univariate data `x` against a
 #'   target `y`. `y` may be one of the following:
 #'
 #'   * A string naming a distribution. For example, "normal".
+#'
+#'     * Result: A parametric goodness-of-fit test is performed.
+#'     * Allowable values: "uniform", "exponential", "bernoulli", "binomial", "geometric",
+#'     "normal" ("gaussian"), "beta", "poisson", "lognormal" ("lnorm"),
+#'     "laplace" ("doubleexponential"), "asymmetriclaplace" ("alaplace"),
+#'     "inversegaussian", ("invgaussian"), "halfnormal", "chisq" ( "chisquared"),
+#'     "F", "gamma", "weibull", "cauchy", "pareto".
+#'
 #'   * A numeric vector of data.
-#'   * A quantile function. For example, `qt`.
+#'
+#'     * Result: A two-sample, non-parametric goodness-of-fit test is performed
+#'
+#'   * A cumulative distribution function. For example, `pt`.
+#'
+#'     * Result: \eqn{y(x)} is tested for uniformity.
 #'
 #'   Both simple (known parameter) and composite (unknown parameter) cases are
 #'   supported, but not all distributions allow for a composite test. See
-#'   [energyGOF-package] for the table of supported distibutions. *P*-values
+#'   [energyGOF-package] for the table of supported distibutions.
+#'
+#'   *P*-values
 #'   are determined via parametric bootstrap. For distributions where
 #'   \eqn{E|Y|} is not finite (Cauchy, Pareto), a *generalized* energy
 #'   goodness-of-fit test is performed, and an additional tuning parameter
 #'   `pow` is required.
 #' @param x A numeric vector.
-#' @param dist A string. The distribution to test `x` against.
+#' @param y A string, distribution function, or numeric vector. The
+#'   distribution to test `x` against.
 #' @param nsim A non-negative integer. The number of parametric bootstrap
 #'   replicates taken to calculate the *p*-value. If 0, no simulation.
-#' @param ... Parameters of the distribution `dist`. Required for a simple
+#' @param ... Parameters of the distribution `y`. Required for a simple
 #'   test. For distributions in the [stats] library, parameter argument names
 #'   are identical. To test the *composite* goodness-of-fit hypothesis that `x`
-#'   is distributed according to the *family of distributions* `dist`, don't
+#'   is distributed according to the *family of distributions* `y`, don't
 #'   pass parameters in `...`. For *generalized* energy tests, you can also
 #'   optionally pass the generalized energy exponent `pow` here. (As you can
 #'   see, there is a lot going on in `...` and if you don't like that, you may
-#'   want to check out [energyGOF] instead.)
+#'   want to check out [energyGOF] for a structured interface.)
 #'
 #' @seealso
+#'
+#'  * [energyGOF-package] for specifics on the distriubtions available to test.
+#'
 #'  * [energyGOF] for the alternate S3 interface for parametric testing.
 #'
 #'  * \link[stats]{Distributions} for a list of distributions available
@@ -59,8 +78,10 @@
 #'  * [energy::poisson.mtest()] for a different Poisson goodness-of-fit test
 #'   based on mean distances.
 #'
-#' @return An object of class `htest' representing the result of the energy
-#'   goodness-of-fit hypothesis test. The htest object has the elements:
+#' @return If `y` is a string or function, return an object of class `htest'
+#'   representing the result of the energy goodness-of-fit hypothesis test. The
+#'   htest object has the elements:
+#'
 #' * `method`: Simple or Composite
 #' * `data.name`
 #' * `distribution`: The distribution object created to test
@@ -71,6 +92,8 @@
 #' * `p.value`
 #' * `sim_reps`: bootstrap replicates of energy statistic
 #' * `estimate`: Any parameter estimates, if the test is composite
+#'
+#' If `y` is numeric, return the some htest object as the [energy::eqdist.etest].
 #'
 #' @aliases egof.test
 #'
@@ -104,6 +127,7 @@
 #' recommend at least 10,000.
 #'
 #' @examples
+#' TODO: Update Examples
 #' x <- rnorm(10)
 #'
 #' ## Composite energy goodness-of-fit test (test for Normality with unknown
@@ -141,8 +165,8 @@
 #'    cauchy_dist(location = 0, scale = 1, pow = 0.5),
 #'    nsim = 10)
 #'
-#' ## energyGOF does not support "partially composite" GOF tests, so this will
-#' ## result in an error.
+#' ## energyGOF does not support tests with a mix of known and unknown
+#' ## parameters, so this will result in an error.
 #'
 #' \dontrun{
 #'   energyGOF.test(x, "normal", mean = 0, nsim = 10) # sd is missing
@@ -153,9 +177,6 @@
 #' pgeom pnorm ppois pweibull rbeta rbinom rcauchy rchisq rexp rgamma rgeom
 #' rlnorm rnorm rpois runif rweibull sd dbeta dbinom mahalanobis pf rf
 #'
-#' @importFrom statmod dinvgauss pinvgauss qinvgauss rinvgauss
-#'
-#' @importFrom fitdistrplus mledist
 #'
 #' @export energyGOF.test
 
@@ -168,10 +189,11 @@ energyGOF.test <- function(x, y, nsim, ...) {
 egof.test <- energyGOF.test
 
 #' @export
-energyGOF.test.function <- function(x, y, nsim) {
+energyGOF.test.function <- function(x, y, nsim, ...) {
   nsim <- validate_nsim(nsim)
-  validate_quantile(y)
-  xu <- y(x) # could be a do.call?
+  validate_cdf(y, x)
+  args <- c(list(x), list(...))
+  xu <- do.call(y, args)
   d <- uniform_dist(0, 1)
   egof(xu, d, nsim = nsim)
 }
@@ -205,7 +227,6 @@ energyGOF.test.character <- function(x,
                                            "gamma",
                                            "weibull",
                                            "cauchy",
-                                           # "stable",
                                            "pareto"),
                                      nsim,
                                      ...) {
@@ -220,26 +241,19 @@ energyGOF.test.character <- function(x,
 
 #### Validation
 
-##### Validate Quantile function
+##### Validate distribution function
+validate_cdf <- function(F, x, n = 100, tol = 1e-6) {
+  # Grid of points over support subset
+  x <- seq(min(x), max(x), length.out = n)
+  vals <- F(x)
 
-validate_quantile <- function(fun, tol = 1e-8, n = 100) {
-  p <- seq(0, 1, length.out = n)
-  # evaluate quantile function
-  qvals <- tryCatch(fun(p), error = function(e) return(NULL))
-  if (is.null(qvals)) {
-    stop("Problem with quantile function. Function not evaluable on [0,1].")
+  if (any(vals < -tol | vals > 1 + tol)) {
+    stop("Distribution function range seems to exceed [0, 1]. ")
   }
-  # check length and NA
-  if (anyNA(qvals)) {
-    stop("Problem with quantile function. NA values returned.")
-  }
-  # monotonicity check
-  diffs <- diff(qvals)
-  if (any(diffs < -tol)) {
-    stop("Problem with quantile function. Not non-decreasing.")
+  if (any(diff(vals) < -tol)) {
+    stop("Distribution function seems to not be monotonic. ")
   }
 }
-
 
 ##### Validate Parameters
 validate_par <- function(dist) {
@@ -623,13 +637,13 @@ print.GOFDist <- function(x, ...) {
 #' statistic. These may be different than `par`.
 #' * `par_domain`: Function used to ensure `par` and `sampler_par` are valid for
 #' this distribution
-#' * `support`: Function to check that data `x` can be tested against `dist`
+#' * `support`: Function to check that data `x` can be tested against `y`
 #' * `sampler`: Function used for rng by [boot::boot()]
 #' * `EYY`: Function to compute \eqn{E|Y-Y'|} (or \eqn{E|Y-Y'|^{pow}}, for the
 #' generalized test.)
 #' * `EXYhat`: Function to compute \eqn{\frac{1}{n} \sum_i E|x_i - Y|} (or
 #' \eqn{\frac{1}{n} \sum_i E|x_i - Y|^{pow}}), where Y is distributed according
-#' to `dist` and x is the data under test (which is passed in `egof.test` or `egof`).
+#' to `y` and x is the data under test (which is passed in `egof.test` or `egof`).
 #' * `xform`: Function that may be used to transform x. Only available in certain
 #' distribution objects.
 #' * `statistic`: Function that returns a list of maximum likelihood estimates.
@@ -992,7 +1006,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
         ## Probability integral transform
         pbeta(x, par$shape1, par$shape2),
       statistic = function(x) {
-        as.list(mledist(x, "beta")$estimate)}
+        as.list(fitdistrplus::mledist(x, "beta")$estimate)}
     ), class = c("BetaDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
@@ -1229,7 +1243,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       },
       xform = function(x, par) exp((log(x) - par$meanlog) / par$sdlog), # ~ lognormal(0, 1)
       statistic = function(x) {
-        as.list(mledist(x, "lnorm")$estimate)}
+        as.list(fitdistrplus::mledist(x, "lnorm")$estimate)}
     ), class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
@@ -1461,7 +1475,7 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
         }
       },
       statistic = function(x) {
-        as.list(mledist(x, "weibull")$estimate)
+        as.list(fitdistrplus::mledist(x, "weibull")$estimate)
       },
       xform = function(x, par) {
         (x / par$scale)^par$shape # ~ exp(1)
@@ -1528,7 +1542,7 @@ gamma_dist <- function(shape = 1, rate = 1) {
         }
       },
       statistic = function(x) {
-        as.list(mledist(x, "gamma")$estimate)
+        as.list(fitdistrplus::mledist(x, "gamma")$estimate)
       },
       xform = function(x, par) {
         x / 2 * par$rate # ~ gamma (a/2, 1/2) ~ chisq (a)
@@ -1640,7 +1654,7 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
       sampler = function(n, par) {
           m <- par$mean
           lam <- par$shape
-          rinvgauss(n, m, lam)
+          statmod::rinvgauss(n, m, lam)
       },
       sampler_par = {
           list(mean = mean, shape = shape)},
@@ -1661,7 +1675,7 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
             Mx
           }
           Msave <- sapply(x, M_closed, mu = m, lambda = lam)
-          mean(2 * x * pinvgauss(x, m, lam) - x + m - 2 * Msave)
+          mean(2 * x * statmod::pinvgauss(x, m, lam) - x + m - 2 * Msave)
         } else {
           d <- chisq_dist(1)
           d$EXYhat(x, list(df = 1))
@@ -1902,7 +1916,7 @@ cauchy_dist <- function(location = NULL, scale = NULL,
         (x - par$location) / par$scale
       },
       statistic = function(x) {
-        as.list(mledist(x, "cauchy")$estimate)
+        as.list(fitdistrplus::mledist(x, "cauchy")$estimate)
       }
     ), class = c("CauchyDist", "GeneralizedGOFDist", "GOFDist")
   )
