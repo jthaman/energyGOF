@@ -48,7 +48,7 @@
 #'
 #' ```
 #'
-#' You may alternatively use the [energyGOF] function, which is a different
+#' You may alternatively use the [energyGOFdist] function, which is a different
 #' interface using S3 objects, but it provides the same result. There is a lot
 #' of documentation in this package for the various S3 constructors that are
 #' needed by [energyGOFdist], **BUT** if you just want to do some testing and

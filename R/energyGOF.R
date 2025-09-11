@@ -162,8 +162,10 @@ egof.test <- energyGOF.test
 #' @export
 energyGOF.test.function <- function(x, y, nsim, ...) {
   nsim <- validate_nsim(nsim)
-  validate_cdf(y, x)
+  validate_cdf(y, x, ...)
   args <- c(list(x), list(...))
+  first_arg <- names(formals(y))[1]
+  args <- c(setNames(list(x), first_arg), list(...))
   xu <- do.call(y, args)
   d <- uniform_dist(0, 1)
   egofd(xu, d, nsim = nsim)
@@ -215,19 +217,21 @@ energyGOF.test.character <- function(x,
 
 ##### Validate distribution function
 ## TODO: Tests for validate_cdf
-validate_cdf <- function(F, x, n = 1000, tol = 1e-3) {
+validate_cdf <- function(y, x, n = 1e5, tol1 = 1e-10, tol2 = 1e-2, ...) {
   # Grid of points over support subset
-  x <- seq(min(x), max(x), length.out = n)
-  vals <- F(x)
-  if (any(vals < -tol | vals > 1 + tol)) {
+  xseq <- seq(min(x), max(x), length.out = n)
+  first_arg <- names(formals(y))[1]
+  args <- c(setNames(list(xseq), first_arg), list(...))
+  vals <- do.call(y, args)
+  if (any(vals < -tol1 | vals > 1 + tol1)) {
     warning("Distribution function [0, 1] range violation.")
   }
-  if (any(diff(vals) < -tol)) {
-    warning("Distribution function seems to not be monotonic. ")
-  }
   diffs <- diff(vals)
-  if (any(diffs > tol)) {
-    warning("Distribution function may not be continuous. ")
+  if (any(diffs < -tol1)) {
+    warning("Distribution function seems to not be monotonic.")
+  }
+  if (any(diffs > tol2)) {
+    warning("Distribution function may not be continuous.")
   }
 }
 
