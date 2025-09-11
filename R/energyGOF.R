@@ -12,7 +12,7 @@
 
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+## TODO: check that s3 constructor aliases are in docs
 
 #' @title Goodness-of-fit tests for univariate data via energy
 #' @author John T. Haman
@@ -32,7 +32,7 @@
 #'
 #'     * Result: A two-sample, non-parametric goodness-of-fit test is performed
 #'
-#'   * A cumulative distribution function. For example, `pt`.
+#'   * A **continuous** cumulative distribution function. For example, `pt`.
 #'
 #'     * Result: \eqn{y(x)} is tested for uniformity.
 #'
@@ -40,9 +40,8 @@
 #'   supported, but not all distributions allow for a composite test. See
 #'   [energyGOF-package] for the table of supported distibutions.
 #'
-#'   *P*-values
-#'   are determined via parametric bootstrap. For distributions where
-#'   \eqn{E|Y|} is not finite (Cauchy, Pareto), a *generalized* energy
+#'   *P*-values are determined via parametric bootstrap. For distributions
+#'   where \eqn{E|Y|} is not finite (Cauchy, Pareto), a *generalized* energy
 #'   goodness-of-fit test is performed, and an additional tuning parameter
 #'   `pow` is required.
 #' @param x A numeric vector.
@@ -50,11 +49,11 @@
 #'   distribution to test `x` against.
 #' @param nsim A non-negative integer. The number of parametric bootstrap
 #'   replicates taken to calculate the *p*-value. If 0, no simulation.
-#' @param ... Parameters of the distribution `y`. Required for a simple
-#'   test. For distributions in the [stats] library, parameter argument names
-#'   are identical. To test the *composite* goodness-of-fit hypothesis that `x`
-#'   is distributed according to the *family of distributions* `y`, don't
-#'   pass parameters in `...`. For *generalized* energy tests, you can also
+#' @param ... Parameters of the distribution `y`. Required for a simple test.
+#'   For distributions in the [stats] library, parameter argument names are
+#'   identical. To test the *composite* goodness-of-fit hypothesis that `x` is
+#'   distributed according to the *family of distributions* `y`, don't pass
+#'   parameters in `...`. For *generalized* energy tests, you can also
 #'   optionally pass the generalized energy exponent `pow` here. (As you can
 #'   see, there is a lot going on in `...` and if you don't like that, you may
 #'   want to check out [energyGOFdist] for a structured interface.)
@@ -152,13 +151,14 @@
 #' @export energyGOF.test
 
 energyGOF.test <- function(x, y, nsim, ...) {
-  UseMethod(energyGOF.test, "y")
+  UseMethod("energyGOF.test", y)
 }
 
 #' @rdname energyGOF.test
 #' @export egof.test
 egof.test <- energyGOF.test
 
+## TODO: Tests for. function
 #' @export
 energyGOF.test.function <- function(x, y, nsim, ...) {
   nsim <- validate_nsim(nsim)
@@ -169,6 +169,7 @@ energyGOF.test.function <- function(x, y, nsim, ...) {
   egofd(xu, d, nsim = nsim)
 }
 
+## TODO: Tests for numeric
 #' @export
 energyGOF.test.numeric <- function(x, y, nsim) {
   nsim <- validate_nsim(nsim)
@@ -202,7 +203,7 @@ energyGOF.test.character <- function(x,
                                      nsim,
                                      ...) {
   dist <- y
-  valid_dists <- eval(formals(energyGOF.test)$dist)
+  valid_dists <- eval(formals(energyGOF.test.character)$y)
   distname <- match.arg(tolower(dist), choices = valid_dists)
   dots <- list(...)
   dist <- char_to_dist(distname, ...)
@@ -213,16 +214,20 @@ energyGOF.test.character <- function(x,
 #### Validation
 
 ##### Validate distribution function
-validate_cdf <- function(F, x, n = 100, tol = 1e-6) {
+## TODO: Tests for validate_cdf
+validate_cdf <- function(F, x, n = 1000, tol = 1e-3) {
   # Grid of points over support subset
   x <- seq(min(x), max(x), length.out = n)
   vals <- F(x)
-
   if (any(vals < -tol | vals > 1 + tol)) {
-    stop("Distribution function range seems to exceed [0, 1]. ")
+    warning("Distribution function [0, 1] range violation.")
   }
   if (any(diff(vals) < -tol)) {
-    stop("Distribution function seems to not be monotonic. ")
+    warning("Distribution function seems to not be monotonic. ")
+  }
+  diffs <- diff(vals)
+  if (any(diffs > tol)) {
+    warning("Distribution function may not be continuous. ")
   }
 }
 
@@ -527,7 +532,7 @@ energyGOFdist <- function(x, dist, nsim) {
 egofd <- energyGOFdist
 
 #' @export
-energyGOF.GOFDist <- function(x, dist, nsim) {
+energyGOFdist.GOFDist <- function(x, dist, nsim) {
   ## Setup
   cp <- inherits(dist, "CompositeGOFDist")
   ## Run functions
@@ -1225,6 +1230,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 
 
 ##### Asymmetric Laplace
+## TODO fix broken estimator
 #' @title Create an asymmetric Laplace distribution object for energy testing
 #' @inherit normal_dist return author
 #' @param location NULL, or a location parameter
