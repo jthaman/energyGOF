@@ -74,6 +74,35 @@
 #' Note: Although it may be proper to hyphenate some distribution names in
 #' text, there are no hyphens in any `*_dist` function names.
 #'
+#' @section Simple and Composite Testing:
+#'
+#' There are two types of goodness-of-fit tests covered by the energyGOF
+#' package, *simple* and *composite*. It's important to know the difference
+#' because they yield different results. Simple GOF tests test the data `x`
+#' against a specific distribution with _known parameters_ that you must pass
+#' to energyGOF.test in the ellipsis argument (...). You should use a simple
+#' GOF test if you wish to test questions like
+#' "my data is Normal with mean 1 and sd 2". `energyGOF` can also conduct
+#' _some_ composite GOF tests. A composite test is performed if no parameters
+#' are passed in the ellipsis argument (...). You should conduct a composite
+#' test if your research question is
+#' "my data are Normal, but I don't know what the parameters are." Obviously,
+#' this composite question is much more common in practice.
+#'
+#' All the composite tests in energyGOF assume that *none* of the parameters
+#' are known. So while there is a statistical test of Normality with known mean
+#' and unknown sd, this is not implemented in the energyGOF package, you will
+#' get an error is you try ask for that. So, either pass all the distribution
+#' parameters or none of them. (In the special case of the Normal distribution,
+#' you can use the energy package to test the GOF hypothesis with any
+#' combination of known and unknown parameters.)
+#'
+#' For each test, `energyGOF` calculates the test statistic and a
+#' *p*-value. In all cases the *p*-value is calculated via parametric bootstrap.
+#' For large `nsim`, the *p*-values should be reasonably honest in small-ish
+#' samples. You should set nsim to be a very large number in practice. I
+#' recommend at least 10,000.
+#'
 #'
 #' @section About Energy:
 #'
