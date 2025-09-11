@@ -12,7 +12,6 @@
 
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
-## TODO: check that s3 constructor aliases are in docs
 
 #' @title Goodness-of-fit tests for univariate data via energy
 #' @author John T. Haman
@@ -97,8 +96,8 @@
 #' @aliases egof.test
 #'
 #' @examples
-#' TODO: Update Examples
 #' x <- rnorm(10)
+#' y <- rt(10, 4)
 #'
 #' ## Composite energy goodness-of-fit test (test for Normality with unknown
 #' ## parameters)
@@ -114,6 +113,14 @@
 #' ## to pass parameter names into `...`
 #'
 #' energyGOFdist(x, normal_dist(0, 1), nsim = 10)
+#'
+#' ## Conduct a two-sample test
+#'
+#' egof.test(x, y, 0)
+#'
+#' ## Conduct a test against any continuous distribution function
+#'
+#' egof.test(x, pcauchy, 0)
 #'
 #' ## Simple energy goodness-of-fit test for Weibull distribution
 #'
@@ -1169,6 +1176,7 @@ laplace_dist <- function(location = NULL, scale = NULL) {
 #'   distribution. If `meanlog` and `sdlog` are both `NULL`, a composite test is
 #'   performed.
 #' @inherit normal_dist return author
+#' @aliases lnorm_dist
 #' @param meanlog NULL or as in [rlnorm()], must be length 1.
 #' @param sdlog NULL or as in [rlnorm()], must be length 1.
 #'
@@ -1237,6 +1245,7 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 ## TODO fix broken estimator
 #' @title Create an asymmetric Laplace distribution object for energy testing
 #' @inherit normal_dist return author
+#' @aliases alaplace_dist
 #' @param location NULL, or a location parameter
 #' @param scale NULL, or a positive scale parameter
 #' @param skew NULL, or a positive skewness parameter. Skew = 1 corresponds to

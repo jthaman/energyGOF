@@ -58,8 +58,6 @@
 #' @section Distributions Supported:
 #'  The following distributions are supported.
 #'
-#' ## TODO: Update table
-#'
 #' \tabular{llll}{
 #'   \strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab \strong{Composite Allowed} \cr
 #'   Normal                \tab `normal_dist`            \tab mean, sd                              \tab Yes\cr
