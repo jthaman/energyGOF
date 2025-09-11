@@ -223,7 +223,6 @@ energyGOF.test.character <- function(x,
 #### Validation
 
 ##### Validate distribution function
-## TODO: Tests for validate_cdf
 validate_cdf <- function(y, x, n = 1e5, tol1 = 1e-10, tol2 = 1e-2, ...) {
   # Grid of points over support subset
   xseq <- seq(min(x), max(x), length.out = n)
@@ -239,6 +238,11 @@ validate_cdf <- function(y, x, n = 1e5, tol1 = 1e-10, tol2 = 1e-2, ...) {
   }
   if (any(diffs > tol2)) {
     warning("Distribution function may not be continuous.")
+  }
+  d <- data.frame(x = xseq, y = vals)
+  ## Seems like a bad method for checking
+  if (NROW(d[with(d, x < 0 & y == 0), ]) > 0) {
+    warning("You may be testing negative data against a distribution with positive support.")
   }
 }
 
@@ -1365,7 +1369,6 @@ asymmetric_laplace_dist <- function(location = NULL,
 alaplace_dist <- asymmetric_laplace_dist
 
 ##### F Distribution (Fisher Distribution)
-##  TODO: add tests
 #' @title Create a F distribution object for energy testing
 #' @inherit normal_dist return author
 #' @param df1 Positive.

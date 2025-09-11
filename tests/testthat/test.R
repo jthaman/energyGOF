@@ -149,7 +149,27 @@ test_that("egof.test", {
   expect_s3_class(egof.test(x, pnorm, 0), "htest")
 })
 
-##### Test that classes are correctly formed
+##### Tests for Validate_CDF
+
+test_that("validate_cdf works", {
+  expect_no_error(validate_cdf(pexp, rexp(10)))
+  expect_no_error(validate_cdf(pt, rt(10, 5), df = 5))
+  expect_no_error(validate_cdf(pnorm, rnorm(10)))
+  expect_no_error(validate_cdf(pbeta, rbeta(10, 5, 5), shape1 = 5, shape2 = 5))
+  expect_no_error(validate_cdf(pcauchy, rcauchy(10)))
+  expect_no_error(validate_cdf(pf, rf(10, 4, 4),
+                               df1 = 4, df2 = 4))
+  expect_warning(validate_cdf(pf, rcauchy(10),
+                              df1 = 4, df2 = 4))
+  expect_no_error(validate_cdf(punif, runif(10)))
+  expect_no_error(validate_cdf(pweibull,
+                               rweibull(100, shape = 4, scale = 1),
+                               shape = 4, scale = 1))
+  expect_warning(validate_cdf(pgeom, rgeom(10, prob = .1), prob = .1))
+  expect_warning(validate_cdf(ppois, rpois(10, lambda = 5), lambda = 5))
+  expect_warning(validate_cdf(pgamma, rcauchy(100), shape = 4, rate = 4))
+  expect_warning(validate_cdf(pbinom, rbinom(10, 1, .5), size = 1, prob = .5))
+})
 
 ##### Test that X is correctly validated
 
