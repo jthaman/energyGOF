@@ -165,7 +165,6 @@ energyGOF.test <- function(x, y, nsim, ...) {
 #' @export egof.test
 egof.test <- energyGOF.test
 
-## TODO: Tests for. function
 #' @export
 energyGOF.test.function <- function(x, y, nsim, ...) {
   nsim <- validate_nsim(nsim)
@@ -178,7 +177,6 @@ energyGOF.test.function <- function(x, y, nsim, ...) {
   egofd(xu, d, nsim = nsim)
 }
 
-## TODO: Tests for numeric
 #' @export
 energyGOF.test.numeric <- function(x, y, nsim, ...) {
   nsim <- validate_nsim(nsim)

@@ -149,6 +149,29 @@ test_that("egof.test", {
   expect_s3_class(egof.test(x, pnorm, 0), "htest")
 })
 
+##### egof.test.function tests
+
+test_that("function method tests", {
+  x <- rnorm(10)
+  y <- rexp(10)
+  expect_s3_class(egof.test(x, pnorm, 0), "htest")
+  expect_s3_class(egof.test(y, pexp, 0), "htest")
+  expect_s3_class(egof.test(x, pt, 0, df = 5), "htest")
+  expect_s3_class(egof.test(x, pcauchy, 0, location = 5, scale = 1), "htest")
+  expect_warning(egof.test(x, pexp, 0, rate = 1))
+  expect_warning(
+    ## Two warnings, so two calls
+    expect_warning(egof.test(x, pbinom, 0, size = 3, prob = 0.4)))
+})
+
+##### egof.test.numeric tests
+
+test_that("numeric tests", {
+  x <- rnorm(10)
+  y <- rt(10, 5)
+  expect_s3_class(egof.test(x, y, 0), "htest")
+})
+
 ##### Tests for Validate_CDF
 
 test_that("validate_cdf works", {
