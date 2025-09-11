@@ -31,48 +31,57 @@
 #' ## Composite energy goodness-of-fit test (test for Normality with unknown
 #' ## parameters)
 #'
-#' energyGOF.test(x, "normal", nsim = 10)
+#' energyGOF.test(x, "normal", nsim = 1e5)
 #'
 #' ## Simple energy goodness-of-fit test (test for Normality with known
 #' ## parameters). egof.test is an alias for energyGOF.test.
 #'
-#' egof.test(x, "normal", nsim = 10, mean = 0, sd = 1)
+#' egof.test(x, "normal", nsim = 1e5, mean = 0, sd = 1)
+#'
+#'
+#' ## Two-sample test
+#' y <- rt(10, 1)
+#' egof.test(x, y, nsim = 1e5)
+#'
+#' ## Test agaist any distribution function by transforming data to uniform
+#' egof.test(y, pt, nsim = 1e5)
+#'
 #' ```
 #'
 #' You may alternatively use the [energyGOF] function, which is a different
 #' interface using S3 objects, but it provides the same result. There is a lot
 #' of documentation in this package for the various S3 constructors that are
-#' needed by [energyGOF], **BUT** if you just want to do some testing and use the
-#' standard interface, you can probably ignore all of that and just read the
-#' page for [energyGOF.test].
+#' needed by [energyGOFdist], **BUT** if you just want to do some testing and
+#' use the standard interface, you can probably ignore all of that and just
+#' read the page for [energyGOF.test].
 #'
 #' @section Distributions Supported:
-#'  The following distributions are supported
+#'  The following distributions are supported.
+#'
+#' ## TODO: Update table
 #'
 #' \tabular{llll}{
 #'   \strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab \strong{Composite Allowed} \cr
-#'   Normal                \tab normal_dist            \tab mean, sd                              \tab Yes\cr
-#'   Uniform               \tab uniform_dist           \tab min, max                              \tab No \cr
-#'   Exponential           \tab exponential_dist       \tab rate                                  \tab Yes\cr
-#'   Poisson               \tab poisson_dist           \tab lambda                                \tab Yes\cr
-#'   Bernoulli             \tab bernoulli_dist         \tab prob                                  \tab No \cr
-#'   Binomial              \tab binomial_dist          \tab prob                                  \tab Yes\cr
-#'   Beta                  \tab beta_dist              \tab shape1, shape2                        \tab No \cr
-#'   Half-Normal           \tab halfnormal_dist        \tab theta                                 \tab No \cr
-#'   Laplace               \tab laplace_dist           \tab location, scale                       \tab No \cr
-#'   Lognormal             \tab lognormal_dist         \tab meanlog, sdlog                        \tab No \cr
-#'   Asymmetric Laplace    \tab asymmetriclaplace_dist \tab location, scale, skew                 \tab No \cr
-#'   F                     \tab d_dist                 \tab df1, df2                              \tab No \cr
-#'   Weibull               \tab weibull_dist           \tab shape, scale                          \tab No \cr
-#'   Gamma                 \tab gamma_dist             \tab shape, rate                           \tab No \cr
-#'   Chi Squared           \tab chisq_dist             \tab df                                    \tab No \cr
-#'   Inverse Gaussian      \tab inversegaussian_dist   \tab mean, shape                           \tab No \cr
-#'   Pareto                \tab pareto_dist            \tab scale, shape, pow, r                  \tab No \cr
-#'   Cauchy                \tab cauchy_dist            \tab location, scale, pow                  \tab No \cr
+#'   Normal                \tab `normal_dist`            \tab mean, sd                              \tab Yes\cr
+#'   Uniform               \tab `uniform_dist`           \tab min, max                              \tab No \cr
+#'   Exponential           \tab `exponential_dist`       \tab rate                                  \tab Yes\cr
+#'   Poisson               \tab `poisson_dist`           \tab lambda                                \tab Yes\cr
+#'   Bernoulli             \tab `bernoulli_dist`         \tab prob                                  \tab No \cr
+#'   Binomial              \tab `binomial_dist`          \tab prob                                  \tab No\cr
+#'   Beta                  \tab `beta_dist`              \tab shape1, shape2                        \tab Yes \cr
+#'   Half-Normal           \tab `halfnormal_dist`        \tab theta                                 \tab No \cr
+#'   Laplace               \tab `laplace_dist`           \tab location, scale                       \tab Yes \cr
+#'   Lognormal             \tab `lognormal_dist`         \tab meanlog, sdlog                        \tab Yes \cr
+#'   Asymmetric Laplace    \tab `asymmetriclaplace_dist` \tab location, scale, skew                 \tab Yes \cr
+#'   F                     \tab `f_dist`                 \tab df1, df2                              \tab No \cr
+#'   Weibull               \tab `weibull_dist`           \tab shape, scale                          \tab Yes \cr
+#'   Gamma                 \tab `gamma_dist`             \tab shape, rate                           \tab No \cr
+#'   Chi Squared           \tab `chisq_dist`             \tab df                                    \tab No \cr
+#'   Inverse Gaussian      \tab `inversegaussian_dist`   \tab mean, shape                           \tab Yes \cr
+#'   Pareto                \tab `pareto_dist`            \tab scale, shape, pow, r                  \tab Yes \cr
+#'   Cauchy                \tab `cauchy_dist`            \tab location, scale, pow                  \tab Yes \cr
 #' }
 #'
-#' Note: Although it may be proper to hyphenate some distribution names in
-#' text, there are no hyphens in any `*_dist` function names.
 #'
 #' @section Simple and Composite Testing:
 #'
@@ -97,11 +106,11 @@
 #' you can use the energy package to test the GOF hypothesis with any
 #' combination of known and unknown parameters.)
 #'
-#' For each test, `energyGOF` calculates the test statistic and a
-#' *p*-value. In all cases the *p*-value is calculated via parametric bootstrap.
-#' For large `nsim`, the *p*-values should be reasonably honest in small-ish
-#' samples. You should set nsim to be a very large number in practice. I
-#' recommend at least 10,000.
+#' For each test, `energyGOF.test` calculates the test statistic and a
+#' *p*-value. In all cases the *p*-value is calculated via parametric
+#' bootstrap. For large `nsim`, the *p*-values should be reasonably honest in
+#' small-ish samples. You should set nsim to be a very large number in
+#' practice. I recommend at least 10,000.
 #'
 #'
 #' @section About Energy:
