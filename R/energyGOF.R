@@ -37,7 +37,7 @@
 #'
 #'   Both simple (known parameter) and composite (unknown parameter) cases are
 #'   supported, but not all distributions allow for a composite test. See
-#'   [energyGOF-package] for the table of supported distibutions.
+#'   [energyGOF-package] for the table of supported distributions.
 #'
 #'   *P*-values are determined via parametric bootstrap. For distributions
 #'   where \eqn{E|Y|} is not finite (Cauchy, Pareto), a *generalized* energy
@@ -59,7 +59,7 @@
 #'
 #' @seealso
 #'
-#'  * [energyGOF-package] for specifics on the distriubtions available to test.
+#'  * [energyGOF-package] for specifics on the distributions available to test.
 #'
 #'  * [energyGOFdist] for the alternate S3 interface for parametric testing.
 #'
@@ -1133,9 +1133,9 @@ halfnormal_dist <- function(scale = NULL) {
 #' @param scale NULL or a positive scale parameter
 #' @description This is exactly the distribution corresponding to the PDF
 #'
-#' \deqn{f(x|\mu, b) = \frac{1}{2b} \exp \{ - \frac{|x - \mu}{b}\}, }
+#' \deqn{f(x|\mu, b) = \frac{1}{2b} \exp \left{ - \frac{|x - \mu|}{b}\right}, }
 #'
-#' where `location` = \eqn{mu} and `scale` = \eqn{b}.
+#' where `location` = \eqn{\mu} and `scale` = \eqn{b}.
 #'
 #' @examples
 #' d <- laplace_dist(1, 1)
@@ -2116,3 +2116,5 @@ cauchy_dist <- function(location = NULL, scale = NULL,
 ## o <- tabular(deats)
 
 ## writeLines(o)
+
+## TODO: add examples to readme file
