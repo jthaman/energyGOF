@@ -1066,7 +1066,7 @@ geometric_dist  <- function(prob = 0.5) {
 ##### Negative Binomial?
 
 ##### Half-Normal
-#' @title Create a halfnormal distribution object for energy testing
+#' @title Create a half-normal distribution object for energy testing
 #' @description Create an S3 object that sets all the required data needed by
 #'   energyGOFdist to execute the energy goodness-of-fit test against a
 #'   half-normal distribution. If scale is NULL, a composite test is performed.
@@ -1134,7 +1134,7 @@ halfnormal_dist <- function(scale = NULL) {
 #' @param scale NULL or a positive scale parameter
 #' @description This is exactly the distribution corresponding to the PDF
 #'
-#' \deqn{f(x|\mu, b) = \frac{1}{2b} \exp \left{ - \frac{|x - \mu|}{b}\right}, }
+#' \deqn{f(x|\mu, b) = \frac{1}{2b} \exp \left(-\frac{|x - \mu|}{b} \right), }
 #'
 #' where `location` = \eqn{\mu} and `scale` = \eqn{b}.
 #'
@@ -1363,7 +1363,7 @@ asymmetric_laplace_dist <- function(location = NULL,
 alaplace_dist <- asymmetric_laplace_dist
 
 ##### F Distribution (Fisher Distribution)
-#' @title Create a F distribution object for energy testing
+#' @title Create an F distribution object for energy testing
 #' @inherit normal_dist return author
 #' @param df1 Positive.
 #' @param df2 Must be greater than 2.
@@ -1873,9 +1873,9 @@ pareto_set_sampler_par <- function(dist) {
 #' @title Create a Cauchy distribution object for energy testing
 #' @inherit normal_dist return author
 #' @description Create an S3 object that sets all the required data needed by
-#'   energyGOFdist to execute the generalize energy goodness-of-fit test against a
-#'   Cauchy distribution. If `location` and `scale` are both NULL, perform a
-#'   composite test.
+#'   energyGOFdist to execute the generalized energy goodness-of-fit test
+#'   against a Cauchy distribution. If `location` and `scale` are both NULL,
+#'   perform a composite test.
 #' @param location NULL, or same as in [stats::rcauchy()]
 #' @param scale NULL, or same as in [stats::rcauchy()]
 #' @param pow Optionally set the exponent of the energy test. 0 < pow < 1 is
