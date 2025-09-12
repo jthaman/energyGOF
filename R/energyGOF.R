@@ -30,6 +30,7 @@
 #'   * A numeric vector of data.
 #'
 #'     * Result: A two-sample, non-parametric goodness-of-fit test is performed
+#'       to test if x and y are equally distributed.
 #'
 #'   * A **continuous** cumulative distribution function. For example, `pt`.
 #'
@@ -105,7 +106,7 @@
 #' energyGOF.test(x, "normal", nsim = 10)
 #'
 #' ## Simple energy goodness-of-fit test (test for Normality with known
-#' ## parameters). eg is an alias for energyGOF.test.
+#' ## parameters). egof.test is an alias for energyGOF.test.
 #'
 #' egof.test(x, "normal", nsim = 10, mean = 0, sd = 1)
 #'
