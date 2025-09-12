@@ -1,6 +1,6 @@
 # EnergyGOF
 
-This package provides the `energyGOF.test` (alias: `egof.test`) function, which conducts one-sample goodness-of-fit tests for parametric distributions, including normal, uniform, exponential, Bernoulli, binomial, geometric, beta, Poisson, lognormal, Laplace,  asymmetric Laplace,  inverse Gaussian, halfnormal,  chi-squared, gamma, F, Weibull, Cauchy, stable, and Pareto distributions. A subset of the available distributions can be tested for the composite goodness-of-fit hypothesis, that is, one can test for distribution fit with unknown parameters.
+This package provides the energyGOF.test (alias: egof.test) function, which conducts one- and two-sample goodness-of-fit tests for univariate data. For one-sample case, normal, uniform, exponential, Bernoulli, binomial, geometric, beta, Poisson, lognormal, Laplace, asymmetric Laplace, inverse Gaussian, half-normal, chi-squared, gamma, F, Weibull, Cauchy, and Pareto distributions are supported. `egof.test` can also test goodness-of-fit to any distribution with a continuous CDF. A subset of the available distributions can be tested for the composite goodness-of-fit hypothesis, that is, one can test for distribution fit with unknown parameters. P-values are calculated with parametric bootstrap.
 
 # Examples
 
