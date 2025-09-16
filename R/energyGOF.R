@@ -18,7 +18,10 @@
 #' @description Perform a goodness-of-fit test of univariate data `x` against a
 #'   target `y`. `y` may be one of the following:
 #'
-#'   * A string naming a distribution. For example, "normal".
+#'   * A string naming a distribution. For example, "normal". Both simple
+#'   (known parameter) and composite (unknown parameter) tests are supported,
+#'   but not all distributions allow for a composite test. See
+#'   [energyGOF-package] for the table of supported distributions.
 #'
 #'     * Result: A parametric goodness-of-fit test is performed.
 #'     * Allowable values: "uniform", "exponential", "bernoulli", "binomial", "geometric",
@@ -33,12 +36,10 @@
 #'       to test if x and y are equally distributed.
 #'
 #'   * A **continuous** cumulative distribution function. For example, `pt`.
+#'   Only simple tests are supported.
 #'
 #'     * Result: \eqn{y(x)} is tested for uniformity.
 #'
-#'   Both simple (known parameter) and composite (unknown parameter) cases are
-#'   supported, but not all distributions allow for a composite test. See
-#'   [energyGOF-package] for the table of supported distributions.
 #'
 #'   *P*-values are determined via parametric bootstrap. For distributions
 #'   where \eqn{E|Y|} is not finite (Cauchy, Pareto), a *generalized* energy
@@ -49,14 +50,16 @@
 #'   distribution to test `x` against.
 #' @param nsim A non-negative integer. The number of parametric bootstrap
 #'   replicates taken to calculate the *p*-value. If 0, no simulation.
-#' @param ... Parameters of the distribution `y`. Required for a simple test.
-#'   For distributions in the [stats] library, parameter argument names are
-#'   identical. To test the *composite* goodness-of-fit hypothesis that `x` is
+#' @param ... If `y` is a string or distribution function, parameters of the
+#'   distribution `y`. Required for a simple test. For distributions in the
+#'   [stats] library, parameter argument names are identical. If `y` is a
+#'   string, to test the *composite* goodness-of-fit hypothesis that `x` is
 #'   distributed according to the *family of distributions* `y`, don't pass
 #'   parameters in `...`. For *generalized* energy tests, you can also
-#'   optionally pass the generalized energy exponent `pow` here. (As you can
-#'   see, there is a lot going on in `...` and if you don't like that, you may
-#'   want to check out [energyGOFdist] for a structured interface.)
+#'   optionally pass the generalized energy exponent `pow` here. Composite
+#'   testing is not supported if `y` is a function. (As you can see, there is a
+#'   lot going on in `...` and if you don't like that, you may want to check
+#'   out [energyGOFdist] for a structured interface.)
 #'
 #' @seealso
 #'
@@ -92,7 +95,7 @@
 #' * `sim_reps`: bootstrap replicates of energy statistic
 #' * `estimate`: Any parameter estimates, if the test is composite
 #'
-#' If `y` is numeric, return the same htest object as the [energy::eqdist.etest].
+#' If `y` is numeric, return the same htest object as [energy::eqdist.etest].
 #'
 #' @aliases egof.test
 #'
