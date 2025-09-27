@@ -92,7 +92,7 @@
 #' * `sim_reps`: bootstrap replicates of energy statistic
 #' * `estimate`: Any parameter estimates, if the test is composite
 #'
-#' If `y` is numeric, return the same htest object as the [energy::eqdist.etest].
+#' If `y` is numeric, return the same htest object as [energy::eqdist.etest].
 #'
 #' @aliases egof.test
 #'
