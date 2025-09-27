@@ -18,7 +18,10 @@
 #' @description Perform a goodness-of-fit test of univariate data `x` against a
 #'   target `y`. `y` may be one of the following:
 #'
-#'   * A string naming a distribution. For example, "normal".
+#'   * A string naming a distribution. For example, "normal". Both simple
+#'   (known parameter) and composite (unknown parameter) tests are supported,
+#'   but not all distributions allow for a composite test. See
+#'   [energyGOF-package] for the table of supported distributions.
 #'
 #'     * Result: A parametric goodness-of-fit test is performed.
 #'     * Allowable values: "uniform", "exponential", "bernoulli", "binomial", "geometric",
@@ -33,12 +36,10 @@
 #'       to test if x and y are equally distributed.
 #'
 #'   * A **continuous** cumulative distribution function. For example, `pt`.
+#'   Only simple tests are supported.
 #'
 #'     * Result: \eqn{y(x)} is tested for uniformity.
 #'
-#'   Both simple (known parameter) and composite (unknown parameter) cases are
-#'   supported, but not all distributions allow for a composite test. See
-#'   [energyGOF-package] for the table of supported distributions.
 #'
 #'   *P*-values are determined via parametric bootstrap. For distributions
 #'   where \eqn{E|Y|} is not finite (Cauchy, Pareto), a *generalized* energy
@@ -49,14 +50,16 @@
 #'   distribution to test `x` against.
 #' @param nsim A non-negative integer. The number of parametric bootstrap
 #'   replicates taken to calculate the *p*-value. If 0, no simulation.
-#' @param ... Parameters of the distribution `y`. Required for a simple test.
-#'   For distributions in the [stats] library, parameter argument names are
-#'   identical. To test the *composite* goodness-of-fit hypothesis that `x` is
+#' @param ... If `y` is a string or distribution function, parameters of the
+#'   distribution `y`. Required for a simple test. For distributions in the
+#'   [stats] library, parameter argument names are identical. If `y` is a
+#'   string, to test the *composite* goodness-of-fit hypothesis that `x` is
 #'   distributed according to the *family of distributions* `y`, don't pass
 #'   parameters in `...`. For *generalized* energy tests, you can also
-#'   optionally pass the generalized energy exponent `pow` here. (As you can
-#'   see, there is a lot going on in `...` and if you don't like that, you may
-#'   want to check out [energyGOFdist] for a structured interface.)
+#'   optionally pass the generalized energy exponent `pow` here. Composite
+#'   testing is not supported if `y` is a function. (As you can see, there is a
+#'   lot going on in `...` and if you don't like that, you may want to check
+#'   out [energyGOFdist] for a structured interface.)
 #'
 #' @seealso
 #'
@@ -2069,51 +2072,3 @@ cauchy_dist <- function(location = NULL, scale = NULL,
 ##   validate_par(dist)
 ##   dist
 ## }
-
-#### Extras
-## tabular <- function(df, ...) {
-##   stopifnot(is.data.frame(df))
-##
-##   align <- function(x) if (is.numeric(x)) "r" else "l"
-##   col_align <- vapply(df, align, character(1))
-##
-##   cols <- lapply(df, format, ...)
-##   contents <- do.call("paste",
-##                       c(cols, list(sep = " \\tab ", collapse = "\\cr\n#'   ")))
-##
-##   paste("#' \\tabular{", paste(col_align, collapse = ""), "}{\n#'   ",
-##         paste0("\\strong{", names(df), "}", sep = "", collapse = " \\tab "), " \\cr\n#'   ",
-##         contents, "\n#' }\n", sep = "")
-## }
-##
-##
-## deats <- data.frame(
-##   Distribution = character(1),
-##   Function = character(1),
-##   Parameter = character(1),
-##   `Composite Allowed` = character(1)
-## )
-##
-##
-## deats <- rbind(deats, list("Normal", "normal_dist", "mean, sd", "Yes"))
-## deats <- rbind(deats, list("Uniform", "uniform_dist", "min, max", "No"))
-## deats <- rbind(deats, list("Exponential", "exponential_dist", "rate", "Yes"))
-## deats <- rbind(deats, list("Poisson", "poisson_dist", "lambda", "Yes"))
-## deats <- rbind(deats, list("Bernoulli", "bernoulli_dist", "prob", "No"))
-## deats <- rbind(deats, list("Binomial", "binomial_dist", "prob", "Yes"))
-## deats <- rbind(deats, list("Beta", "beta_dist", "shape1, shape2", "No"))
-## deats <- rbind(deats, list("Half-Normal", "halfnormal_dist", "theta", "No"))
-## deats <- rbind(deats, list("Laplace", "laplace_dist", "location, scale", "No"))
-## deats <- rbind(deats, list("Log-normal", "lognormal_dist", "meanlog, sdlog", "No"))
-## deats <- rbind(deats, list("Asymmetric Laplace", "asymmetriclaplace_dist", "location, scale, skew", "No"))
-## deats <- rbind(deats, list("Weibull", "weibull_dist", "shape, scale", "No"))
-## deats <- rbind(deats, list("Gamma", "gamma_dist", "shape, rate", "No"))
-## deats <- rbind(deats, list("Chi Squared", "chisq_dist", "df", "No"))
-## deats <- rbind(deats, list("Inverse Gaussian", "inversegaussian_dist", "mean, shape", "No"))
-## deats <- rbind(deats, list("Pareto", "pareto_dist", "scale, shape, pow, r", "No"))
-## deats <- rbind(deats, list("Cauchy", "cauchy_dist", "location, scale, pow", "No"))
-## deats <- rbind(deats, list("Stable", "stable_dist", "location, scale, skew, stability, pow", "No"))
-##
-## o <- tabular(deats)
-
-## writeLines(o)

@@ -101,14 +101,14 @@
 #' and unknown sd, this is not implemented in the energyGOF package, you will
 #' get an error is you try ask for that. So, either pass all the distribution
 #' parameters or none of them. (In the special case of the Normal distribution,
-#' you can use the energy package to test the GOF hypothesis with any
+#' you can use the [energy] package to test the GOF hypothesis with any
 #' combination of known and unknown parameters.)
 #'
 #' For each test, `energyGOF.test` calculates the test statistic and a
 #' *p*-value. In all cases the *p*-value is calculated via parametric
 #' bootstrap. For large `nsim`, the *p*-values should be reasonably honest in
-#' small-ish samples. You should set nsim to be a very large number in
-#' practice. I recommend at least 10,000.
+#' small-ish samples. You may need to perform a sensitivity study to find a
+#' reasonable `nsim` for your particular testing problem.
 #'
 #'
 #' @section About Energy:
@@ -158,9 +158,8 @@
 #' random variables with expected value \eqn{E|Y-Y'|^s}. If \eqn{X} and \eqn{Y}
 #' differ, then \eqn{Q \to \infty} with \eqn{n}. So, \eqn{Q} provides a
 #' consistent goodness-of-fit test, even in some situations where \eqn{E|Y|} is
-#' not finite. And that's what `energyGOF.test` does. Asymptotic theory of
-#' V-statistics can be applied to prove that tests based on \eqn{Q} are
-#' statistically consistent goodness-of-fit tests.
+#' not finite. Asymptotic theory of V-statistics can be applied to prove that
+#' tests based on \eqn{Q} are statistically consistent goodness-of-fit tests.
 #'
 #' @references
 #'
