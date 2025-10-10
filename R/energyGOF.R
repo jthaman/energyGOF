@@ -686,34 +686,39 @@ print.GOFDist <- function(x, ...) {
 #'
 #' @export
 normal_dist <- function(mean = NULL, sd = NULL) {
-  dist <- structure(
-    list(
-      name = "Normal",
-      composite_p = is_composite(mean, sd),
-      par = list(mean = mean, sd = sd),
-      sampler_par = list(mean = 0, sd = 1),
-      par_domain = function(par) {
-        all(
-          length(mean) == 1 || is.null(mean),
-          length(sd) == 1 || is.null(sd),
-          par$sd > 0 || is.null(par$sd),
-          is.finite(par$mean) || is.null(par$mean))
-      },
-      support = function(x, par) all(is.finite(x)),
-      sampler = function(n, par) rnorm(n, par$mean, par$sd),
-      EYY = function(par) 2 * par$sd / sqrt(pi),
-      EXYhat = function(x, par) {
-        mean(2 * (x - par$mean) * pnorm(x, par$mean, par$sd) +
-               2 * par$sd^2 * dnorm(x, par$mean, par$sd) - (x - par$mean))
-      },
-      xform = function(x, par) (x - par$mean) / par$sd,
-      statistic = function(x) {
-        list(mean = mean(x), sd = sd(x))
-      }
-    ), class = c("NormalDist", "EuclideanGOFDist", "GOFDist")
-  )
-  validate_par(dist)
-  set_composite_class(dist)
+    cp <- is_composite(mean, sd)
+    dist <- structure(
+        list(
+            name = "Normal",
+            composite_p = cp,
+            par = list(mean = mean, sd = sd),
+            sampler_par = if (cp) {
+                              list(mean = 0, sd = 1)
+                          } else {
+                              list(mean = mean, sd = sd)
+                          },
+            par_domain = function(par) {
+                all(
+                    length(mean) == 1 || is.null(mean),
+                    length(sd) == 1 || is.null(sd),
+                    par$sd > 0 || is.null(par$sd),
+                    is.finite(par$mean) || is.null(par$mean))
+            },
+            support = function(x, par) all(is.finite(x)),
+            sampler = function(n, par) rnorm(n, par$mean, par$sd),
+            EYY = function(par) 2 * par$sd / sqrt(pi),
+            EXYhat = function(x, par) {
+                mean(2 * (x - par$mean) * pnorm(x, par$mean, par$sd) +
+                     2 * par$sd^2 * dnorm(x, par$mean, par$sd) - (x - par$mean))
+            },
+            xform = function(x, par) (x - par$mean) / par$sd,
+            statistic = function(x) {
+                list(mean = mean(x), sd = sd(x))
+            }
+        ), class = c("NormalDist", "EuclideanGOFDist", "GOFDist")
+        )
+    validate_par(dist)
+    set_composite_class(dist)
 }
 
 
