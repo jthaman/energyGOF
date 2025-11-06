@@ -206,7 +206,7 @@ energyGOF.test.character <- function(x,
                                            "inversegaussian", "invgaussian",
                                            "halfnormal",
                                            "chisq", "chisquared",
-                                           "F",
+                                           "f",
                                            "gamma",
                                            "weibull",
                                            "cauchy",
@@ -308,7 +308,7 @@ char_to_dist <- function(name, ...) {
          "halfnormal" = halfnormal_dist(...),
          "chisq" = chisq_dist(...),
          "chisquared" = chisq_dist(...),
-         "F" = f_dist(...),
+         "f" = f_dist(...),
          "binomial" = binomial_dist(...),
          "bernoulli" = bernoulli_dist(...),
          "geometric" = geometric_dist(...),
@@ -1681,7 +1681,7 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
             pref <- sqrt(lambda / (2 * pi)) * exp(lambda / mu)
             integrand <- function(y) y^(-0.5) * exp(-a * y - b / y)
             val <- integrate(integrand, lower = 0, upper = x,
-                             rel.tol = 1e-10)$value
+                             rel.tol = 1e-5)$value
             Mx <- pref * val
             Mx
           }
