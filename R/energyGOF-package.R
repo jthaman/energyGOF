@@ -13,7 +13,6 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 #' @title energyGOF: Goodness-of-fit tests via the energy of data
 #' @author John T. Haman
 #'
@@ -110,6 +109,11 @@
 #' small-ish samples. You may need to perform a sensitivity study to find a
 #' reasonable `nsim` for your particular testing problem.
 #'
+#' @section Power Analyses:
+#'
+#' Please see the repository https://github.com/jthaman/energyGOF-power for
+#' examples of how to conduct power analyses with energyGOF, and for
+#' preliminary performance data agaist alternative methods.
 #'
 #' @section About Energy:
 #'

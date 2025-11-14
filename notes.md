@@ -11,7 +11,7 @@
 
 # Goals to submit package to CRAN
 
-1. Pass cran checks  (error with fitdistrplus)
-2. (DONE) Check documentation for spelling and grammar
+1. (Done) Pass cran checks  (error with fitdistrplus)
+2. (Done) Check documentation for spelling and grammar
 3. Better unit testing
-4. Power analysis in a vignette
+4. (Done)Power analysis in a vignette
