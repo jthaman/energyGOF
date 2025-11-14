@@ -186,33 +186,42 @@ energyGOF.test.numeric <- function(x, y, nsim, ...) {
   nsim <- validate_nsim(nsim)
   pooled <- matrix(c(x, y))
   sizes <- c(NROW(x), NROW(y))
-  energy::eqdist.etest(pooled, sizes = sizes,
-                       method = "original", R = nsim)
+  energy::eqdist.etest(pooled, sizes = sizes, method = "original", R = nsim)
 }
 
 #' @export
-energyGOF.test.character <- function(x,
-                                     y = c("uniform",
-                                           "exponential",
-                                           "bernoulli",
-                                           "binomial",
-                                           "geometric",
-                                           "normal", "gaussian",
-                                           "beta",
-                                           "poisson",
-                                           "lognormal", "lnorm",
-                                           "laplace", "doubleexponential",
-                                           "asymmetriclaplace", "alaplace",
-                                           "inversegaussian", "invgaussian",
-                                           "halfnormal",
-                                           "chisq", "chisquared",
-                                           "f",
-                                           "gamma",
-                                           "weibull",
-                                           "cauchy",
-                                           "pareto"),
-                                     nsim,
-                                     ...) {
+energyGOF.test.character <- function(
+  x,
+  y = c(
+    "uniform",
+    "exponential",
+    "bernoulli",
+    "binomial",
+    "geometric",
+    "normal",
+    "gaussian",
+    "beta",
+    "poisson",
+    "lognormal",
+    "lnorm",
+    "laplace",
+    "doubleexponential",
+    "asymmetriclaplace",
+    "alaplace",
+    "inversegaussian",
+    "invgaussian",
+    "halfnormal",
+    "chisq",
+    "chisquared",
+    "f",
+    "gamma",
+    "weibull",
+    "cauchy",
+    "pareto"
+  ),
+  nsim,
+  ...
+) {
   dist <- y
   valid_dists <- eval(formals(energyGOF.test.character)$y)
   distname <- match.arg(tolower(dist), choices = valid_dists)
@@ -244,7 +253,9 @@ validate_cdf <- function(y, x, n = 1e5, tol1 = 1e-10, tol2 = 1e-2, ...) {
   d <- data.frame(x = xseq, y = vals)
   ## Seems like a bad method for checking
   if (NROW(d[with(d, x < 0 & y == 0), ]) > 0) {
-    warning("You may be testing negative data against a distribution with positive support.")
+    warning(
+      "You may be testing negative data against a distribution with positive support."
+    )
   }
 }
 
@@ -252,35 +263,42 @@ validate_cdf <- function(y, x, n = 1e5, tol1 = 1e-10, tol2 = 1e-2, ...) {
 validate_par <- function(dist) {
   if (!dist$par_domain(dist$par)) {
     stop(sprintf(
-      "Parameters passed in ... failed domain check:  %s", paste0(deparse(body(dist$par_domain)), collapse = "")))
+      "Parameters passed in ... failed domain check:  %s",
+      paste0(deparse(body(dist$par_domain)), collapse = "")
+    ))
   }
   if (!dist$par_domain(dist$sampler_par)) {
     stop(sprintf(
-      "Parameters passed in ... failed domain check:  %s", paste0(deparse(body(dist$par_domain)), collapse = "")))
+      "Parameters passed in ... failed domain check:  %s",
+      paste0(deparse(body(dist$par_domain)), collapse = "")
+    ))
   }
 }
 
 
 ##### Validate x
 validate_x <- function(x, dist) {
-  if (any(is.na(x),
-          is.null(x),
-          is.infinite(x))) {
-    stop ("Missing data are not supported.")
+  if (any(is.na(x), is.null(x), is.infinite(x))) {
+    stop("Missing data are not supported.")
   }
   if (!dist$support(x, dist$par)) {
-    stop(sprintf("Not all elements of x lie in the support of distribution: %s
+    stop(sprintf(
+      "Not all elements of x lie in the support of distribution: %s
 Support test:  %s",
-dist$name, paste0(deparse(body(dist$support)), collapse = "")))
+      dist$name,
+      paste0(deparse(body(dist$support)), collapse = "")
+    ))
   }
 }
 
 ##### Validate nsim
 validate_nsim <- function(nsim) {
-  if (!is.numeric(nsim))
+  if (!is.numeric(nsim)) {
     stop("nsim must be numeric.")
-  if (!(nsim >= 0))
+  }
+  if (!(nsim >= 0)) {
     stop("nsim must be non-negative.")
+  }
   floor(nsim)
 }
 
@@ -288,37 +306,38 @@ validate_nsim <- function(nsim) {
 #### Distribution Switcher
 char_to_dist <- function(name, ...) {
   ## ... should have the params and pow
-  switch(name,
-         ## Euclidean GOF Dists
-         "normal" = normal_dist(...),
-         "gaussian" = normal_dist(...),
-         "uniform" = uniform_dist(...),
-         "exponential" = exponential_dist(...),
-         "beta" = beta_dist(...),
-         "gamma" = gamma_dist(...),
-         "weibull" = weibull_dist(...),
-         "lognormal" = lognormal_dist(...),
-         "lnorm" = lognormal_dist(...),
-         "laplace" = laplace_dist(...),
-         "doubleexponential" = laplace_dist(...),
-         "asymmetriclaplace" = asymmetric_laplace_dist(...),
-         "alaplace" = asymmetric_laplace_dist(...),
-         "inversegaussian" = inverse_gaussian_dist(...),
-         "invgaussian" = inverse_gaussian_dist(...),
-         "halfnormal" = halfnormal_dist(...),
-         "chisq" = chisq_dist(...),
-         "chisquared" = chisq_dist(...),
-         "f" = f_dist(...),
-         "binomial" = binomial_dist(...),
-         "bernoulli" = bernoulli_dist(...),
-         "geometric" = geometric_dist(...),
-         "poisson" = poisson_dist(...),
-         ## Generalized GOF Dists
-         "cauchy" = cauchy_dist(...),
-         ##"stable" = stable_dist(...),
-         "pareto" = pareto_dist(...),
-         stop("Unsupported distribution: ", name)
-         )
+  switch(
+    name,
+    ## Euclidean GOF Dists
+    "normal" = normal_dist(...),
+    "gaussian" = normal_dist(...),
+    "uniform" = uniform_dist(...),
+    "exponential" = exponential_dist(...),
+    "beta" = beta_dist(...),
+    "gamma" = gamma_dist(...),
+    "weibull" = weibull_dist(...),
+    "lognormal" = lognormal_dist(...),
+    "lnorm" = lognormal_dist(...),
+    "laplace" = laplace_dist(...),
+    "doubleexponential" = laplace_dist(...),
+    "asymmetriclaplace" = asymmetric_laplace_dist(...),
+    "alaplace" = asymmetric_laplace_dist(...),
+    "inversegaussian" = inverse_gaussian_dist(...),
+    "invgaussian" = inverse_gaussian_dist(...),
+    "halfnormal" = halfnormal_dist(...),
+    "chisq" = chisq_dist(...),
+    "chisquared" = chisq_dist(...),
+    "f" = f_dist(...),
+    "binomial" = binomial_dist(...),
+    "bernoulli" = bernoulli_dist(...),
+    "geometric" = geometric_dist(...),
+    "poisson" = poisson_dist(...),
+    ## Generalized GOF Dists
+    "cauchy" = cauchy_dist(...),
+    ##"stable" = stable_dist(...),
+    "pareto" = pareto_dist(...),
+    stop("Unsupported distribution: ", name)
+  )
 }
 
 #### Transform x for some tests
@@ -399,9 +418,7 @@ xform_dist.AsymmetricLaplaceDist <- function(x, dist) {
   # Must transform in Composite case.
   if (dist$composite) {
     mle <- dist$statistic(x)
-    dist$sampler_par <- list(location = 0,
-                             scale = 1,
-                             skew = mle$skew)
+    dist$sampler_par <- list(location = 0, scale = 1, skew = mle$skew)
   }
   dist
 }
@@ -438,7 +455,7 @@ EXXhat.EuclideanGOFDist <- function(x, dist) {
 EXXhat.GeneralizedGOFDist <- function(x, dist) {
   pow <- dist$sampler_par$pow
   n <- length(x)
-  2 * sum(dist(x)^pow) /n^2
+  2 * sum(dist(x)^pow) / n^2
 }
 
 
@@ -465,15 +482,19 @@ Qhat.GOFDist <- function(x, dist, EYY) {
 
 #### Simulate P-values
 simulate_pval <- function(x, dist, nsim, Qhat, EYY) {
-  if (nsim == 0) return(list(sim_reps = 0, p_value = NA))
-  bootobj <- boot::boot(x,
-                        statistic = Qhat,
-                        R = nsim,
-                        sim = "parametric",
-                        ran.gen = dist$sampler,
-                        mle = dist$sampler_par,
-                        dist = dist,
-                        EYY = EYY)
+  if (nsim == 0) {
+    return(list(sim_reps = 0, p_value = NA))
+  }
+  bootobj <- boot::boot(
+    x,
+    statistic = Qhat,
+    R = nsim,
+    sim = "parametric",
+    ran.gen = dist$sampler,
+    mle = dist$sampler_par,
+    dist = dist,
+    EYY = EYY
+  )
   list(
     sim_reps = bootobj$t,
     p_value = mean(bootobj$t > bootobj$t0)
@@ -487,24 +508,30 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
   cp <- inherits(dist, "CompositeGOFDist")
   gen <- inherits(dist, "GeneralizedGOFDist")
   names(E_stat) <- paste0("E-statistic")
-  if (cp) mle <- unlist(dist$statistic(x))
-  structure(list(
-    method = paste0((if (cp) "Composite" else "Simple"),
-                    " energy goodness-of-fit test",
-                    (if (cp)
-                      paste0(" (conditional on ", deparse(substitute(x)), ")"))
-                    ),
-    data.name = deparse(substitute(x)),
-    distribution = dist,
-    parameter = c("Distribution" = dist$name,
-                  if (cp) NULL else dist$par),
-    nsim = nsim,
-    composite_p = cp,
-    statistic = E_stat,
-    p.value = sim$p_value,
-    sim_reps = sim$sim_reps,
-    estimate = if (cp) mle else NULL
-  ), class = "htest")
+  if (cp) {
+    mle <- unlist(dist$statistic(x))
+  }
+  structure(
+    list(
+      method = paste0(
+        (if (cp) "Composite" else "Simple"),
+        " energy goodness-of-fit test",
+        (if (cp) {
+          paste0(" (conditional on ", deparse(substitute(x)), ")")
+        })
+      ),
+      data.name = deparse(substitute(x)),
+      distribution = dist,
+      parameter = c("Distribution" = dist$name, if (cp) NULL else dist$par),
+      nsim = nsim,
+      composite_p = cp,
+      statistic = E_stat,
+      p.value = sim$p_value,
+      sim_reps = sim$sim_reps,
+      estimate = if (cp) mle else NULL
+    ),
+    class = "htest"
+  )
 }
 
 #### energyGOFdist Generic & Methods
@@ -581,9 +608,9 @@ is_composite <- function(...) {
   nulls <- sapply(list(...), is.null)
   n_null <- sum(nulls)
   if (n_null == 0) {
-    FALSE  # simple test: all pars supplied
+    FALSE # simple test: all pars supplied
   } else if (n_null == length(nulls)) {
-    TRUE   # composite test: all pars NULL
+    TRUE # composite test: all pars NULL
   } else {
     stop("Partially composite tests not implemented.")
   }
@@ -593,7 +620,7 @@ composite_not_allowed <- function(...) {
   nulls <- sapply(list(...), is.null)
   n_null <- sum(nulls)
   if (n_null == 0) {
-    FALSE  # simple test: all pars supplied
+    FALSE # simple test: all pars supplied
   } else {
     stop("Composite test not implemented for this distribution.")
   }
@@ -613,18 +640,32 @@ set_composite_class <- function(dist) {
 print.GOFDist <- function(x, ...) {
   cat(" Energy goodness-of-fit test for:\n")
   cat("   *", x$name, "Distribution\n")
-  if (!x$composite_p)
-    cat("   * Test Parameters: ", paste(names(x$par),
-                                        unlist(x$par),
-                                        sep = "=", collapse = ", "), "\n")
-  cat("   * Sampler Parameters: ", paste(names(x$sampler_par),
-                                         unlist(x$sampler_par),
-                                         sep = "=", collapse = ", "), "\n")
-  cat("   * Test type:",
-      if (x$composite_p)
-        "Composite (parameters unknown)"
-      else
-        "Simple (parameters known)", "\n")
+  if (!x$composite_p) {
+    cat(
+      "   * Test Parameters: ",
+      paste(names(x$par), unlist(x$par), sep = "=", collapse = ", "),
+      "\n"
+    )
+  }
+  cat(
+    "   * Sampler Parameters: ",
+    paste(
+      names(x$sampler_par),
+      unlist(x$sampler_par),
+      sep = "=",
+      collapse = ", "
+    ),
+    "\n"
+  )
+  cat(
+    "   * Test type:",
+    if (x$composite_p) {
+      "Composite (parameters unknown)"
+    } else {
+      "Simple (parameters known)"
+    },
+    "\n"
+  )
   cat("   * S3 Classes:", class(x), "\n")
 }
 
@@ -686,39 +727,46 @@ print.GOFDist <- function(x, ...) {
 #'
 #' @export
 normal_dist <- function(mean = NULL, sd = NULL) {
-    cp <- is_composite(mean, sd)
-    dist <- structure(
-        list(
-            name = "Normal",
-            composite_p = cp,
-            par = list(mean = mean, sd = sd),
-            sampler_par = if (cp) {
-                              list(mean = 0, sd = 1)
-                          } else {
-                              list(mean = mean, sd = sd)
-                          },
-            par_domain = function(par) {
-                all(
-                    length(mean) == 1 || is.null(mean),
-                    length(sd) == 1 || is.null(sd),
-                    par$sd > 0 || is.null(par$sd),
-                    is.finite(par$mean) || is.null(par$mean))
-            },
-            support = function(x, par) all(is.finite(x)),
-            sampler = function(n, par) rnorm(n, par$mean, par$sd),
-            EYY = function(par) 2 * par$sd / sqrt(pi),
-            EXYhat = function(x, par) {
-                mean(2 * (x - par$mean) * pnorm(x, par$mean, par$sd) +
-                     2 * par$sd^2 * dnorm(x, par$mean, par$sd) - (x - par$mean))
-            },
-            xform = function(x, par) (x - par$mean) / par$sd,
-            statistic = function(x) {
-                list(mean = mean(x), sd = sd(x))
-            }
-        ), class = c("NormalDist", "EuclideanGOFDist", "GOFDist")
+  cp <- is_composite(mean, sd)
+  dist <- structure(
+    list(
+      name = "Normal",
+      composite_p = cp,
+      par = list(mean = mean, sd = sd),
+      sampler_par = if (cp) {
+        list(mean = 0, sd = 1)
+      } else {
+        list(mean = mean, sd = sd)
+      },
+      par_domain = function(par) {
+        all(
+          length(mean) == 1 || is.null(mean),
+          length(sd) == 1 || is.null(sd),
+          par$sd > 0 || is.null(par$sd),
+          is.finite(par$mean) || is.null(par$mean)
         )
-    validate_par(dist)
-    set_composite_class(dist)
+      },
+      support = function(x, par) all(is.finite(x)),
+      sampler = function(n, par) rnorm(n, par$mean, par$sd),
+      EYY = function(par) 2 * par$sd / sqrt(pi),
+      EXYhat = function(x, par) {
+        mean(
+          2 *
+            (x - par$mean) *
+            pnorm(x, par$mean, par$sd) +
+            2 * par$sd^2 * dnorm(x, par$mean, par$sd) -
+            (x - par$mean)
+        )
+      },
+      xform = function(x, par) (x - par$mean) / par$sd,
+      statistic = function(x) {
+        list(mean = mean(x), sd = sd(x))
+      }
+    ),
+    class = c("NormalDist", "EuclideanGOFDist", "GOFDist")
+  )
+  validate_par(dist)
+  set_composite_class(dist)
 }
 
 
@@ -740,7 +788,7 @@ normal_dist <- function(mean = NULL, sd = NULL) {
 #'
 #'
 #' @export
-uniform_dist<- function(min = 0, max = 1) {
+uniform_dist <- function(min = 0, max = 1) {
   dist <- structure(
     list(
       name = "Uniform",
@@ -758,12 +806,16 @@ uniform_dist<- function(min = 0, max = 1) {
       sampler = function(n, par) runif(n, par$min, par$max),
       EYY = function(par) (par$max - par$min) / 3,
       EXYhat = function(x, par) {
-        mean((x - par$min)^2 / (par$max - par$min) - x +
-               (par$max - par$min) / 2)},
+        mean(
+          (x - par$min)^2 / (par$max - par$min) - x + (par$max - par$min) / 2
+        )
+      },
       xform = function(x, par) (x - par$min) / (par$max - par$min),
       statistic = function(x) {
-        list(min = min(x), max = max(x))}
-    ), class = c("UniformDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
+        list(min = min(x), max = max(x))
+      }
+    ),
+    class = c("UniformDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
   )
   validate_par(dist)
   dist
@@ -803,7 +855,8 @@ exponential_dist <- function(rate = NULL) {
       },
       xform = function(x, par) x / par$rate,
       statistic = function(x) list(rate = mean(x))
-    ), class = c("ExponentialDist", "EuclideanGOFDist", "GOFDist")
+    ),
+    class = c("ExponentialDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
@@ -838,26 +891,39 @@ poisson_dist <- function(lambda = NULL) {
       sampler_par = if (cp) {
         list(lambda = NULL)
       } else {
-        list(lambda = lambda)},
+        list(lambda = lambda)
+      },
       par_domain = function(par) {
         (par$lambda > 0 && length(par$lambda) == 1) || is.null(par$lambda)
       },
       support = function(x, par) {
-        all(x >= 0) && all(is.integer(x))},
+        all(x >= 0) && all(is.integer(x))
+      },
       sampler = function(n, par) {
-        rpois(n, par$lambda)},
+        rpois(n, par$lambda)
+      },
       EYY = function(par) {
-        2 * par$lambda * exp(-2 * par$lambda) * (besselI(2 * par$lambda, 0) +
-                                                   besselI(2 * par$lambda, 1))
+        2 *
+          par$lambda *
+          exp(-2 * par$lambda) *
+          (besselI(2 * par$lambda, 0) +
+            besselI(2 * par$lambda, 1))
       },
       EXYhat = function(x, par) {
         n <- length(x)
-        mean(2 * x * ppois(x, par$lambda) -
-               2 * par$lambda * ppois(x - 1, par$lambda) + par$lambda - x)
+        mean(
+          2 *
+            x *
+            ppois(x, par$lambda) -
+            2 * par$lambda * ppois(x - 1, par$lambda) +
+            par$lambda -
+            x
+        )
       },
       xform = function(x, par) x,
       statistic = function(x) list(lambda = mean(x))
-    ), class = c("PoissonDist", "EuclideanGOFDist", "GOFDist")
+    ),
+    class = c("PoissonDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
@@ -895,16 +961,19 @@ bernoulli_dist <- function(prob = 0.5) {
       },
       support = function(x, par) all(x %in% c(0L, 1L)),
       sampler = function(n, par) {
-        rbinom(n, size = 1, prob = par$prob)},
+        rbinom(n, size = 1, prob = par$prob)
+      },
       EYY = function(par) {
-        2 * par$prob * (1 - par$prob)},
+        2 * par$prob * (1 - par$prob)
+      },
       EXYhat = function(x, par) {
         h <- sum(x)
         n <- length(x)
         (h * (1 - par$prob) + (n - h) * par$prob) / n
       },
       statistic = function(x) list(prob = mean(x))
-    ), class = c("BernoulliDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
+    ),
+    class = c("BernoulliDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
   )
   validate_par(dist)
   dist
@@ -943,7 +1012,8 @@ binomial_dist <- function(size = 1, prob = 0.5) {
       },
       support = function(x, par) all(x %in% 0:par$size),
       sampler = function(n, par) {
-        rbinom(n, size = par$size, prob = par$prob)},
+        rbinom(n, size = par$size, prob = par$prob)
+      },
       EYY = function(par) {
         i <- 0:par$size
         probs <- dbinom(i, size = par$size, prob = par$prob)
@@ -956,7 +1026,8 @@ binomial_dist <- function(size = 1, prob = 0.5) {
         mean(sapply(x, function(xi) sum(abs(xi - i) * probs)))
       },
       statistic = function(x) list(prob = mean(x))
-    ), class = c("BinomialDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
+    ),
+    class = c("BinomialDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
   )
   validate_par(dist)
   dist
@@ -989,21 +1060,27 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
       sampler_par = if (!cp) {
         list(shape1 = shape1, shape2 = shape2)
       } else {
-        list(shape1 = 1, shape2 = 1)},
+        list(shape1 = 1, shape2 = 1)
+      },
       par_domain = function(par) {
         all(
-        (par$shape1 > 0 && length(par$shape1) == 1) || is.null(par$shape1),
-        (par$shape2 > 0 && length(par$shape2) == 1) || is.null(par$shape2)
+          (par$shape1 > 0 && length(par$shape1) == 1) || is.null(par$shape1),
+          (par$shape2 > 0 && length(par$shape2) == 1) || is.null(par$shape2)
         )
       },
       sampler = function(n, par) {
-        rbeta(n, shape1 = par$shape1, shape2 = par$shape2)},
+        rbeta(n, shape1 = par$shape1, shape2 = par$shape2)
+      },
       support = function(x, par) all(x < 1) && all(x > 0),
-      EYY = function(par)  {
+      EYY = function(par) {
         integrand <- function(x, par) {
           a <- par$shape1
           b <- par$shape2
-          ExY <- 2 * x * pbeta(x, a, b) - x + a / (a + b) -
+          ExY <- 2 *
+            x *
+            pbeta(x, a, b) -
+            x +
+            a / (a + b) -
             2 * pbeta(x, a + 1, b) * beta(a + 1, b) / beta(a, b)
           ExY * dbeta(x, a, b)
         }
@@ -1013,15 +1090,24 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
       EXYhat = function(x, par) {
         a <- par$shape1
         b <- par$shape2
-        mean(2 * x * pbeta(x, a, b) - x + a / (a + b) -
-               2 * beta(a + 1, b) / beta(a, b) * pbeta(x, a + 1, b))
+        mean(
+          2 *
+            x *
+            pbeta(x, a, b) -
+            x +
+            a / (a + b) -
+            2 * beta(a + 1, b) / beta(a, b) * pbeta(x, a + 1, b)
+        )
       },
-      xform = function(x, par)
+      xform = function(x, par) {
         ## Probability integral transform
-        pbeta(x, par$shape1, par$shape2),
+        pbeta(x, par$shape1, par$shape2)
+      },
       statistic = function(x) {
-        as.list(fitdistrplus::mledist(x, "beta")$estimate)}
-    ), class = c("BetaDist", "EuclideanGOFDist", "GOFDist")
+        as.list(fitdistrplus::mledist(x, "beta")$estimate)
+      }
+    ),
+    class = c("BetaDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
@@ -1043,7 +1129,7 @@ beta_dist <- function(shape1 = NULL, shape2 = NULL) {
 #' egofd(rgeom(10, .5), d, 0)
 #'
 #' @export
-geometric_dist  <- function(prob = 0.5) {
+geometric_dist <- function(prob = 0.5) {
   dist <- structure(
     list(
       name = "Geometric",
@@ -1053,7 +1139,8 @@ geometric_dist  <- function(prob = 0.5) {
       par_domain = function(par) {
         all(
           par$prob > 0 && par$prob < 1,
-          length(par$prob) == 1)
+          length(par$prob) == 1
+        )
       },
       support = function(x, par) all(x == floor(x)) && all(x >= 0),
       sampler = function(n, par) rgeom(n, par$prob),
@@ -1064,7 +1151,8 @@ geometric_dist  <- function(prob = 0.5) {
       EXYhat = function(x, par) {
         mean(x + 1 + (1 - 2 * pgeom(x, par$prob)) / par$prob)
       }
-    ), class = c("GeometricDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
+    ),
+    class = c("GeometricDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
   )
   validate_par(dist)
   dist
@@ -1111,10 +1199,14 @@ halfnormal_dist <- function(scale = NULL) {
       },
       EXYhat = function(x, par) {
         scale <- par$scale
-        mean(2 * x * (2 * pnorm(x, 0, scale) - 1)
-             - x + scale * sqrt(2 / pi) -
-               2 * sqrt(2 / pi) * scale *
-                 (1 - exp(-x^2 / (2 * scale^2))))
+        mean(
+          2 *
+            x *
+            (2 * pnorm(x, 0, scale) - 1) -
+            x +
+            scale * sqrt(2 / pi) -
+            2 * sqrt(2 / pi) * scale * (1 - exp(-x^2 / (2 * scale^2)))
+        )
       },
       EYY = function(par) {
         par$scale * 2 * (2 - sqrt(2)) / sqrt(pi)
@@ -1124,7 +1216,8 @@ halfnormal_dist <- function(scale = NULL) {
         n <- length(x)
         list(scale = sqrt(sum(x^2) / n))
       }
-    ), class = c("HalfNormalDist", "EuclideanGOFDist", "GOFDist")
+    ),
+    class = c("HalfNormalDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
@@ -1164,31 +1257,35 @@ laplace_dist <- function(location = NULL, scale = NULL) {
       sampler_par = if (cp) {
         list(location = 0, scale = 1)
       } else {
-        list(location = location, scale = scale)},
+        list(location = location, scale = scale)
+      },
       par_domain = function(par) {
         all(
-        (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
-        (length(par$location) == 1) || is.null(par$location)
+          (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
+          (length(par$location) == 1) || is.null(par$location)
         )
       },
       support = function(x, par) all(is.finite(x)),
-      sampler =  function(n, par) {
+      sampler = function(n, par) {
         par$location + sign(runif(n) - 0.5) * rexp(n, 1 / par$scale)
       },
       EXYhat = function(x, par) {
-        mean(abs(x - par$location) + par$scale
-             * exp(-abs(x - par$location) / par$scale))
+        mean(
+          abs(x - par$location) +
+            par$scale * exp(-abs(x - par$location) / par$scale)
+        )
       },
       EYY = function(par) {
         par$scale * (3 / 2)
       },
       statistic = function(x) {
-        list(location = median(x),
-             scale = mean(abs(x - median(x))))},
+        list(location = median(x), scale = mean(abs(x - median(x))))
+      },
       xform = function(x, par) {
         (x - par$location) / par$scale
       }
-    ), class = c("LaplaceDist", "EuclideanGOFDist", "GOFDist")
+    ),
+    class = c("LaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
@@ -1222,7 +1319,8 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       sampler_par = if (cp) {
         list(meanlog = 0, sdlog = 1)
       } else {
-        list(meanlog = meanlog, sdlog = sdlog)},
+        list(meanlog = meanlog, sdlog = sdlog)
+      },
       support = function(x, par) {
         all(x > 0) && all(is.finite(x))
       },
@@ -1258,13 +1356,14 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
       },
       xform = function(x, par) exp((log(x) - par$meanlog) / par$sdlog), # ~ lognormal(0, 1)
       statistic = function(x) {
-        as.list(fitdistrplus::mledist(x, "lnorm")$estimate)}
-    ), class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
+        as.list(fitdistrplus::mledist(x, "lnorm")$estimate)
+      }
+    ),
+    class = c("LogNormalDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
 }
-
 
 
 ##### Asymmetric Laplace
@@ -1305,9 +1404,11 @@ lognormal_dist <- function(meanlog = NULL, sdlog = NULL) {
 #'
 #'
 #' @export
-asymmetric_laplace_dist <- function(location = NULL,
-                                    scale = NULL,
-                                    skew = NULL) {
+asymmetric_laplace_dist <- function(
+  location = NULL,
+  scale = NULL,
+  skew = NULL
+) {
   dist <- structure(
     list(
       name = "Asymmetric Laplace",
@@ -1316,16 +1417,17 @@ asymmetric_laplace_dist <- function(location = NULL,
       sampler_par = list(location = location, scale = scale, skew = skew),
       par_domain = function(par) {
         all(
-        (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
-        (par$skew > 0 && length(par$skew) == 1) || is.null(par$skew),
-        length(par$location) == 1 || is.null(par$location))
+          (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
+          (par$skew > 0 && length(par$skew) == 1) || is.null(par$skew),
+          length(par$location) == 1 || is.null(par$location)
+        )
       },
       support = function(x, par) all(is.finite(x)),
       sampler = function(n, par) {
         loc <- par$location
         scale <- par$scale
         k <- par$skew
-        loc + scale * log(runif(n)^k / runif(n)^(1 / k))/sqrt(2)
+        loc + scale * log(runif(n)^k / runif(n)^(1 / k)) / sqrt(2)
       },
       EXYhat = function(x, par) {
         loc <- par$location
@@ -1339,12 +1441,20 @@ asymmetric_laplace_dist <- function(location = NULL,
         mean(
           ifelse(
             x >= loc,
-            x - loc - mu + (2 * pk / lam) *
-              exp(-lam * abs(x - loc)),
-            -x + loc + mu + (2 * qk / beta) *
-              exp(-beta * abs(x - loc))))
+            x -
+              loc -
+              mu +
+              (2 * pk / lam) *
+                exp(-lam * abs(x - loc)),
+            -x +
+              loc +
+              mu +
+              (2 * qk / beta) *
+                exp(-beta * abs(x - loc))
+          )
+        )
       },
-      EYY = function(par){
+      EYY = function(par) {
         loc <- par$location
         scale <- par$scale
         k <- par$skew
@@ -1361,7 +1471,8 @@ asymmetric_laplace_dist <- function(location = NULL,
       statistic = function(x) {
         AML_EM(x)
       }
-    ), class = c("AsymmetricLaplaceDist", "EuclideanGOFDist", "GOFDist")
+    ),
+    class = c("AsymmetricLaplaceDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
@@ -1391,31 +1502,35 @@ f_dist <- function(df1 = 3, df2 = 3) {
       name = "F",
       composite_p = cp,
       par = list(df1 = df1, df2 = df2),
-      sampler_par =
-        list(df1 = df1, df2 = df2),
+      sampler_par = list(df1 = df1, df2 = df2),
       support = function(x, par) {
         all(x > 0)
       },
       par_domain = function(par) {
         all(
-        (par$df1 > 0 && length(par$df1) == 1),
-        (par$df2 > 2 && length(par$df2) == 1))
+          (par$df1 > 0 && length(par$df1) == 1),
+          (par$df2 > 2 && length(par$df2) == 1)
+        )
       },
       sampler = function(n, par) {
-        rf(n, df1 = par$df1, df2 = par$df2)},
+        rf(n, df1 = par$df1, df2 = par$df2)
+      },
       EXYhat = function(x, par) {
         df1 <- par$df1
         df2 <- par$df2
-        EX <- df2 /(df2 - 2)
+        EX <- df2 / (df2 - 2)
         u <- df1 * x / (df1 * x + df2)
-        mean(x * (2 * pf(x, df1, df2) - 1) +
-               EX * (1 - 2 * pbeta(u, df1 / 2 + 1, df2 / 2 - 1)))
+        mean(
+          x *
+            (2 * pf(x, df1, df2) - 1) +
+            EX * (1 - 2 * pbeta(u, df1 / 2 + 1, df2 / 2 - 1))
+        )
       },
       ## Wrong
       EYY = function(par) {
         df1 <- par$df1
         df2 <- par$df2
-        EY <- df2 /(df2 - 2)
+        EY <- df2 / (df2 - 2)
         integrand <- function(t, df1, df2) {
           a <- df1 / 2
           b <- df2 / 2
@@ -1424,7 +1539,8 @@ f_dist <- function(df1 = 3, df2 = 3) {
         I <- integrate(integrand, 0, 1, df1 = df1, df2 = df2)$value
         2 * EY - 2 * df2 / df1 * I
       }
-    ), class = c("FDist", "EuclideanGOFDist", "GOFDist")
+    ),
+    class = c("FDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   dist
@@ -1453,24 +1569,31 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
       name = "Weibull",
       composite_p = cp,
       par = list(shape = shape, scale = scale),
-      sampler_par =
-        list(shape = shape, scale = scale),
+      sampler_par = list(shape = shape, scale = scale),
       support = function(x, par) {
         all(x > 0)
       },
       par_domain = function(par) {
         all(
-        (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
-        (par$scale > 0 && length(par$scale) == 1) || is.null(par$shape))
+          (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
+          (par$scale > 0 && length(par$scale) == 1) || is.null(par$shape)
+        )
       },
       sampler = function(n, par) {
-        rweibull(n, shape = par$shape, scale = par$scale)},
+        rweibull(n, shape = par$shape, scale = par$scale)
+      },
       EXYhat = function(x, par) {
         if (!cp) {
           z = (x / par$scale)^par$shape
-          mean(2 * x * pweibull(x, par$shape, par$scale) - x +
-                 par$scale * gamma(1 + 1 / par$shape) *
-                 (1 - 2 * pgamma(z, 1 + 1 / par$shape, 1)))
+          mean(
+            2 *
+              x *
+              pweibull(x, par$shape, par$scale) -
+              x +
+              par$scale *
+                gamma(1 + 1 / par$shape) *
+                (1 - 2 * pgamma(z, 1 + 1 / par$shape, 1))
+          )
         } else {
           mean(x + 1 * (1 - 2 * pexp(x, 1)))
         }
@@ -1479,7 +1602,8 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
         if (!cp) {
           # scale = lambda
           # shape = k
-          (2 * par$scale / par$shape) * gamma(1 / par$shape) *
+          (2 * par$scale / par$shape) *
+            gamma(1 / par$shape) *
             (1 - 2^(-1 / par$shape))
         } else {
           1
@@ -1491,7 +1615,8 @@ weibull_dist <- function(shape = NULL, scale = NULL) {
       xform = function(x, par) {
         (x / par$scale)^par$shape # ~ exp(1)
       }
-    ), class = c("WeibullDist", "EuclideanGOFDist", "GOFDist")
+    ),
+    class = c("WeibullDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
@@ -1524,22 +1649,25 @@ gamma_dist <- function(shape = 1, rate = 1) {
       },
       par_domain = function(par) {
         all(
-        (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
-        (par$rate > 0 && length(par$rate) == 1) || is.null(par$rate)
+          (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
+          (par$rate > 0 && length(par$rate) == 1) || is.null(par$rate)
         )
       },
       sampler = function(n, par) {
-        rgamma(n, shape = par$shape, rate = par$rate)},
+        rgamma(n, shape = par$shape, rate = par$rate)
+      },
       EXYhat = function(x, par) {
         if (!cp) {
           a <- par$shape
           b <- par$rate
-          mean((a / b) - (2 * a / b) * pgamma(x, a + 1, b) +
-                 x * (2 * pgamma(x, a, b) - 1))
+          mean(
+            (a / b) -
+              (2 * a / b) * pgamma(x, a + 1, b) +
+              x * (2 * pgamma(x, a, b) - 1)
+          )
         } else {
           df <- 2 * par$shape # will be the statistic from xform_dist.GammaDist
-          mean(2 * x * pchisq(x, df) - x + df -
-                 2 * df * pchisq(x, df + 2))
+          mean(2 * x * pchisq(x, df) - x + df - 2 * df * pchisq(x, df + 2))
         }
       },
       EYY = function(par) {
@@ -1558,7 +1686,8 @@ gamma_dist <- function(shape = 1, rate = 1) {
       xform = function(x, par) {
         x / 2 * par$rate # ~ gamma (a/2, 1/2) ~ chisq (a)
       }
-    ), class = c("GammaDist", "EuclideanGOFDist", "GOFDist")
+    ),
+    class = c("GammaDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
@@ -1593,18 +1722,18 @@ chisq_dist <- function(df = 2) {
         par$df > 0 && length(par$df) == 1
       },
       sampler = function(n, par) {
-        rchisq(n, df = par$df, ncp = 0)},
+        rchisq(n, df = par$df, ncp = 0)
+      },
       EXYhat = function(x, par) {
         v <- par$df
-        mean(2 * x * pchisq(x, v) - x + v -
-               2 * v * pchisq(x, v + 2))
+        mean(2 * x * pchisq(x, v) - x + v - 2 * v * pchisq(x, v + 2))
       },
       EYY = function(par) {
         v <- par$df
         4 * gamma((v + 1) / 2) / gamma(v / 2) / sqrt(pi)
       }
-    ), class = c("ChiSquaredDist", "EuclideanGOFDist",
-                 "SimpleGOFDist", "GOFDist")
+    ),
+    class = c("ChiSquaredDist", "EuclideanGOFDist", "SimpleGOFDist", "GOFDist")
   )
   validate_par(dist)
   dist
@@ -1659,16 +1788,18 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
       },
       par_domain = function(par) {
         all(
-        (par$mean > 0 && length(par$mean) == 1) || is.null(par$mean),
-        (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape))
+          (par$mean > 0 && length(par$mean) == 1) || is.null(par$mean),
+          (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape)
+        )
       },
       sampler = function(n, par) {
-          m <- par$mean
-          lam <- par$shape
-          statmod::rinvgauss(n, m, lam)
+        m <- par$mean
+        lam <- par$shape
+        statmod::rinvgauss(n, m, lam)
       },
       sampler_par = {
-        list(mean = mean, shape = shape)},
+        list(mean = mean, shape = shape)
+      },
       EXYhat = function(x, par) {
         if (!cp) {
           m <- par$mean
@@ -1680,8 +1811,12 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
             z <- 2 * sqrt(a * b)
             pref <- sqrt(lambda / (2 * pi)) * exp(lambda / mu)
             integrand <- function(y) y^(-0.5) * exp(-a * y - b / y)
-            val <- integrate(integrand, lower = 0, upper = x,
-                             rel.tol = 1e-5)$value
+            val <- integrate(
+              integrand,
+              lower = 0,
+              upper = x,
+              rel.tol = 1e-5
+            )$value
             Mx <- pref * val
             Mx
           }
@@ -1700,7 +1835,7 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
             phi <- sqrt(lam / m)
             erf <- function(w) 2 * pnorm(w * sqrt(2)) - 1
             8 * exp(-t^2) * t * erf(t) / sqrt(pi) / sqrt(t^2 + 2 * phi^2)
-        }
+          }
           m * integrate(integrand, 0, Inf, m = m, lam = lam)$value
         } else {
           d <- chisq_dist(1)
@@ -1708,14 +1843,13 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
         }
       },
       statistic = function(x) {
-        list(mean = mean(x),
-             shape = {
-               n <- length(x)
-               x.tilde <- n / sum(1 / x)
-               x.bar <- mean(x)
-               ilam.hat <- 1 / x.tilde - 1 / x.bar
-               1 / ilam.hat
-             })
+        list(mean = mean(x), shape = {
+          n <- length(x)
+          x.tilde <- n / sum(1 / x)
+          x.bar <- mean(x)
+          ilam.hat <- 1 / x.tilde - 1 / x.bar
+          1 / ilam.hat
+        })
       },
       xform = function(x, par) {
         ## The half-normal transformation seems to not be sensitive?
@@ -1724,7 +1858,8 @@ inverse_gaussian_dist <- function(mean = NULL, shape = NULL) {
         ## abs(sqrt(lam / x) * (x - m) / m)
         lam * (x - m)^2 / m^2 / x # ~ chisq(1)
       }
-    ), class = c("InverseGaussianDist", "EuclideanGOFDist", "GOFDist")
+    ),
+    class = c("InverseGaussianDist", "EuclideanGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
@@ -1763,34 +1898,32 @@ invgauss_dist <- inverse_gaussian_dist
 #' egofd(x, d, 0)
 #'
 #' @export
-pareto_dist <- function(scale = NULL, shape = NULL,
-                        pow = shape / 4){
+pareto_dist <- function(scale = NULL, shape = NULL, pow = shape / 4) {
   dist <- structure(
     list(
       name = "Pareto (Type I)",
       composite_p = is_composite(scale, shape),
-      par = list(scale = scale, shape = shape,
-                 pow = pow),
-      sampler_par = list(scale = 1, shape = 1,
-                         pow = 0.25),
+      par = list(scale = scale, shape = shape, pow = pow),
+      sampler_par = list(scale = 1, shape = 1, pow = 0.25),
       support = function(x, par) {
         all(x > par$scale)
       },
       par_domain = function(par) {
         all(
-        (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
-        (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
-        par$pow < par$shape / 2,
-        par$pow > 0,
-        any(
-          is.null(par$shape),
-          par$shape < 1,
-          par$pow == 1 || par$pow < par$shape / 2)
+          (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
+          (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
+          par$pow < par$shape / 2,
+          par$pow > 0,
+          any(
+            is.null(par$shape),
+            par$shape < 1,
+            par$pow == 1 || par$pow < par$shape / 2
+          )
         )
       },
       sampler = function(n, par) {
         u <- runif(n)
-        par$scale / u^(1/par$shape)
+        par$scale / u^(1 / par$shape)
       },
       EXYhat = function(x, par) {
         shape <- par$shape
@@ -1800,18 +1933,28 @@ pareto_dist <- function(scale = NULL, shape = NULL,
         if (shape == 1) {
           A <- (x - scale)^pow
           B <- scale * pow * x^(pow - 1)
-          C <- x0^pow / pow + x0^(pow + 1) / (pow + 1) *
-            gsl::hyperg_2F1(1, pow + 1, pow + 2, x0)
+          C <- x0^pow /
+            pow +
+            x0^(pow + 1) / (pow + 1) * gsl::hyperg_2F1(1, pow + 1, pow + 2, x0)
           D <- scale * x^(pow - 1) * beta(pow + 1, 1 - pow)
           mean(A - B * C + D)
-        } else if (shape > 1 && pow == 1){
-          mean(x + (2 * scale^shape * x^(1 - shape) - shape * scale) /
-                 (shape - 1))
+        } else if (shape > 1 && pow == 1) {
+          mean(
+            x +
+              (2 * scale^shape * x^(1 - shape) - shape * scale) /
+                (shape - 1)
+          )
         } else {
           ## Shape < 1 and pow < 1/2
-          mean((x - scale)^pow - scale^shape *
-                 (pow * beta(pow, 1 - shape) * pbeta(x0, pow, 1 - shape) -
-                    shape * beta(shape - pow, pow + 1)) / x^(shape - pow))
+          mean(
+            (x - scale)^pow -
+              scale^shape *
+                (pow *
+                  beta(pow, 1 - shape) *
+                  pbeta(x0, pow, 1 - shape) -
+                  shape * beta(shape - pow, pow + 1)) /
+                x^(shape - pow)
+          )
         }
       },
       EYY = function(par) {
@@ -1823,34 +1966,43 @@ pareto_dist <- function(scale = NULL, shape = NULL,
         } else if (shape > 1 && pow == 1) {
           2 * shape * scale / (shape - 1) / (2 * shape - 1)
         } else {
-## Shape < 1 and pow < 1/2
-            #2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape -
-            #pow)
-            ## I thought this was unstable, so i wrote on log scale, but I no
-            ## longer believe it to be unstable.
-            L <- log(2) + 2 * log(shape) + pow * log(scale) +
-              lbeta(shape - pow, pow + 1) - log(2 * shape - pow)
-            exp(L)
-          }
-        },
-        statistic = function(x) {
-          list(scale = min(x),
-               shape = {
-                 n <- length(x)
-                 n / (sum(log(x / min(x))))
-               })
-        },
-        xform = function(x, par) {x^par$shape},
-        notes = {
-          if (!is.null(shape) && shape > 1 && pow != 1)
-            message("\n Note: Shape > 1 and pow != 1. Transforming data by data^shape to conduct energy GOF test.\n")}
-    ), class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
-    )
-    validate_par(dist)
-    ## Specific to Pareto: transform the params if necessary.
-    dist <- pareto_set_sampler_par(dist)
-    set_composite_class(dist)
-  }
+          ## Shape < 1 and pow < 1/2
+          #2 * shape^2 * scale^pow * beta(shape - pow, pow + 1) / (2 * shape -
+          #pow)
+          ## I thought this was unstable, so i wrote on log scale, but I no
+          ## longer believe it to be unstable.
+          L <- log(2) +
+            2 * log(shape) +
+            pow * log(scale) +
+            lbeta(shape - pow, pow + 1) -
+            log(2 * shape - pow)
+          exp(L)
+        }
+      },
+      statistic = function(x) {
+        list(scale = min(x), shape = {
+          n <- length(x)
+          n / (sum(log(x / min(x))))
+        })
+      },
+      xform = function(x, par) {
+        x^par$shape
+      },
+      notes = {
+        if (!is.null(shape) && shape > 1 && pow != 1) {
+          message(
+            "\n Note: Shape > 1 and pow != 1. Transforming data by data^shape to conduct energy GOF test.\n"
+          )
+        }
+      }
+    ),
+    class = c("ParetoDist", "GeneralizedGOFDist", "GOFDist")
+  )
+  validate_par(dist)
+  ## Specific to Pareto: transform the params if necessary.
+  dist <- pareto_set_sampler_par(dist)
+  set_composite_class(dist)
+}
 
 pareto_set_sampler_par <- function(dist) {
   ## X ~ P(scale, shape) -> X^shape ~ P(newscale = scale^shape, newshape = 1)
@@ -1861,16 +2013,15 @@ pareto_set_sampler_par <- function(dist) {
   ## New par
   xshape <- 1
   xscale <- initscale^initshape
-  xpow <-  initpow / (4 * initshape)
-  xpar <- list(scale = xscale,
-               shape = xshape,
-               pow = xpow)
+  xpow <- initpow / (4 * initshape)
+  xpar <- list(scale = xscale, shape = xshape, pow = xpow)
   if (!is.null(dist$par$shape)) {
     if (dist$par$shape > 1 && (dist$par$pow != 1 || dist$par$pow >= 0.5)) {
       dist$sampler_par <- xpar
     } else {
       dist$sampler_par <- dist$par
-    }}
+    }
+  }
   validate_par(dist)
   dist
 }
@@ -1894,8 +2045,7 @@ pareto_set_sampler_par <- function(dist) {
 #' egofd(x, d, 0)
 #'
 #' @export
-cauchy_dist <- function(location = NULL, scale = NULL,
-                        pow = 0.5) {
+cauchy_dist <- function(location = NULL, scale = NULL, pow = 0.5) {
   dist <- structure(
     list(
       name = "Cauchy",
@@ -1914,7 +2064,8 @@ cauchy_dist <- function(location = NULL, scale = NULL,
         )
       },
       sampler = function(n, par) {
-        rcauchy(n, location = 0, scale = 1)},
+        rcauchy(n, location = 0, scale = 1)
+      },
       EXYhat = function(x, par) {
         pow <- par$pow
         mean((1 + x^2)^(pow / 2) * cos(pow * atan(x)) / cospi(pow / 2))
@@ -1929,7 +2080,8 @@ cauchy_dist <- function(location = NULL, scale = NULL,
       statistic = function(x) {
         as.list(fitdistrplus::mledist(x, "cauchy")$estimate)
       }
-    ), class = c("CauchyDist", "GeneralizedGOFDist", "GOFDist")
+    ),
+    class = c("CauchyDist", "GeneralizedGOFDist", "GOFDist")
   )
   validate_par(dist)
   set_composite_class(dist)
