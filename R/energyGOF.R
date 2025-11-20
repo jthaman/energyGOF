@@ -28,7 +28,7 @@
 #'     "normal" ("gaussian"), "beta", "poisson", "lognormal" ("lnorm"),
 #'     "laplace" ("doubleexponential"), "asymmetriclaplace" ("alaplace"),
 #'     "inversegaussian", ("invgaussian"), "halfnormal", "chisq" ( "chisquared"),
-#'     "F", "gamma", "weibull", "cauchy", "pareto".
+#'     "f", "gamma", "weibull", "cauchy", "pareto".
 #'
 #'   * A numeric vector of data.
 #'
