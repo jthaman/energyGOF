@@ -111,17 +111,18 @@ test_that("Dists", {
   ## Pareto
   expect_s3_class(pareto_dist(1, 1), "GOFDist")
   expect_s3_class(pareto_dist(1e5, 1 / 1e5), "GOFDist")
-  expect_error(pareto_dist(1 / 1e5, 1e5))
+  expect_s3_class(pareto_dist(1 / 1e5, 1e5), "GOFDist")
   expect_s3_class(pareto_dist(1e5, 1e5), "GOFDist") # Rounds to zero!
   expect_s3_class(pareto_dist(5, 5, 1), "GOFDist")
-  expect_s3_class(pareto_dist(5, 5, 2), "GOFDist")
+  expect_error(pareto_dist(5, 5, 2))
   expect_error(pareto_dist(5, 5, 3))
   expect_error(pareto_dist(5, -5, 2))
   expect_error(pareto_dist(-5, 5, 2))
   expect_error(pareto_dist(NULL, 4, 2))
   expect_s3_class(pareto_dist(NULL, NULL, 2), "GOFDist")
+  expect_s3_class(pareto_dist(NULL, NULL, NULL), "GOFDist")
   expect_error(pareto_dist(4, NULL, 2))
-  expect_error(pareto_dist(4, 4, NULL))
+  expect_s3_class(pareto_dist(4, 4, NULL), "GOFDist")
   ## Cauchy
   expect_s3_class(cauchy_dist(0, 1), "GOFDist")
   expect_s3_class(cauchy_dist(), "GOFDist")
@@ -161,7 +162,8 @@ test_that("function method tests", {
   expect_warning(egof.test(x, pexp, 0, rate = 1))
   expect_warning(
     ## Two warnings, so two calls
-    expect_warning(egof.test(x, pbinom, 0, size = 3, prob = 0.4)))
+    expect_warning(egof.test(x, pbinom, 0, size = 3, prob = 0.4))
+  )
 })
 
 ##### egof.test.numeric tests
@@ -180,14 +182,15 @@ test_that("validate_cdf works", {
   expect_no_error(validate_cdf(pnorm, rnorm(10)))
   expect_no_error(validate_cdf(pbeta, rbeta(10, 5, 5), shape1 = 5, shape2 = 5))
   expect_no_error(validate_cdf(pcauchy, rcauchy(10)))
-  expect_no_error(validate_cdf(pf, rf(10, 4, 4),
-                               df1 = 4, df2 = 4))
-  expect_warning(validate_cdf(pf, rcauchy(10),
-                              df1 = 4, df2 = 4))
+  expect_no_error(validate_cdf(pf, rf(10, 4, 4), df1 = 4, df2 = 4))
+  expect_warning(validate_cdf(pf, rcauchy(10), df1 = 4, df2 = 4))
   expect_no_error(validate_cdf(punif, runif(10)))
-  expect_no_error(validate_cdf(pweibull,
-                               rweibull(100, shape = 4, scale = 1),
-                               shape = 4, scale = 1))
+  expect_no_error(validate_cdf(
+    pweibull,
+    rweibull(100, shape = 4, scale = 1),
+    shape = 4,
+    scale = 1
+  ))
   expect_warning(validate_cdf(pgeom, rgeom(10, prob = .1), prob = .1))
   expect_warning(validate_cdf(ppois, rpois(10, lambda = 5), lambda = 5))
   expect_warning(validate_cdf(pgamma, rcauchy(100), shape = 4, rate = 4))
@@ -196,7 +199,7 @@ test_that("validate_cdf works", {
 
 ##### Test that X is correctly validated
 
-test_that ("validate support checks", {
+test_that("validate support checks", {
   f <- f_dist(3, 3)
   nd <- normal_dist()
   ed <- exponential_dist()
@@ -358,7 +361,7 @@ test_that ("validate support checks", {
 
 ##### F
 
-test_that("F EYY Distance",{
+test_that("F EYY Distance", {
   d <- f_dist(10, 10)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -368,7 +371,7 @@ test_that("F EYY Distance",{
   expect_lt(err, 0.01)
 })
 
-test_that("F EXY Distance",{
+test_that("F EXY Distance", {
   d <- f_dist(10, 10)
   y <- d$sampler(1e6, d$par)
   mc <- mean(abs(5 - y))
@@ -380,7 +383,7 @@ test_that("F EXY Distance",{
 
 ##### Normal
 
-test_that("Normal EYY Distance",{
+test_that("Normal EYY Distance", {
   d <- normal_dist(10, 10)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -390,7 +393,7 @@ test_that("Normal EYY Distance",{
   expect_lt(err, 0.01)
 })
 
-test_that("Normal EXY Distance",{
+test_that("Normal EXY Distance", {
   d <- normal_dist(10, 10)
   y <- d$sampler(1e6, d$par)
   mc <- mean(abs(5 - y))
@@ -402,8 +405,7 @@ test_that("Normal EXY Distance",{
 
 ##### Uniform
 
-
-test_that("Uniform Distances",{
+test_that("Uniform Distances", {
   d <- uniform_dist(-10, 10)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -420,7 +422,7 @@ test_that("Uniform Distances",{
 })
 
 ##### Exp
-test_that("Exp Distances",{
+test_that("Exp Distances", {
   d <- exponential_dist(10)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -437,7 +439,7 @@ test_that("Exp Distances",{
 })
 
 ##### Poisson
-test_that("Poisson Distances",{
+test_that("Poisson Distances", {
   d <- poisson_dist(10)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -454,7 +456,7 @@ test_that("Poisson Distances",{
 })
 
 ##### Bernoulli
-test_that("Bernoulli Distances",{
+test_that("Bernoulli Distances", {
   d <- bernoulli_dist(.7)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -471,7 +473,7 @@ test_that("Bernoulli Distances",{
 })
 
 ##### Binomial
-test_that("Binomial Distances",{
+test_that("Binomial Distances", {
   d <- binomial_dist(10, .4)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -488,7 +490,7 @@ test_that("Binomial Distances",{
 })
 
 ##### Beta
-test_that("Beta Distances",{
+test_that("Beta Distances", {
   d <- beta_dist(10, 5)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -505,7 +507,7 @@ test_that("Beta Distances",{
 })
 
 ##### Geo
-test_that("Geometric Distances",{
+test_that("Geometric Distances", {
   d <- geometric_dist(.07)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -524,7 +526,7 @@ test_that("Geometric Distances",{
 
 ##### Half-Normal
 
-test_that("hn Distances",{
+test_that("hn Distances", {
   d <- halfnormal_dist(7)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -541,7 +543,7 @@ test_that("hn Distances",{
 })
 ##### Laplace
 
-test_that("Laplace Distances",{
+test_that("Laplace Distances", {
   d <- laplace_dist(4, 2)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -558,7 +560,7 @@ test_that("Laplace Distances",{
 })
 ##### Lognormal
 
-test_that("Lognormal Distances",{
+test_that("Lognormal Distances", {
   d <- lognormal_dist(4, 2)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -575,7 +577,7 @@ test_that("Lognormal Distances",{
 })
 
 ##### A-Laplace
-test_that("Asymmetric Laplace Distances",{
+test_that("Asymmetric Laplace Distances", {
   d <- alaplace_dist(4, 3, .5)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -593,7 +595,7 @@ test_that("Asymmetric Laplace Distances",{
 
 
 ##### Weibull
-test_that("Weibull Distances",{
+test_that("Weibull Distances", {
   d <- weibull_dist(5, 6)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -610,7 +612,7 @@ test_that("Weibull Distances",{
 })
 
 ##### Gamma
-test_that("Gamma Distances",{
+test_that("Gamma Distances", {
   d <- gamma_dist(5, 8)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -627,7 +629,7 @@ test_that("Gamma Distances",{
 })
 
 ##### Chi-Sq
-test_that("Chi-sq Distances",{
+test_that("Chi-sq Distances", {
   d <- chisq_dist(33)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -644,7 +646,7 @@ test_that("Chi-sq Distances",{
 })
 
 ##### Inv Gaussian
-test_that("Inv Gaussian Distances",{
+test_that("Inv Gaussian Distances", {
   d <- invgauss_dist(10, 10)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -661,9 +663,8 @@ test_that("Inv Gaussian Distances",{
 })
 
 
-
 ##### Pareto
-test_that("Pareto Distances",{
+test_that("Pareto Distances", {
   d <- pareto_dist(4, 4)
   x <- d$sampler(1e6, d$par)
   y <- d$sampler(1e6, d$par)
@@ -680,7 +681,7 @@ test_that("Pareto Distances",{
 })
 
 ##### Cauchy
-test_that("Cauchy Distances",{
+test_that("Cauchy Distances", {
   d <- cauchy_dist(2, .1, .5)
   x <- d$sampler(1e7, d$par)
   y <- d$sampler(1e7, d$par)
@@ -698,7 +699,6 @@ test_that("Cauchy Distances",{
 
 
 ##### Stable
-
 
 ##### F Tests
 test_that("Test should work", {
@@ -929,7 +929,7 @@ test_that("Test works", {
 })
 
 test_that("Detect lam shift", {
-  x <- rpois(100,5)
+  x <- rpois(100, 5)
   d <- poisson_dist(10)
   o <- egofd(x, d, nsim = 60)
   o
@@ -1311,7 +1311,6 @@ test_that("Test is sensitive", {
 
 ##### Gamma  tests
 
-
 test_that("Test works", {
   d <- gamma_dist(1, 1)
   x <- d$sampler(100, d$par)
@@ -1356,7 +1355,6 @@ test_that("Test is sensitive", {
   expect_gt(o$statistic, 0)
   expect_lt(o$p.value, 0.01)
 })
-
 
 
 ##### Weibull  tests
@@ -1533,7 +1531,6 @@ test_that("composite test is sensitive", {
 ##   expect_gt(o$statistic, 0)
 ##   expect_gt(o$p.value, 0.01)})
 
-
 ##### Beta Test
 
 test_that("Beta Estat should be positive", {
@@ -1541,21 +1538,24 @@ test_that("Beta Estat should be positive", {
   x <- rbeta(100, 20, 20)
   o <- egofd(x, d, 0)
   o
-  expect_gt(o$statistic, 0)})
+  expect_gt(o$statistic, 0)
+})
 
 test_that("Beta Estat should be positive", {
   d <- beta_dist(.5, 1.5)
   x <- rbeta(100, .5, 1.5)
   o <- egofd(x, d, 0)
   o
-  expect_gt(o$statistic, 0)})
+  expect_gt(o$statistic, 0)
+})
 
 test_that("Beta Estat should be sensitive to parameter change", {
   d <- beta_dist(.5, 1.5)
   x <- rbeta(100, 20, 20)
   o <- egofd(x, d, 100)
   o
-  expect_lt(o$p.value, .01)})
+  expect_lt(o$p.value, .01)
+})
 
 
 test_that("Beta Composite should work", {
@@ -1563,14 +1563,16 @@ test_that("Beta Composite should work", {
   x <- rbeta(100, 20, 20)
   o <- egofd(x, d, 0)
   o
-  expect_gt(o$statistic, 0)})
+  expect_gt(o$statistic, 0)
+})
 
 test_that("Beta Composite should work", {
   d <- beta_dist()
   x <- rbeta(100, 1 / 60, 70)
   o <- egofd(x, d, 0)
   o
-  expect_gt(o$statistic, 0)})
+  expect_gt(o$statistic, 0)
+})
 
 ##### Pareto Test
 test_that("Pareto: shape, scale >1", {

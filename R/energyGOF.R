@@ -158,6 +158,7 @@
 #' pgeom pnorm ppois pweibull rbeta rbinom rcauchy rchisq rexp rgamma rgeom
 #' rlnorm rnorm rpois runif rweibull sd dbeta dbinom mahalanobis pf rf setNames
 #'
+#' @importFrom utils lsf.str
 #'
 #' @export energyGOF.test
 
@@ -1888,9 +1889,8 @@ invgauss_dist <- inverse_gaussian_dist
 #' @param shape NULL or a positive shape parameter. If shape > 1, shape is used
 #'   to transform x
 #' @param pow Optional exponent of the energy test. Pow must be less than
-#'   shape/2. If shape > 1 and pow != 1, pow will be scaled to pow/(4*shape) to
-#'   ensure pow < 1/2.
-#' @details If shape > 1, the energy test is more difficult, so data
+#'   shape. If shape > 1 and pow != 1, pow will be scaled down.
+#' @details If shape > 1, the energy test is more difficult, so data are
 #'   transformed to data^shape ~ Pareto(scale^shape, 1).
 #' @examples
 #' d <- pareto_dist(1, .5)
@@ -1898,7 +1898,18 @@ invgauss_dist <- inverse_gaussian_dist
 #' egofd(x, d, 0)
 #'
 #' @export
-pareto_dist <- function(scale = NULL, shape = NULL, pow = shape / 4) {
+pareto_dist <- function(scale = NULL, shape = NULL, pow = NULL) {
+  if (is.null(pow)) {
+    if (is.null(shape)) {
+      pow <- 1 / 4
+    } else if (shape > 1) {
+      pow <- 1
+    } else if (shape == 1) {
+      pow <- 0.5
+    } else if (shape < 1) {
+      pow <- shape / 2
+    }
+  }
   dist <- structure(
     list(
       name = "Pareto (Type I)",
@@ -1910,15 +1921,15 @@ pareto_dist <- function(scale = NULL, shape = NULL, pow = shape / 4) {
       },
       par_domain = function(par) {
         all(
-          (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
-          (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
-          par$pow < par$shape / 2,
-          par$pow > 0,
-          any(
-            is.null(par$shape),
-            par$shape < 1,
-            par$pow == 1 || par$pow < par$shape / 2
-          )
+        (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
+        (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
+        par$pow > 0,
+        any(
+          is.null(par$shape),
+          par$shape == 1 && par$pow < 1,
+          par$shape < 1 && par$pow < par$shape,
+          par$shape > 1 && par$pow == 1
+        )
         )
       },
       sampler = function(n, par) {
@@ -1942,18 +1953,18 @@ pareto_dist <- function(scale = NULL, shape = NULL, pow = shape / 4) {
           mean(
             x +
               (2 * scale^shape * x^(1 - shape) - shape * scale) /
-                (shape - 1)
+              (shape - 1)
           )
         } else {
           ## Shape < 1 and pow < 1/2
           mean(
-            (x - scale)^pow -
-              scale^shape *
-                (pow *
-                  beta(pow, 1 - shape) *
-                  pbeta(x0, pow, 1 - shape) -
-                  shape * beta(shape - pow, pow + 1)) /
-                x^(shape - pow)
+          (x - scale)^pow -
+            scale^shape *
+            (pow *
+               beta(pow, 1 - shape) *
+               pbeta(x0, pow, 1 - shape) -
+               shape * beta(shape - pow, pow + 1)) /
+            x^(shape - pow)
           )
         }
       },
@@ -2013,10 +2024,10 @@ pareto_set_sampler_par <- function(dist) {
   ## New par
   xshape <- 1
   xscale <- initscale^initshape
-  xpow <- initpow / (4 * initshape)
+  xpow <- ifelse(initpow < xshape, initpow, 0.5)
   xpar <- list(scale = xscale, shape = xshape, pow = xpow)
   if (!is.null(dist$par$shape)) {
-    if (dist$par$shape > 1 && (dist$par$pow != 1 || dist$par$pow >= 0.5)) {
+    if (dist$par$shape > 1 && (dist$par$pow != 1)) {
       dist$sampler_par <- xpar
     } else {
       dist$sampler_par <- dist$par

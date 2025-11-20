@@ -57,27 +57,7 @@
 #' @section Distributions Supported:
 #'  The following distributions are supported.
 #'
-#' \tabular{llll}{
-#'   \strong{Distribution} \tab \strong{Function} \tab \strong{Parameter} \tab \strong{Composite Allowed} \cr
-#'   Normal                \tab `normal_dist`            \tab mean, sd                              \tab Yes\cr
-#'   Uniform               \tab `uniform_dist`           \tab min, max                              \tab No \cr
-#'   Exponential           \tab `exponential_dist`       \tab rate                                  \tab Yes\cr
-#'   Poisson               \tab `poisson_dist`           \tab lambda                                \tab Yes\cr
-#'   Bernoulli             \tab `bernoulli_dist`         \tab prob                                  \tab No \cr
-#'   Binomial              \tab `binomial_dist`          \tab prob                                  \tab No\cr
-#'   Beta                  \tab `beta_dist`              \tab shape1, shape2                        \tab Yes \cr
-#'   Half-Normal           \tab `halfnormal_dist`        \tab theta                                 \tab No \cr
-#'   Laplace               \tab `laplace_dist`           \tab location, scale                       \tab Yes \cr
-#'   Lognormal             \tab `lognormal_dist`         \tab meanlog, sdlog                        \tab Yes \cr
-#'   Asymmetric Laplace    \tab `asymmetriclaplace_dist` \tab location, scale, skew                 \tab Yes \cr
-#'   F                     \tab `f_dist`                 \tab df1, df2                              \tab No \cr
-#'   Weibull               \tab `weibull_dist`           \tab shape, scale                          \tab Yes \cr
-#'   Gamma                 \tab `gamma_dist`             \tab shape, rate                           \tab No \cr
-#'   Chi Squared           \tab `chisq_dist`             \tab df                                    \tab No \cr
-#'   Inverse Gaussian      \tab `inversegaussian_dist`   \tab mean, shape                           \tab Yes \cr
-#'   Pareto                \tab `pareto_dist`            \tab scale, shape, pow, r                  \tab Yes \cr
-#'   Cauchy                \tab `cauchy_dist`            \tab location, scale, pow                  \tab Yes \cr
-#' }
+#' `r tab_dists()`
 #'
 #'
 #' @section Simple and Composite Testing:
