@@ -13,7 +13,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#' @title energyGOF: Goodness-of-fit tests via the energy of data
+#' @title energyGOF: Goodness-of-Fit Tests via the Energy of Data
 #' @author John T. Haman
 #'
 #'

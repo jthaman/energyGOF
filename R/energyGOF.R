@@ -1,4 +1,4 @@
-### energyGOF: Goodness-of-fit tests for univariate data via energy
+### energyGOF: Goodness-of-Fit Tests for Univariate Data via Energy
 
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -1921,15 +1921,15 @@ pareto_dist <- function(scale = NULL, shape = NULL, pow = NULL) {
       },
       par_domain = function(par) {
         all(
-        (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
-        (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
-        par$pow > 0,
-        any(
-          is.null(par$shape),
-          par$shape == 1 && par$pow < 1,
-          par$shape < 1 && par$pow < par$shape,
-          par$shape > 1 && par$pow == 1
-        )
+          (par$scale > 0 && length(par$scale) == 1) || is.null(par$scale),
+          (par$shape > 0 && length(par$shape) == 1) || is.null(par$shape),
+          par$pow > 0,
+          any(
+            is.null(par$shape),
+            par$shape == 1 && par$pow < 1,
+            par$shape < 1 && par$pow < par$shape,
+            par$shape > 1 && par$pow == 1
+          )
         )
       },
       sampler = function(n, par) {
@@ -1953,18 +1953,18 @@ pareto_dist <- function(scale = NULL, shape = NULL, pow = NULL) {
           mean(
             x +
               (2 * scale^shape * x^(1 - shape) - shape * scale) /
-              (shape - 1)
+                (shape - 1)
           )
         } else {
           ## Shape < 1 and pow < 1/2
           mean(
-          (x - scale)^pow -
-            scale^shape *
-            (pow *
-               beta(pow, 1 - shape) *
-               pbeta(x0, pow, 1 - shape) -
-               shape * beta(shape - pow, pow + 1)) /
-            x^(shape - pow)
+            (x - scale)^pow -
+              scale^shape *
+                (pow *
+                  beta(pow, 1 - shape) *
+                  pbeta(x0, pow, 1 - shape) -
+                  shape * beta(shape - pow, pow + 1)) /
+                x^(shape - pow)
           )
         }
       },
