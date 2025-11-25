@@ -24,18 +24,14 @@
 #'   [energyGOF-package] for the table of supported distributions.
 #'
 #'     * Result: A parametric goodness-of-fit test is performed.
-#'     * Allowable values: "uniform", "exponential", "bernoulli", "binomial", "geometric",
-#'     "normal" ("gaussian"), "beta", "poisson", "lognormal" ("lnorm"),
-#'     "laplace" ("doubleexponential"), "asymmetriclaplace" ("alaplace"),
-#'     "inversegaussian", ("invgaussian"), "halfnormal", "chisq" ( "chisquared"),
-#'     "F", "gamma", "weibull", "cauchy", "pareto".
+#'     * Allowable values: `r paste(unlist(as.list(formals(energyGOF.test.character)$y)[-1]), collapse = ", ")`.
 #'
 #'   * A numeric vector of data.
 #'
 #'     * Result: A two-sample, non-parametric goodness-of-fit test is performed
-#'       to test if x and y are equally distributed.
+#'       to test if x and y are equal in distribution.
 #'
-#'   * A **continuous** cumulative distribution function. For example, `pt`.
+#'   * A continuous cumulative distribution function. For example, `pt`.
 #'   Only simple tests are supported.
 #'
 #'     * Result: \eqn{y(x)} is tested for uniformity.
@@ -149,7 +145,7 @@
 #' ## energyGOF does not support tests with a mix of known and unknown
 #' ## parameters, so this will result in an error.
 #'
-#' \dontrun{
+#' \donttest{
 #'   energyGOF.test(x, "normal", mean = 0, nsim = 10) # sd is missing
 #' }
 #'
@@ -543,11 +539,11 @@ output_htest <- function(x, dist, nsim, E_stat, sim) {
 #'   pass a distribution object like [normal_dist()] (Distribution objects are
 #'   specific to the implementation of this R package). The advantage is that
 #'   you do not need to pass distribution parameters into a `...` argument as
-#'   in `energyGOF.test`. `energyGOF.test` uses this function under the hood,
+#'   in energyGOF.test(). energyGOF.test() uses this function under the hood,
 #'   but it's perfectly suitable for the user to use as well.
 #' @param x A numeric vector.
 #' @param dist An object of class GOFDist. The distribution to test `x`
-#'   against. GOFDist objects are created with the various "`name_dist()`"
+#'   against. GOFDist objects are created with the various "*_dist()"
 #'   functions in this package. See, for example, [normal_dist()] for details
 #'   on these class objects.
 #' @param nsim A non-negative integer. The number of parametric bootstrap

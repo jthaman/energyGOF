@@ -44,7 +44,6 @@ tab_dists <- function() {
   )
 
   for (i in seq_along(dists)) {
-    print("Writing row for energyGOF-package document...")
     d <- do.call(dists[i], args = as.list(formals(dists[i])))
     Distribution = d$name
     Function = dists[i]

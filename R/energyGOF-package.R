@@ -18,7 +18,7 @@
 #'
 #'
 #' @section Getting Started:
-#' The main entry point is energyGOF.test. The only documentation you need to
+#' The main entry point is energyGOF.test(). The only documentation you need to
 #' read is [energyGOF.test] and [energyGOF-package].
 #'
 #'
@@ -68,7 +68,7 @@
 #' against a specific distribution with _known parameters_ that you must pass
 #' to energyGOF.test in the ellipsis argument (...). You should use a simple
 #' GOF test if you wish to test questions like
-#' "my data is Normal with mean 1 and sd 2". `energyGOF` can also conduct
+#' "my data are Normal with mean 1 and sd 2". energyGOF() can also conduct
 #' _some_ composite GOF tests. A composite test is performed if no parameters
 #' are passed in the ellipsis argument (...). You should conduct a composite
 #' test if your research question is
@@ -77,13 +77,12 @@
 #'
 #' All the composite tests in energyGOF assume that *none* of the parameters
 #' are known. So while there is a statistical test of Normality with known mean
-#' and unknown sd, this is not implemented in the energyGOF package, you will
-#' get an error is you try ask for that. So, either pass all the distribution
-#' parameters or none of them. (In the special case of the Normal distribution,
-#' you can use the [energy] package to test the GOF hypothesis with any
-#' combination of known and unknown parameters.)
+#' and unknown sd, this is not implemented in the energyGOF package. So, either
+#' pass all the distribution parameters or none of them. (In the special case
+#' of the Normal distribution, you can use the [energy] package to test the GOF
+#' hypothesis with any combination of known and unknown parameters.)
 #'
-#' For each test, `energyGOF.test` calculates the test statistic and a
+#' For each test, energyGOF.test() calculates the test statistic and a
 #' *p*-value. In all cases the *p*-value is calculated via parametric
 #' bootstrap. For large `nsim`, the *p*-values should be reasonably honest in
 #' small-ish samples. You may need to perform a sensitivity study to find a
