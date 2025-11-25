@@ -145,9 +145,9 @@
 #' ## energyGOF does not support tests with a mix of known and unknown
 #' ## parameters, so this will result in an error.
 #'
-#' \donttest{
-#'   energyGOF.test(x, "normal", mean = 0, nsim = 10) # sd is missing
-#' }
+#'
+#' try(energyGOF.test(x, "normal", mean = 0, nsim = 10)) # sd is missing
+#'
 #'
 #'
 #' @importFrom stats dlnorm dnorm integrate median pbeta pchisq pexp pgamma
