@@ -55,13 +55,13 @@
 #'   optionally pass the generalized energy exponent `pow` here. Composite
 #'   testing is not supported if `y` is a function. (As you can see, there is a
 #'   lot going on in `...` and if you don't like that, you may want to check
-#'   out [energyGOFdist] for a structured interface.)
+#'   out [energyGOFdist()] for a structured interface.)
 #'
 #' @seealso
 #'
 #'  * [energyGOF-package] for specifics on the distributions available to test.
 #'
-#'  * [energyGOFdist] for the alternate S3 interface for parametric testing.
+#'  * [energyGOFdist()] for the alternate S3 interface for parametric testing.
 #'
 #'  * \link[stats]{Distributions} for a list of distributions available
 #'   in most R installations.
@@ -91,7 +91,7 @@
 #' * `sim_reps`: bootstrap replicates of energy statistic
 #' * `estimate`: Any parameter estimates, if the test is composite
 #'
-#' If `y` is numeric, return the same htest object as [energy::eqdist.etest].
+#' If `y` is numeric, return the same htest object as [energy::eqdist.etest()].
 #'
 #' @aliases egof.test
 #'
