@@ -175,6 +175,7 @@ energyGOF.test.function <- function(x, y, nsim, ...) {
   args <- c(setNames(list(x), first_arg), list(...))
   xu <- do.call(y, args)
   d <- uniform_dist(0, 1)
+  d$notes <- "Test of y(x) ~ Uniform(0, 1)."
   egofd(xu, d, nsim = nsim)
 }
 
