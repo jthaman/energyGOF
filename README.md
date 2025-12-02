@@ -41,10 +41,10 @@ energyGOF.test(y, "weibull", shape = 1, scale = 3, nsim = 10)
 
 egofd(y, weibull_dist(1, 3), nsim = 10)
 
-## Conduct a generalized GOF test. `pow` is the exponent *s* in the generalize ## energy statistic. Pow is only necessary when testing Cauchy, and
-## Pareto distributions. If you don't set a pow, there is a default for each
-## of the distributions, but the default isn't necessarily better than any
-## other number.
+## Conduct a generalized GOF test. `pow` is the exponent *s* in the generalized energy statistic.
+## Pow is only necessary when testing Cauchy, and Pareto distributions. If you don't
+## set a pow, there is a default for each of the distributions, but the default
+## isn't necessarily better than any other number.
 
 egofd(rcauchy(100),
       cauchy_dist(location = 0, scale = 1, pow = 0.5),
