@@ -4,7 +4,7 @@ Conduct one- and two-sample goodness-of-fit tests for univariate data. In the on
 
 # Examples
 
-```{r}
+```r
 x <- rnorm(10)
 y <- rt(10, 4)
 
