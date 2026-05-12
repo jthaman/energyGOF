@@ -348,7 +348,7 @@ xform_x <- function(x, dist) {
 #' @export
 xform_x.CauchyDist <- function(x, dist) {
   # Must transform in Simple case.
-  if (!dist$composite) {
+  if (!dist$composite_p) {
     x <- dist$xform(x, dist$par)
   }
   x
@@ -358,7 +358,7 @@ xform_x.CauchyDist <- function(x, dist) {
 xform_x.StableDist <- function(x, dist) {
   # Must transform in Simple case.
   ## I don't think there will be a composite test, but i can leave the if statement.
-  if (!dist$composite) {
+  if (!dist$composite_p) {
     x <- dist$xform(x, dist$par)
   }
   x
@@ -387,7 +387,7 @@ xform_dist <- function(x, dist) {
 #' @export
 xform_dist.PoissonDist <- function(x, dist) {
   # Must transform in Simple case.
-  if (dist$composite) {
+  if (dist$composite_p) {
     dist$sampler_par <- dist$statistic(x)
   }
   dist
@@ -396,7 +396,7 @@ xform_dist.PoissonDist <- function(x, dist) {
 #' @export
 xform_dist.InverseGaussianDist <- function(x, dist) {
   # Must transform in composite case.
-  if (dist$composite) {
+  if (dist$composite_p) {
     dist$sampler_par <- dist$statistic(x)
   }
   dist
@@ -405,7 +405,7 @@ xform_dist.InverseGaussianDist <- function(x, dist) {
 #' @export
 xform_dist.GammaDist <- function(x, dist) {
   # Must transform in Composite case.
-  if (dist$composite) {
+  if (dist$composite_p) {
     dist$sampler_par <- dist$statistic(x)
   }
   dist
@@ -414,7 +414,7 @@ xform_dist.GammaDist <- function(x, dist) {
 #' @export
 xform_dist.AsymmetricLaplaceDist <- function(x, dist) {
   # Must transform in Composite case.
-  if (dist$composite) {
+  if (dist$composite_p) {
     mle <- dist$statistic(x)
     dist$sampler_par <- list(location = 0, scale = 1, skew = mle$skew)
   }
@@ -424,7 +424,7 @@ xform_dist.AsymmetricLaplaceDist <- function(x, dist) {
 #' @export
 xform_dist.WeibullDist <- function(x, dist) {
   # Must transform in Composite case.
-  if (dist$composite) {
+  if (dist$composite_p) {
     dist$sampler_par <- dist$statistic(x)
   }
   dist
